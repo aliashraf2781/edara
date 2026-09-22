@@ -18,7 +18,7 @@ import { useAdminReference, useSchoolStats, useSchoolStudent, useSchoolStudents 
 import { PERMISSION } from '../../api/permissions'
 import type { GradeStat, SchoolStudentRow, SubjectStat } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
-import { narrowFilters } from './filters'
+import { narrowFilters, type FilterKey } from './filters'
 import { ReportCardTable } from './report-card-table'
 import { resultsText } from './results.i18n'
 import { ResultsToolbar } from './results-toolbar'
@@ -27,6 +27,9 @@ import { StatCards } from './stat-cards'
 
 const PER_PAGE = 25
 const DEFAULTS = { term: '', grade: '', classroom: '', subject: '', search: '' } as const
+// No subject filter — this screen lists students, not one row per subject,
+// and a subject only means something once a grade narrows which one.
+const TOOLBAR_FIELDS: readonly FilterKey[] = ['search', 'term', 'grade', 'classroom']
 
 export function SchoolResultsScreen() {
   const text = useDict(resultsText)
@@ -167,6 +170,7 @@ export function SchoolResultsScreen() {
 
       <ResultsToolbar
         reference={reference.data}
+        fields={TOOLBAR_FIELDS}
         values={filters}
         onChange={(key, value) => setValue(key, value)}
       />
