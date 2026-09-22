@@ -33,7 +33,7 @@ export function SchoolStudentsScreen() {
   const search = useDebouncedValue(values.search)
 
   const allowed = can(PERMISSION.viewTenant) || can(PERMISSION.viewTenants)
-  const reference = useAdminReference()
+  const reference = useAdminReference(code)
   const filters = narrowFilters(reference.data, { ...values, term: '', subject: '' })
   const stats = useSchoolStats(code, '', allowed)
   const students = useSchoolStudents(

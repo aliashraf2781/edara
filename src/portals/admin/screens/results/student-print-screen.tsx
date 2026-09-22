@@ -105,7 +105,7 @@ function StudentExtract() {
   const id = params.id ?? ''
   const { values, setValue } = useTableParams(TERM_PARAM)
 
-  const reference = useAdminReference()
+  const reference = useAdminReference(code)
   const detail = useSchoolStudent(code, id)
 
   const [askingDetails, setAskingDetails] = useState(false)

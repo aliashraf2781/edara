@@ -123,13 +123,14 @@ export type ReferenceClassroom = {
 export type ReferenceSubject = {
   id: string
   grade_id: string
-  educational_stage_id: string
+  educational_stage_id: string | null
   code: string
   name: string
   grading_type: GradingType
   max_score: number | null
   pass_score: number | null
-  group: SubjectGroup
+  /** Print-layout grouping — not tracked for a real (non-mock) school's subjects. */
+  group?: SubjectGroup
 }
 
 /** Grades, terms, classrooms and subjects — everything the filters need. */
