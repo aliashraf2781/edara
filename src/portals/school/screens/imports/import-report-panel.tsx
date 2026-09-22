@@ -98,6 +98,13 @@ export function ImportReportPanel({
 
           <p className="text-small text-muted">{text.importedResultsHint(report.imported_rows)}</p>
 
+          {report.studentsCreated > 0 ? (
+            <p className="flex items-center gap-2 text-small text-muted">
+              <Icon name="info" className="size-4 text-accent" />
+              {text.studentsCreatedHint(report.studentsCreated)}
+            </p>
+          ) : null}
+
           {detectedGradeName || detectedTermName ? (
             <p className="flex items-center gap-2 text-small text-muted">
               <Icon name="info" className="size-4 text-accent" />

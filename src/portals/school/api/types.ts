@@ -174,6 +174,7 @@ export type ImportErrorCode =
   | 'invalid_score'
   | 'invalid_rating'
   | 'processing_error'
+  | 'no_classroom_available'
 
 export type ImportRowError = {
   row_number: number
@@ -199,6 +200,8 @@ export type ImportReport = {
   invalid_rows: number
   /** Individual subject results written — not student count. */
   imported_rows: number
+  /** New Student records created from sheet rows with an unrecognized code. */
+  studentsCreated: number
   errors: ImportRowError[]
 }
 

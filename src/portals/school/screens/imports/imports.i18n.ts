@@ -16,6 +16,7 @@ export const importsText: Dict<{
   partialBanner: (valid: number, total: number, invalid: number) => string
   summaryTitle: string
   importedResultsHint: (count: number) => string
+  studentsCreatedHint: (count: number) => string
   detectedFromSheet: (grade: string | null, term: string | null) => string
   stats: { total: string; valid: string; invalid: string; imported: string }
   errorsTitle: string
@@ -53,6 +54,10 @@ export const importsText: Dict<{
       `تم رفع نتائج ${valid} من ${total} طالبًا. ${invalid} يحتاجون تصحيحًا أدناه.`,
     summaryTitle: 'نتيجة الرفع',
     importedResultsHint: (count) => `${count} درجة مادة فردية سُجِّلت ونُشرت.`,
+    studentsCreatedHint: (count) =>
+      count === 0
+        ? ''
+        : `تم إنشاء ${count} سجل طالب جديد من أكواد لم تكن موجودة في النظام — راجع بياناتهم لاحقًا.`,
     detectedFromSheet: (grade, term) => {
       const parts = [grade ? `الصف: ${grade}` : null, term ? `الترم: ${term}` : null].filter(Boolean)
       return `تم التعرف عليها من الملف — ${parts.join('، ')}`
@@ -74,6 +79,7 @@ export const importsText: Dict<{
       invalid_score: 'درجة غير صالحة',
       invalid_rating: 'تقدير غير معروف',
       processing_error: 'خطأ غير متوقع في هذا الصف',
+      no_classroom_available: 'لا يوجد فصل لهذا الصف الدراسي لتسجيل الطالب فيه',
     },
     startOver: 'رفع ملف آخر',
     historyTitle: 'آخر عمليات الرفع',
@@ -105,6 +111,10 @@ export const importsText: Dict<{
       `${valid} of ${total} students uploaded. ${invalid} need correcting below.`,
     summaryTitle: 'Upload result',
     importedResultsHint: (count) => `${count} individual subject marks were recorded and published.`,
+    studentsCreatedHint: (count) =>
+      count === 0
+        ? ''
+        : `${count} new student record${count === 1 ? '' : 's'} were created from codes not already in the system — review their details later.`,
     detectedFromSheet: (grade, term) => {
       const parts = [grade ? `Grade: ${grade}` : null, term ? `Term: ${term}` : null].filter(Boolean)
       return `Detected from the file — ${parts.join(', ')}`
@@ -126,6 +136,7 @@ export const importsText: Dict<{
       invalid_score: 'Score is not a usable mark',
       invalid_rating: 'Unrecognised pass/fail text',
       processing_error: 'Unexpected error on this row',
+      no_classroom_available: 'No classroom exists for this grade to enroll the student into',
     },
     startOver: 'Upload another file',
     historyTitle: 'Recent uploads',
