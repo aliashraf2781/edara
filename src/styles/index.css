@@ -1,0 +1,96 @@
+@import "@fontsource/el-messiri/400.css";
+@import "@fontsource/el-messiri/500.css";
+@import "@fontsource/el-messiri/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "tailwindcss";
+@import "./theme.css";
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Numerals line up like a printed ledger wherever they appear. */
+  .font-mono,
+  code,
+  kbd {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Never removed. Controls that render their own focus ring (inputs,
+     buttons, checkboxes) opt out with outline-none and use shadow-ring instead. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-control);
+  }
+
+  ::placeholder {
+    color: var(--color-muted);
+  }
+
+  /* Hairlines, not shadows, define resting surfaces. */
+  hr {
+    border-color: var(--color-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  /* Directional glyphs only. Search, filter and download keep their shape. */
+  [dir="rtl"] [data-directional="true"] {
+    transform: scaleX(-1);
+  }
+}
+
+@utility rule-double {
+  border-block-end: 1px solid var(--color-line);
+}
+
+@layer components {
+  /* Micro label. Latin gets the tracked caps; Arabic must not be tracked or
+     capitalised — it would break the connected script. */
+  .label-micro {
+    font-size: var(--text-micro);
+    line-height: var(--text-micro--line-height);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  [lang="ar"] .label-micro {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  /* Field label: sentence case, medium weight — reads as an instruction, not a tag. */
+  .label-form {
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+}

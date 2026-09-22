@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إدارة — Edara</title>
+    <script>
+      // Applied before first paint so the page never flashes the wrong theme
+      // or the wrong writing direction on load.
+      (function () {
+        try {
+          var locale = localStorage.getItem('edara.locale')
+          if (locale !== 'en') locale = 'ar'
+          document.documentElement.lang = locale
+          document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
+
+          var theme = localStorage.getItem('edara.theme') || 'system'
+          var dark =
+            theme === 'dark' ||
+            (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

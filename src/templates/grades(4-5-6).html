@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مستخرج رسمي بنتيجة الصف الابتدائي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..700&family=Noto+Kufi+Arabic:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --line:#000;
+    --paper:#fdfcf9;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:#e9e9e4;
+    font-family:'Noto Naskh Arabic', serif;
+    color:var(--ink);
+  }
+  body{
+    padding:24px;
+    display:flex;
+    justify-content:center;
+  }
+  .page{
+    background:var(--paper);
+    width:1300px;
+    max-width:100%;
+    padding:22px 34px 26px;
+    border:2.5px solid var(--line);
+    position:relative;
+  }
+
+  /* ---------- top row: seal / date / letterhead ---------- */
+  .top-row{
+    display:flex;
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:flex-start;
+    direction:ltr; /* force visual L-to-R placement regardless of page rtl */
+    margin-bottom:6px;
+  }
+  .seal{
+    width:70px;height:70px;
+    border:2px solid #333;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:8px;text-align:center;color:#555;
+    background:
+      repeating-conic-gradient(from 0deg, #cfcfc9 0deg 8deg, transparent 8deg 16deg);
+    flex:0 0 auto;
+  }
+  .date-field{
+    direction:rtl;
+    font-size:15px;
+    padding-top:14px;
+    white-space:nowrap;
+  }
+  .date-field .blank{
+    display:inline-block;
+    min-width:26px;
+    border-bottom:1px dotted #000;
+    margin:0 3px;
+  }
+  .letterhead{
+    direction:rtl;
+    text-align:right;
+    font-size:11px;
+    line-height:1.6;
+    color:#333;
+    flex:0 0 auto;
+  }
+
+  /* ---------- title box ---------- */
+  .title-wrap{
+    display:flex;
+    justify-content:center;
+    margin:6px 0 14px;
+  }
+  .title-box{
+    border:1.5px solid var(--line);
+    padding:6px 26px;
+    font-weight:700;
+    font-size:20px;
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+  }
+  .title-box .blank{
+    display:inline-block;
+    min-width:170px;
+    border-bottom:1px dotted #000;
+  }
+
+  /* ---------- info lines ---------- */
+  .info-lines p{
+    margin:5px 0;
+    font-size:14.5px;
+    text-align:right;
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:baseline;
+    white-space:nowrap;
+  }
+  .info-lines p .txt{white-space:nowrap;}
+  .blank{
+    display:inline-block;
+    border-bottom:1px dotted #000;
+    margin:0 4px;
+  }
+  .b-xl{min-width:260px;}
+  .b-lg{min-width:140px;}
+  .b-md{min-width:80px;}
+  .b-sm{min-width:34px;}
+  .info-lines p{justify-content:flex-start;}
+  .info-lines .row{
+    display:flex;justify-content:flex-end;flex-wrap:wrap;
+    row-gap:2px;
+  }
+
+  /* ---------- grades table ---------- */
+  table.grades{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:14px;
+    table-layout:fixed;
+  }
+  table.grades th, table.grades td{
+    border:1px solid var(--line);
+    text-align:center;
+    vertical-align:middle;
+    font-size:11px;
+    padding:3px 2px;
+    line-height:1.3;
+    overflow-wrap:break-word;
+    white-space:normal;
+  }
+  table.grades th{
+    font-weight:700;
+    height:56px;
+    font-size:10.5px;
+  }
+  table.grades td.label-col, table.grades th.label-col{
+    font-weight:700;
+    width:8%;
+  }
+  .summary-row td{
+    font-weight:700;
+    font-size:12px;
+    height:30px;
+  }
+  .summary-row td.blank-cell{
+    border:none;
+    border-top:1px solid var(--line);
+  }
+  .vertical-text{
+    font-weight:700;
+    height:130px;
+    position:relative;
+    padding:0;
+  }
+  .vertical-text span{
+    display:inline-block;
+    transform: rotate(-90deg);
+    white-space:nowrap;
+    letter-spacing:1px;
+  }
+  .num-row td{height:26px;}
+  .fill-row td{height:34px;}
+
+  /* ---------- after-table text ---------- */
+  .after-table{margin-top:14px;}
+  .after-table p{
+    margin:6px 0;
+    font-size:13.5px;
+    text-align:right;
+  }
+  .submit-line{display:flex;align-items:baseline;justify-content:flex-end;}
+  .submit-line .blank{flex:1 1 auto;max-width:520px;margin-inline-start:6px;}
+  .pay-line{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px;}
+
+  /* ---------- signatures ---------- */
+  .signatures{
+    display:flex;
+    justify-content:space-between;
+    margin-top:56px;
+    font-size:14px;
+    font-weight:700;
+    padding:0 6px;
+  }
+  .office-stamp{
+    position:absolute;
+    left:34px;
+    bottom:64px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .office-stamp .seal{width:56px;height:56px;}
+  .office-stamp .date-field{font-size:11px;padding-top:0;}
+
+  @media print{
+    body{background:#fff;padding:0;}
+    .page{border-width:2px;box-shadow:none;width:100%;}
+    @page{size:A4 landscape;margin:10mm;}
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ===== Header ===== -->
+    <div class="top-row">
+      <div class="seal" title="شعار الجهة (عنصر بديل)"></div>
+      <div class="date-field">
+        التاريخ : <span class="blank" style="min-width:34px;"></span> / <span class="blank" style="min-width:34px;"></span> / ٢٠<span class="blank" style="min-width:34px;"></span> م
+      </div>
+      <div class="letterhead">
+        <div>وزارة التربية والتعليم</div>
+        <div>مديرية التربية والتعليم بـ ..........................</div>
+        <div>إدارة .......................... التعليمية</div>
+      </div>
+    </div>
+
+    <!-- ===== Title box ===== -->
+    <div class="title-wrap">
+      <div class="title-box">
+        <span>مستخرج رسمي بنتيجة الصف</span>
+        <span class="blank"></span>
+        <span>الابتدائي</span>
+      </div>
+    </div>
+
+    <!-- ===== Info lines ===== -->
+    <div class="info-lines">
+      <div class="row">
+        <span class="txt">بالكشف في سجلات القيد بمدرسة&nbsp;:</span>
+        <span class="blank b-xl"></span>
+        <span class="txt">في العام الدراسي ٢٠</span>
+        <span class="blank b-sm"></span>
+        <span class="txt">/ ٢٠</span>
+        <span class="blank b-sm"></span>
+        <span class="txt">م&nbsp;(</span>
+        <span class="blank b-lg"></span>
+        <span class="txt">)</span>
+      </div>
+      <div class="row">
+        <span class="txt">وجد اسم الطالب&nbsp;:</span>
+        <span class="blank b-xl"></span>
+        <span class="txt">منقول من الصف</span>
+        <span class="blank b-md"></span>
+        <span class="txt">الابتدائي إلى الصف</span>
+        <span class="blank b-md"></span>
+      </div>
+      <div class="row">
+        <span class="txt">تحت اشراف المديرية برقم جلوس</span>
+        <span class="blank b-lg"></span>
+        <span class="txt">طبقاً للقرار الوزاري رقم ١٩٥ لسنة ٢٠٢٣م الدور</span>
+        <span class="blank b-md"></span>
+      </div>
+    </div>
+
+    <!-- ===== Grades table ===== -->
+    <table class="grades">
+      <thead>
+        <tr class="summary-row">
+          <td class="label-col"></td>
+          <td colspan="3">مواد نجاح ورسوب</td>
+          <td colspan="1">تقييم تكويني</td>
+          <td colspan="5">مواد نجاح بنسبة حضور ٨٠٪</td>
+          <td colspan="4" class="blank-cell"></td>
+        </tr>
+        <tr>
+          <th class="label-col">المادة</th>
+          <th>اللغة العربية</th>
+          <th>الرياضيات</th>
+          <th>الدراسات الاجتماعية</th>
+          <th>العلوم</th>
+          <th>اللغة الانجليزية</th>
+          <th>تكنولوجيا<br>المعلومات<br>والاتصالات</th>
+          <th>التربية<br>الدولية</th>
+          <th>مستوى<br>رابع (١)</th>
+          <th>مستوى<br>رابع (٢)</th>
+          <th>توكاتسو</th>
+          <th>التربية<br>البدنية<br>والصحية</th>
+          <th>التربية<br>الفنية</th>
+          <th>التربية<br>العقلية و<br>الموسيقية</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="num-row">
+          <td class="label-col">الدرجة النهائية</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td>١٠٠</td>
+          <td rowspan="4" class="vertical-text"><span>اجتياز</span></td>
+          <td rowspan="4" class="vertical-text"><span>اجتياز</span></td>
+          <td rowspan="4" class="vertical-text"><span>اجتياز</span></td>
+          <td rowspan="4" class="vertical-text"><span>اجتياز</span></td>
+        </tr>
+        <tr class="num-row">
+          <td class="label-col">الدرجة الصغرى</td>
+          <td>٥٠</td>
+          <td>٥٠</td>
+          <td>٥٠</td>
+          <td>٥٠</td>
+          <td>٥٠</td>
+          <td>٥٠</td>
+          <td>٧٠</td>
+          <td>٥٠</td>
+          <td>٥٠</td>
+        </tr>
+        <tr class="fill-row">
+          <td class="label-col">درجة الطالب</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr class="fill-row">
+          <td class="label-col">التقييم</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ===== After-table text ===== -->
+    <div class="after-table">
+      <p class="submit-line">
+        <span>وقد استخرج هذا البيان لتقديمه إلى&nbsp;:</span>
+        <span class="blank"></span>
+      </p>
+      <p class="pay-line">
+        <span>بناء على طلب الطالب بعد سداد الرسم المقرر بالحوالة رقم&nbsp;:</span>
+        <span class="blank b-md"></span>
+        <span>بتاريخ&nbsp;:</span>
+        <span class="blank" style="min-width:20px;"></span>/<span class="blank" style="min-width:20px;"></span>/٢٠<span class="blank" style="min-width:20px;"></span>م
+        <span>&nbsp;&nbsp;مبلغ&nbsp;:</span>
+        <span class="blank b-md"></span>
+      </p>
+      <p>وعلى الجهة المقدم لها البيان التحقق من أن صاحب البيان هو نفس الشخص المدون أعلاه ولا يجوز تقديم البيان إلى جهة أخرى أو استخراج</p>
+      <p>صورة منه لجهة المقدم لها .</p>
+    </div>
+
+    <!-- ===== Signatures ===== -->
+    <div class="signatures">
+      <div>المحرر</div>
+      <div>مراجع أول</div>
+      <div>مراجع ثان</div>
+      <div>مدير إدارة شئون الطلبة والامتحانات</div>
+    </div>
+
+    <div class="office-stamp">
+      <div class="seal"></div>
+      <div class="date-field">التاريخ : <span class="blank" style="min-width:18px;"></span>/<span class="blank" style="min-width:18px;"></span>/٢٠<span class="blank" style="min-width:18px;"></span>م</div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+/* Design tokens. Every value lives here; components only use semantic classes.
+   Cool slate-blue neutrals + a single institutional blue accent — built for a
+   government system: precise, trustworthy, legible, no visual noise. */
+@theme {
+  /* Colour — light is the default mode */
+  --color-paper: #f8fafc;
+  --color-surface: #ffffff;
+  --color-sunken: #f1f5f9;
+  --color-ink: #0f172a;
+  --color-ink-strong: #020617;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-attention: #d97706;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  /* Workflow-only hue: results move draft -> submitted before any status above applies */
+  --color-info: #4f46e5;
+
+  /* Sidebar — a fixed dark panel, deliberately independent of the light/dark
+     toggle above. It is the one piece of chrome that never flips, so the
+     product keeps a consistent anchor no matter which theme the page is in. */
+  --color-sidebar: #0f172a;
+  --color-sidebar-raised: #16213a;
+  --color-sidebar-line: #1e293b;
+  --color-sidebar-hover: #1e293b;
+  --color-sidebar-active: rgb(59 130 246 / 0.16);
+  --color-sidebar-ink: #f1f5f9;
+  --color-sidebar-muted: #8896ac;
+  --color-sidebar-accent: #3b82f6;
+
+  /* Type — one bilingual family for Arabic and Latin alike, mono for every numeral */
+  --font-sans: "El Messiri", system-ui, sans-serif;
+  --font-latin: "El Messiri", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --text-display: 28px;
+  --text-display--line-height: 34px;
+  --text-h1: 22px;
+  --text-h1--line-height: 28px;
+  --text-h2: 17px;
+  --text-h2--line-height: 24px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-small: 13px;
+  --text-small--line-height: 18px;
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+  --text-micro--letter-spacing: 0.04em;
+
+  /* Shape — squarer than a consumer app; pills reserved for status and tags */
+  --radius-control: 8px;
+  --radius-input: 10px;
+  --radius-card: 10px;
+  --radius-large: 14px;
+  --radius-pill: 9999px;
+
+  /* Elevation — a 1px border defines a resting surface; shadow adds just
+     enough lift to separate chrome and controls from the page canvas. */
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow-button: 0 1px 2px 0 rgb(15 23 42 / 0.08);
+  --shadow-ring: 0 0 0 4px rgb(37 99 235 / 0.16);
+  --shadow-ring-danger: 0 0 0 4px rgb(220 38 38 / 0.16);
+  --shadow-popover: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+  --shadow-drawer: 0 20px 25px -5px rgb(15 23 42 / 0.12), 0 8px 10px -6px rgb(15 23 42 / 0.1);
+  --shadow-toast: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+
+  --container-shell: 1440px;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --animate-progress: progress 1.2s ease-in-out infinite;
+  --animate-drawer-in: drawer-in 220ms var(--ease-out-soft);
+  --animate-drawer-in-rtl: drawer-in-rtl 220ms var(--ease-out-soft);
+  --animate-fade-in: fade-in 120ms ease-out;
+  --animate-toast-in: toast-in 180ms var(--ease-out-soft);
+
+  @keyframes progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes drawer-in-rtl {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* Same roles, dark values. Utilities read the vars, so nothing needs a dark: variant. */
+[data-theme="dark"] {
+  --color-paper: #020617;
+  --color-surface: #0f172a;
+  --color-sunken: #1e293b;
+  --color-ink: #f1f5f9;
+  --color-ink-strong: #ffffff;
+  --color-muted: #94a3b8;
+  --color-line: #334155;
+  --color-line-strong: #475569;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-attention: #fbbf24;
+  --color-success: #22c55e;
+  --color-danger: #f87171;
+  --color-info: #818cf8;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-button: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-ring: 0 0 0 4px rgb(59 130 246 / 0.25);
+  --shadow-ring-danger: 0 0 0 4px rgb(248 113 113 / 0.25);
+}

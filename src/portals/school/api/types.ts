@@ -1,0 +1,222 @@
+export type SchoolUserStatus = 'active' | 'suspended'
+
+export type SchoolUser = {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  status: SchoolUserStatus
+  roles: string[]
+  createdAt: string
+}
+
+export type SchoolIdentity = {
+  user: SchoolUser
+  school: { code: string; name: string }
+  permissions: string[]
+}
+
+export type AcademicYear = {
+  id: string
+  code: string
+  name: string
+  starts_on: string
+  ends_on: string
+  is_current: boolean
+}
+
+export type EducationalStage = {
+  id: string
+  code: string
+  name: string
+  sort_order: number | null
+}
+
+export type Grade = {
+  id: string
+  educational_stage_id: string
+  code: string
+  name: string
+  level: number | null
+}
+
+export type Classroom = {
+  id: string
+  grade_id: string
+  academic_year_id: string
+  code: string
+  name: string
+  capacity: number | null
+}
+
+export type ExamPeriod = {
+  id: string
+  academic_year_id: string
+  code: string
+  name: string
+  type: string
+  term: number | null
+  starts_on: string | null
+  ends_on: string | null
+  status: string | null
+  entry_opens_at: string | null
+  entry_closes_at: string | null
+  locked_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type GradingType = 'numeric' | 'qualitative'
+
+export type Subject = {
+  id: string
+  grade_id: string | null
+  educational_stage_id: string | null
+  code: string
+  name: string
+  grading_type: GradingType
+  /** Null for qualitative subjects. */
+  max_score: number | null
+  /** Null for qualitative subjects. */
+  pass_score: number | null
+}
+
+export type Gender = 'male' | 'female'
+
+export type Enrollment = {
+  id: string
+  academic_year_id: string
+  grade_id: string
+  classroom_id: string
+  enrolled_on: string | null
+  classroom?: Classroom
+  academic_year?: AcademicYear
+}
+
+export type Student = {
+  id: string
+  student_code: string
+  national_id: string | null
+  first_name: string
+  father_name: string | null
+  family_name: string | null
+  gender: Gender
+  birth_date: string | null
+  guardian_name: string | null
+  guardian_phone: string | null
+  status: string | null
+  enrollments?: Enrollment[]
+}
+
+/** The workflow is a fixed graph; the UI only ever offers a legal next move. */
+export const RESULT_STATUSES = [
+  'draft',
+  'submitted',
+  'under_review',
+  'approved',
+  'rejected',
+  'published',
+] as const
+
+export type ResultStatus = (typeof RESULT_STATUSES)[number]
+
+export type ResultTransition = {
+  id: string
+  from_status: ResultStatus | null
+  to_status: ResultStatus
+  reason: string | null
+  causer_name: string | null
+  created_at: string
+}
+
+/** Populated instead of score/max_score when the subject is qualitative. */
+export const QUALITATIVE_RATINGS = [
+  'exceeds_expectations',
+  'meets_expectations',
+  'sometimes_meets_expectations',
+  'below_expectations',
+] as const
+
+export type QualitativeRating = (typeof QUALITATIVE_RATINGS)[number]
+
+export type Result = {
+  id: string
+  student_enrollment_id: string
+  subject_id: string
+  exam_period_id: string
+  /** Null when the subject is qualitative — see `qualitative_rating`. */
+  score: number | null
+  max_score: number | null
+  qualitative_rating: QualitativeRating | null
+  is_absent: boolean
+  status: ResultStatus
+  reason: string | null
+  student_name?: string
+  subject_name?: string
+  transitions?: ResultTransition[]
+}
+
+export type ImportErrorCode =
+  | 'duplicate_row'
+  | 'unknown_student'
+  | 'not_enrolled'
+  | 'invalid_score'
+  | 'invalid_rating'
+
+export type ImportRowError = {
+  row_number: number
+  error_code: ImportErrorCode
+  error_message: string
+  row_payload: Record<string, unknown>
+}
+
+export type ImportReport = {
+  id: string
+  status: string
+  /** Student rows in the sheet. */
+  total_rows: number
+  /** Students whose mapped subjects all imported cleanly. */
+  valid_rows: number
+  /** Students with at least one mapped-subject failure. */
+  invalid_rows: number
+  /** Individual subject results written — not student count. */
+  imported_rows: number
+  errors: ImportRowError[]
+}
+
+/** One subject block the sheet parser found. Field names match the preview envelope (camelCase). */
+export type ImportPreviewSubject = {
+  sheetIndex: number
+  sheetName: string
+  gradingType: GradingType
+  /** Column letter → component label (اعمال / نصف العام / اجمالي …). */
+  columns: Record<string, string>
+  /** Pre-filled suggestion only — null when nothing matched by name. */
+  suggestedSubjectId: string | number | null
+  suggestedSubjectName: string | null
+}
+
+export type ImportPreview = {
+  resultImportId: string | number
+  sheet: string
+  idColumns: {
+    serial?: string
+    student_code?: string
+    student_name?: string
+    classroom?: string
+  }
+  subjects: ImportPreviewSubject[]
+  /** A handful of raw data rows for the mapping UI. */
+  previewRows: Record<string, string>[]
+}
+
+/** Confirm body — integers only. Never round-trip column letters or Arabic labels. */
+export type ImportSubjectMapping = {
+  sheet_index: number
+  subject_id: number | string
+}
+
+export type ReportSummary = {
+  overall: { total: number; passed: number; average: number }
+  byGrade: { grade_id: string; total: number; passed: number; average: number }[]
+}
