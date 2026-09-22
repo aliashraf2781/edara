@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { formatPercent, formatScore } from '~/lib/format'
 import { useDebouncedValue } from '~/lib/hooks/use-debounced-value'
@@ -7,16 +8,19 @@ import { Button } from '~/ui/button'
 import { DataTable, type Column } from '~/ui/data-table'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
+import { Modal } from '~/ui/modal'
 import { NoAccess } from '~/ui/no-access'
 import { PageHeader } from '~/ui/page-header'
 import { Pagination } from '~/ui/pagination'
+import { Spinner } from '~/ui/spinner'
 import { adminText } from '../../admin.i18n'
-import { useAdminReference, useSchoolResults, useSchoolStats } from '../../api/insights'
+import { useAdminReference, useSchoolResults, useSchoolStats, useSchoolStudent } from '../../api/insights'
 import { PERMISSION } from '../../api/permissions'
 import type { GradeStat, SchoolResultRow, SubjectStat } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
 import { narrowFilters } from './filters'
 import { MarkCell, VerdictStamp } from './result-cells'
+import { ReportCardTable } from './report-card-table'
 import { resultsText } from './results.i18n'
 import { ResultsToolbar } from './results-toolbar'
 import { SchoolNav } from './school-nav'
@@ -33,6 +37,7 @@ export function SchoolResultsScreen() {
   const code = useParams().code ?? ''
   const { values, page, setValue, setPage, clear } = useTableParams(DEFAULTS)
   const search = useDebouncedValue(values.search)
+  const [selected, setSelected] = useState<{ id: string; name: string } | null>(null)
 
   const allowed = can(PERMISSION.viewTenant) || can(PERMISSION.viewTenants)
   const reference = useAdminReference(code)
@@ -51,10 +56,13 @@ export function SchoolResultsScreen() {
     },
     allowed,
   )
+  const detail = useSchoolStudent(code, selected?.id ?? '', selected !== null)
 
   if (!allowed) {
     return <NoAccess title={text.school.resultsTitle} description={shell.guard.noAccess} />
   }
+
+  const selectedTerm = detail.data?.terms.find((term) => term.term_id === filters.term)
 
   const verdicts = { passed: text.student.passed, failed: text.student.failed }
   const hasFilters = Object.values(values).some((value) => value !== '')
@@ -213,7 +221,7 @@ export function SchoolResultsScreen() {
             columns={columns}
             rows={results.data?.data ?? []}
             rowKey={(row) => row.id}
-            onRowActivate={(row) => navigate(`/admin/schools/${code}/students/${row.student_id}`)}
+            onRowActivate={(row) => setSelected({ id: row.student_id, name: row.student_name })}
             isLoading={results.isLoading}
             empty={
               <EmptyState
@@ -266,6 +274,27 @@ export function SchoolResultsScreen() {
           </section>
         </div>
       ) : null}
+
+      <Modal
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? ''}
+        description={text.reportCard.title}
+        closeLabel={shell.common.close}
+      >
+        {filters.term === '' ? (
+          <p className="text-small text-muted">{text.reportCard.pickTermPrompt}</p>
+        ) : detail.isError ? (
+          <ErrorState error={detail.error} onRetry={() => void detail.refetch()} labels={shell.error} />
+        ) : detail.isPending ? (
+          <div className="flex items-center gap-3 text-muted">
+            <Spinner className="text-accent" label={shell.guard.loading} />
+            <p className="text-small">{shell.guard.loading}</p>
+          </div>
+        ) : (
+          <ReportCardTable subjects={selectedTerm?.subjects ?? []} />
+        )}
+      </Modal>
     </div>
   )
 }
