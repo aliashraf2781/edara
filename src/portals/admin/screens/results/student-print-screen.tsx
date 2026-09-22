@@ -230,9 +230,9 @@ function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
             التاريخ :{' '}
             {/* Digits + slashes must stay LTR or bidi flips day/month/year. */}
             <span className="date-run" dir="ltr">
-              <span className="blank" style={{ minWidth: 34 }} /> /{' '}
-              <span className="blank" style={{ minWidth: 34 }} /> /{' '}
-              <span className="blank" style={{ minWidth: 48 }} /> م
+              <Blank style={{ minWidth: 34 }} value={toArabicDigits(issue.issueDay)} /> /{' '}
+              <Blank style={{ minWidth: 34 }} value={toArabicDigits(issue.issueMonth)} /> /{' '}
+              <Blank style={{ minWidth: 48 }} value={toArabicDigits(issue.issueYear)} /> م
             </span>
           </div>
           <img className="crest crest-end" src="/topright.png" alt="محافظة الدقهلية — مديرية التربية والتعليم" />

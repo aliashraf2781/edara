@@ -60,6 +60,44 @@ export function IssueDetailsDialog({
           onApply(values)
         }}
       >
+        <Field label={text.issueDate} hint={text.issueDateHint}>
+          {(props) => (
+            <div className="flex items-center gap-2" dir="ltr">
+              <NumeralInput
+                {...props}
+                value={values.issueDay}
+                onChange={(event) => set('issueDay')(event.target.value)}
+                aria-label={text.day}
+                placeholder={text.day}
+                maxLength={2}
+                className="w-16 text-center"
+                inputMode="numeric"
+                autoFocus
+              />
+              <span className="text-muted">/</span>
+              <NumeralInput
+                value={values.issueMonth}
+                onChange={(event) => set('issueMonth')(event.target.value)}
+                aria-label={text.month}
+                placeholder={text.month}
+                maxLength={2}
+                className="w-16 text-center"
+                inputMode="numeric"
+              />
+              <span className="text-muted">/</span>
+              <NumeralInput
+                value={values.issueYear}
+                onChange={(event) => set('issueYear')(event.target.value)}
+                aria-label={text.year}
+                placeholder={text.year}
+                maxLength={4}
+                className="w-20 text-center"
+                inputMode="numeric"
+              />
+            </div>
+          )}
+        </Field>
+
         <Field label={text.submittedTo}>
           {(props) => (
             <TextInput
@@ -67,7 +105,6 @@ export function IssueDetailsDialog({
               value={values.submittedTo}
               onChange={(event) => set('submittedTo')(event.target.value)}
               placeholder={text.submittedToPlaceholder}
-              autoFocus
             />
           )}
         </Field>

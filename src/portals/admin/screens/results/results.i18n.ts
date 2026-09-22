@@ -129,6 +129,8 @@ export const resultsText: Dict<{
   issue: {
     title: string
     description: string
+    issueDate: string
+    issueDateHint: string
     submittedTo: string
     submittedToPlaceholder: string
     transferNumber: string
@@ -273,7 +275,9 @@ export const resultsText: Dict<{
     issue: {
       title: 'بيانات استخراج المستخرج',
       description:
-        'املأ الجهة ورقم الحوالة وتاريخها والمبلغ. الحقول اختيارية — اتركها فارغة لتبقى الأسطر منقّطة وتُملأ بخط اليد.',
+        'املأ تاريخ المستخرج والجهة ورقم الحوالة وتاريخها والمبلغ. الحقول اختيارية — اتركها فارغة لتبقى الأسطر منقّطة وتُملأ بخط اليد.',
+      issueDate: 'تاريخ المستخرج',
+      issueDateHint: 'يوم / شهر / سنة كاملة — يظهر أعلى الصفحة.',
       submittedTo: 'وقد استخرج هذا البيان لتقديمه إلى',
       submittedToPlaceholder: 'الجهة المقدَّم إليها البيان',
       transferNumber: 'رقم الحوالة',
@@ -418,7 +422,9 @@ export const resultsText: Dict<{
     issue: {
       title: 'Extract issue details',
       description:
-        'Fill the destination, transfer number, date, and amount. Every field is optional — leave them blank to keep the dotted rules for handwriting.',
+        'Fill the extract date, destination, transfer number, date, and amount. Every field is optional — leave them blank to keep the dotted rules for handwriting.',
+      issueDate: 'Extract date',
+      issueDateHint: 'Day / month / full year — printed at the top of the page.',
       submittedTo: 'Issued for submission to',
       submittedToPlaceholder: 'The body the extract is submitted to',
       transferNumber: 'Transfer number',
