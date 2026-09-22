@@ -6,6 +6,7 @@ export const importsText: Dict<{
   description: string
   uploadTitle: string
   uploadHint: string
+  detectionFailed: string
   file: string
   fileHint: string
   upload: string
@@ -40,6 +41,7 @@ export const importsText: Dict<{
     description: 'ارفع ملف النتائج مباشرة — السنة والصف والترم تُقرأ من الملف نفسه.',
     uploadTitle: 'رفع النتائج',
     uploadHint: 'اختر ملف النتائج (xlsx أو xls أو csv) وارفعه. لا حاجة لاختيار الترم أو الصف مسبقًا.',
+    detectionFailed: 'لم نتمكن من التعرف على الصف أو الترم من هذا الملف — اخترهما يدويًا ثم أعد الرفع.',
     file: 'ملف النتائج',
     fileHint: 'xlsx أو xls أو csv، بحد أقصى ١٠ ميجابايت.',
     upload: 'رفع النتائج',
@@ -71,6 +73,7 @@ export const importsText: Dict<{
       not_enrolled: 'الطالب غير مقيّد بهذا الصف',
       invalid_score: 'درجة غير صالحة',
       invalid_rating: 'تقدير غير معروف',
+      processing_error: 'خطأ غير متوقع في هذا الصف',
     },
     startOver: 'رفع ملف آخر',
     historyTitle: 'آخر عمليات الرفع',
@@ -90,6 +93,7 @@ export const importsText: Dict<{
     description: 'Upload the results file directly — the year, grade and term are read from the file itself.',
     uploadTitle: 'Upload results',
     uploadHint: 'Choose the results file (xlsx, xls or csv) and upload it. No need to pick a term or grade first.',
+    detectionFailed: "Couldn't detect the grade or term from this file — pick them manually, then upload again.",
     file: 'Results file',
     fileHint: 'xlsx, xls or csv, 10 MB maximum.',
     upload: 'Upload results',
@@ -121,6 +125,7 @@ export const importsText: Dict<{
       not_enrolled: 'Student is not enrolled in this grade',
       invalid_score: 'Score is not a usable mark',
       invalid_rating: 'Unrecognised pass/fail text',
+      processing_error: 'Unexpected error on this row',
     },
     startOver: 'Upload another file',
     historyTitle: 'Recent uploads',

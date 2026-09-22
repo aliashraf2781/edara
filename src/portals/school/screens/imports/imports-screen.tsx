@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { isValidationError } from '~/lib/api/error'
 import { validationText } from '~/lib/forms/validation.i18n'
 import { formatDateTime } from '~/lib/format'
 import { useLocale } from '~/lib/i18n/locale-context'
@@ -16,6 +17,7 @@ import { useToast } from '~/ui/toast'
 import { IMPORT_EXTENSIONS, IMPORT_MAX_BYTES, useImportHistory, useUploadResults } from '../../api/imports'
 import type { ImportReport } from '../../api/types'
 import { useCurriculumNames } from '../../api/use-options'
+import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { ImportReportPanel } from './import-report-panel'
 import { importsText } from './imports.i18n'
@@ -33,6 +35,12 @@ export function ImportsScreen() {
 
   const [file, setFile] = useState<File | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
+  // Set only after a 422 asks for one explicitly — most sheets never need
+  // these, so they stay hidden until the backend says it can't detect one.
+  const [needsGrade, setNeedsGrade] = useState(false)
+  const [needsTerm, setNeedsTerm] = useState(false)
+  const [gradeId, setGradeId] = useState('')
+  const [termId, setTermId] = useState('')
 
   const history = useImportHistory()
   const upload = useUploadResults()
@@ -40,6 +48,10 @@ export function ImportsScreen() {
   const resetUpload = () => {
     setReport(null)
     setFile(null)
+    setNeedsGrade(false)
+    setNeedsTerm(false)
+    setGradeId('')
+    setTermId('')
     if (fileInput.current) fileInput.current.value = ''
     upload.reset()
   }
@@ -49,8 +61,17 @@ export function ImportsScreen() {
     if (file.size > IMPORT_MAX_BYTES) return notify('danger', v.fileTooLarge(MAX_MB))
 
     try {
-      setReport(await upload.mutateAsync({ file }))
+      setReport(await upload.mutateAsync({ file, gradeId: gradeId || undefined, termId: termId || undefined }))
+      setNeedsGrade(false)
+      setNeedsTerm(false)
     } catch (error) {
+      // A sheet with no detectable grade/term (grades 1-2 never split
+      // results by term at all) — reveal the matching picker instead of
+      // just showing the error, so the operator can retry immediately.
+      if (isValidationError(error)) {
+        if (error.fieldErrors.grade_id) setNeedsGrade(true)
+        if (error.fieldErrors.term_id) setNeedsTerm(true)
+      }
       notifyError(error, shell.error.title)
     }
   }
@@ -79,6 +100,23 @@ export function ImportsScreen() {
         <CardBody className="flex flex-col gap-4">
           <p className="max-w-prose text-small text-muted">{text.uploadHint}</p>
 
+          {needsGrade || needsTerm ? (
+            <div className="flex flex-col gap-3 rounded-control border border-line border-s-2 border-s-attention bg-sunken px-4 py-3">
+              <p className="flex items-center gap-2 text-small text-attention">
+                <Icon name="alert" className="size-4" />
+                {text.detectionFailed}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
+                {needsGrade ? (
+                  <GradeField value={gradeId} onChange={setGradeId} placeholder={shell.pickers.pickGrade} required />
+                ) : null}
+                {needsTerm ? (
+                  <TermField value={termId} onChange={setTermId} placeholder={shell.pickers.pickTerm} required />
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           <Field label={text.file} hint={text.fileHint} required>
             {(props) => (
               <input
@@ -95,7 +133,12 @@ export function ImportsScreen() {
           {upload.isPending ? <ProgressBar label={text.uploading} /> : null}
 
           <div className="flex justify-end">
-            <Button variant="primary" loading={upload.isPending} disabled={file === null} onClick={submit}>
+            <Button
+              variant="primary"
+              loading={upload.isPending}
+              disabled={file === null || (needsGrade && gradeId === '') || (needsTerm && termId === '')}
+              onClick={submit}
+            >
               <Icon name="upload" />
               {text.upload}
             </Button>

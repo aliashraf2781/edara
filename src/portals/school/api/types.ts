@@ -173,6 +173,7 @@ export type ImportErrorCode =
   | 'not_enrolled'
   | 'invalid_score'
   | 'invalid_rating'
+  | 'processing_error'
 
 export type ImportRowError = {
   row_number: number
