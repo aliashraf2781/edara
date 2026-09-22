@@ -220,9 +220,24 @@ function Statement() {
   )
 }
 
-/** A few small overrides for this simpler form — the shared EXTRACT_CSS covers the rest (page frame, blanks, date runs). */
+/**
+ * A few overrides for this simpler form — the shared EXTRACT_CSS covers
+ * the rest (blanks, date runs, signatures spacing) but assumes the
+ * result extract's wide landscape table. This form is a short portrait
+ * page instead (see the real template), so it needs its own page size
+ * both on screen and, more importantly, in @page — otherwise it would
+ * print on a landscape sheet at the wide extract's proportions, mostly
+ * empty. A later @page rule with equal specificity wins the cascade, so
+ * this one (loaded after EXTRACT_CSS) overrides its landscape default.
+ */
 const STATEMENT_CSS = `
-.statement-page{ min-height: 900px; }
+.statement-page{
+  width:780px;
+  min-height:1040px;
+  padding:34px 46px 40px;
+  display:flex;
+  flex-direction:column;
+}
 .statement-date-slot{ display:inline-block; min-width:26px; border-bottom:1px dotted #000; margin:0 3px; text-align:center; }
 .statement-date-slot-lg{ display:inline-block; min-width:48px; border-bottom:1px dotted #000; margin:0 3px; text-align:center; }
 .statement-subtitle{ text-align:center; font-size:14px; margin:4px 0 18px; }
@@ -252,5 +267,14 @@ const STATEMENT_CSS = `
   font-size:14px;
   font-weight:700;
   padding:0 10px;
+}
+/* Pushes the note/signatures/approval block toward the bottom of the
+   page instead of clumping right under the info lines, matching the
+   real form's proportions. */
+.statement-note{ margin-top:auto; }
+
+@media print{
+  @page{ size:A4 portrait; margin:12mm; }
+  .statement-page{ width:100%; min-height:auto; }
 }
 `
