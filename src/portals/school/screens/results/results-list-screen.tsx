@@ -4,11 +4,11 @@ import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
 import { Button } from '~/ui/button'
 import { DataTable, type Column } from '~/ui/data-table'
-import { Drawer } from '~/ui/drawer'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
 import { Field } from '~/ui/field'
 import { Icon } from '~/ui/icon'
+import { Modal } from '~/ui/modal'
 import { PageHeader } from '~/ui/page-header'
 import { Pagination } from '~/ui/pagination'
 import { SearchInput } from '~/ui/search-input'
@@ -138,7 +138,7 @@ export function ResultsListScreen() {
         </>
       )}
 
-      <Drawer
+      <Modal
         open={selectedStudent !== null}
         onClose={() => setSelectedStudent(null)}
         title={selectedStudent ? fullName(selectedStudent) : ''}
@@ -157,7 +157,7 @@ export function ResultsListScreen() {
         ) : (
           <ReportCardTable subjects={report.data.subjects} />
         )}
-      </Drawer>
+      </Modal>
 
       <ResultEntryDrawer open={entering} onClose={() => setEntering(false)} />
     </div>
