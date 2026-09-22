@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useDebouncedValue } from '~/lib/hooks/use-debounced-value'
 import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
 import { Button } from '~/ui/button'
+import { Card, CardBody, CardHeader } from '~/ui/card'
 import { DataTable, type Column } from '~/ui/data-table'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
@@ -10,88 +11,67 @@ import { Field } from '~/ui/field'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
 import { Pagination } from '~/ui/pagination'
+import { SearchInput } from '~/ui/search-input'
 import { Select } from '~/ui/select'
-import { Stamp } from '~/ui/stamp'
-import { useResultList } from '../../api/results'
-import { RESULT_STATUSES, type Result } from '../../api/types'
-import { useClassroomOptions, useSubjectOptions } from '../../api/use-options'
+import { Spinner } from '~/ui/spinner'
+import { useStudentList, useStudentTermResults } from '../../api/students'
+import type { Student } from '../../api/types'
+import { useClassroomOptions } from '../../api/use-options'
 import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
-import { markLabel } from './mark'
+import { ReportCardTable } from '../students/report-card-table'
+import { fullName } from '../students/student-name'
 import { ResultEntryDrawer } from './result-entry-drawer'
 import { resultsText } from './results.i18n'
-import { STATUS_TONE } from './workflow'
 
 const PER_PAGE = 20
-const DEFAULTS = { term: '', grade: '', classroom: '', subject: '', status: '' } as const
+const DEFAULTS = { term: '', grade: '', classroom: '', search: '' } as const
 
+/**
+ * Browsing results here means finding a student and reading their whole
+ * report card, not scanning a flat list of individual subject rows — so
+ * the primary list is students (searchable by name/code, filterable by
+ * grade/classroom), and picking one renders their term's full subject
+ * table (ReportCardTable, the same one the student profile page uses)
+ * right underneath, without leaving the page.
+ */
 export function ResultsListScreen() {
   const text = useDict(resultsText)
   const shell = useDict(schoolText)
-  const navigate = useNavigate()
   const { values, page, setValue, setPage } = useTableParams(DEFAULTS)
   const [entering, setEntering] = useState(false)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
+  const search = useDebouncedValue(values.search)
   const classrooms = useClassroomOptions({ gradeId: values.grade || undefined })
-  const subjects = useSubjectOptions(values.grade || undefined)
 
-  const list = useResultList({
+  const list = useStudentList({
     page,
     perPage: PER_PAGE,
-    termId: values.term,
-    gradeId: values.grade,
-    classroomId: values.classroom,
-    subjectId: values.subject,
-    status: values.status,
+    search,
+    gradeId: values.grade || undefined,
+    classroomId: values.classroom || undefined,
   })
 
-  // Narrowing the grade invalidates whatever classroom or subject was picked.
+  const report = useStudentTermResults(selectedStudent?.id ?? '', values.term)
+
+  // Narrowing the grade invalidates whatever classroom was picked.
   const changeGrade = (value: string) => {
     setValue('grade', value)
     setValue('classroom', '')
-    setValue('subject', '')
   }
 
-  const markLabels = { absent: text.absent, none: shell.common.none, qualitative: text.qualitative }
-
-  const columns: readonly Column<Result>[] = [
-    {
-      key: 'student',
-      header: text.columns.student,
-      cell: (row) => (
-        <button
-          type="button"
-          className="text-start text-accent underline-offset-2 hover:underline"
-          onClick={(event) => {
-            event.stopPropagation()
-            navigate(`/school/students/${row.student_id}${values.term ? `?term=${values.term}` : ''}`)
-          }}
-        >
-          {row.student_name}
-        </button>
-      ),
-    },
+  const columns: readonly Column<Student>[] = [
+    { key: 'name', header: text.columns.student, cell: (row) => fullName(row) },
     {
       key: 'code',
       header: text.columns.code,
       cell: (row) => <span className="font-mono">{row.student_code}</span>,
     },
-    { key: 'subject', header: text.columns.subject, cell: (row) => row.subject_name },
     {
-      key: 'mark',
-      header: text.columns.mark,
-      numeric: true,
-      cell: (row) =>
-        row.is_absent ? (
-          <span className="text-muted">{text.absent}</span>
-        ) : (
-          markLabel(row, markLabels)
-        ),
-    },
-    {
-      key: 'status',
-      header: text.columns.status,
-      cell: (row) => <Stamp tone={STATUS_TONE[row.status]}>{text.statuses[row.status]}</Stamp>,
+      key: 'classroom',
+      header: text.filters.classroom,
+      cell: (row) => row.current_enrollment?.classroom?.name ?? shell.common.none,
     },
   ]
 
@@ -108,13 +88,9 @@ export function ResultsListScreen() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <TermField value={values.term} onChange={(value) => setValue('term', value)} />
-        <GradeField
-          value={values.grade}
-          onChange={changeGrade}
-          placeholder={shell.pickers.allGrades}
-        />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <TermField value={values.term} onChange={(value) => setValue('term', value)} required />
+        <GradeField value={values.grade} onChange={changeGrade} placeholder={shell.pickers.allGrades} />
         <Field label={text.filters.classroom}>
           {(props) => (
             <Select
@@ -126,33 +102,13 @@ export function ResultsListScreen() {
             />
           )}
         </Field>
-        <Field label={text.filters.subject}>
-          {(props) => (
-            <Select
-              {...props}
-              value={values.subject}
-              onChange={(event) => setValue('subject', event.target.value)}
-              options={subjects}
-              placeholder={text.filters.anySubject}
-            />
-          )}
-        </Field>
-        {/* A filter, not a setter: choosing a status here never changes one. */}
-        <Field label={text.filters.status}>
-          {(props) => (
-            <Select
-              {...props}
-              value={values.status}
-              onChange={(event) => setValue('status', event.target.value)}
-              options={RESULT_STATUSES.map((status) => ({
-                value: status,
-                label: text.statuses[status],
-              }))}
-              placeholder={text.filters.anyStatus}
-            />
-          )}
-        </Field>
       </div>
+
+      <SearchInput
+        label={text.searchLabel}
+        value={values.search}
+        onChange={(event) => setValue('search', event.target.value)}
+      />
 
       {list.isError ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} labels={shell.error} />
@@ -163,19 +119,9 @@ export function ResultsListScreen() {
             columns={columns}
             rows={list.data?.data ?? []}
             rowKey={(row) => row.id}
-            onRowActivate={(row) => navigate(`/school/results/${row.id}`)}
+            onRowActivate={setSelectedStudent}
             isLoading={list.isLoading}
-            empty={
-              <EmptyState
-                title={text.emptyTitle}
-                description={text.emptyBody}
-                action={
-                  <Button variant="primary" onClick={() => setEntering(true)}>
-                    {text.newResult}
-                  </Button>
-                }
-              />
-            }
+            empty={<EmptyState title={text.noStudentsTitle} description={text.noStudentsBody} />}
           />
 
           {list.data ? (
@@ -185,13 +131,32 @@ export function ResultsListScreen() {
               labels={{
                 previous: shell.common.previous,
                 next: shell.common.next,
-                summary: (meta) =>
-                  shell.common.pageSummary(meta.current_page, meta.last_page, meta.total),
+                summary: (meta) => shell.common.pageSummary(meta.current_page, meta.last_page, meta.total),
               }}
             />
           ) : null}
         </>
       )}
+
+      <Card>
+        <CardHeader title={selectedStudent ? fullName(selectedStudent) : text.title} />
+        <CardBody>
+          {values.term === '' ? (
+            <p className="text-small text-muted">{text.pickTermPrompt}</p>
+          ) : selectedStudent === null ? (
+            <p className="text-small text-muted">{text.pickStudentPrompt}</p>
+          ) : report.isError ? (
+            <ErrorState error={report.error} onRetry={() => void report.refetch()} labels={shell.error} />
+          ) : report.isPending ? (
+            <div className="flex items-center gap-3 text-muted">
+              <Spinner className="text-accent" label={shell.guard.loading} />
+              <p className="text-small">{shell.guard.loading}</p>
+            </div>
+          ) : (
+            <ReportCardTable subjects={report.data.subjects} />
+          )}
+        </CardBody>
+      </Card>
 
       <ResultEntryDrawer open={entering} onClose={() => setEntering(false)} />
     </div>

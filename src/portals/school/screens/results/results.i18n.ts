@@ -48,6 +48,11 @@ export const resultsText: Dict<{
   saved: string
   emptyTitle: string
   emptyBody: string
+  searchLabel: string
+  pickTermPrompt: string
+  pickStudentPrompt: string
+  noStudentsTitle: string
+  noStudentsBody: string
   detailTitle: string
   timeline: string
   timelineEmpty: string
@@ -121,6 +126,11 @@ export const resultsText: Dict<{
     saved: 'تم حفظ الدرجة كمسودة.',
     emptyTitle: 'لا نتائج',
     emptyBody: 'ارفع كشف النتائج من شاشة رفع النتائج، أو أدخل درجة يدويًا.',
+    searchLabel: 'ابحث بكود الطالب أو الاسم',
+    pickTermPrompt: 'اختر الترم لعرض كشف الدرجات.',
+    pickStudentPrompt: 'اختر طالبًا من القائمة لعرض كشف درجاته.',
+    noStudentsTitle: 'لا يوجد طلاب مطابقون',
+    noStudentsBody: 'جرّب اسمًا أو كودًا آخر، أو غيّر الصف والفصل.',
     detailTitle: 'تفاصيل النتيجة',
     timeline: 'سجل الحالات',
     timelineEmpty: 'لم تتغير حالة هذه النتيجة بعد.',
@@ -195,6 +205,11 @@ export const resultsText: Dict<{
     saved: 'Mark saved as a draft.',
     emptyTitle: 'No results',
     emptyBody: 'Upload a results sheet from the upload screen, or enter a mark by hand.',
+    searchLabel: 'Search by student code or name',
+    pickTermPrompt: 'Choose a term to see the report card.',
+    pickStudentPrompt: 'Pick a student from the list to see their report card.',
+    noStudentsTitle: 'No matching students',
+    noStudentsBody: 'Try a different name or code, or change the grade and classroom.',
     detailTitle: 'Result details',
     timeline: 'Status history',
     timelineEmpty: 'This result has not changed status yet.',
