@@ -229,6 +229,28 @@ export const EXTRACT_CSS = `
 .extract .office-stamp .seal{ width:56px;height:56px; }
 .extract .office-stamp .date-field{ font-size:11px;padding-top:0; }
 
+/* ---------- rating-band legend ---------- */
+.extract .legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:40px;
+  border-top:1px solid var(--line);
+  padding-top:6px;
+}
+.extract .legend-item{
+  flex:1 1 0;
+  border:1px solid var(--line);
+  text-align:center;
+  font-size:10.5px;
+  font-weight:700;
+  padding:4px 6px;
+}
+.extract .legend-blue{ background:#dbeafe; }
+.extract .legend-green{ background:#dcfce7; }
+.extract .legend-yellow{ background:#fef9c3; }
+.extract .legend-red{ background:#fee2e2; }
+
 @media print{
   body{ background:#fff; }
   /* Keep the crests when the browser's "background graphics" box is off. */

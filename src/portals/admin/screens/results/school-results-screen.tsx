@@ -8,6 +8,7 @@ import { Button } from '~/ui/button'
 import { DataTable, type Column } from '~/ui/data-table'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
+import { Icon } from '~/ui/icon'
 import { Modal } from '~/ui/modal'
 import { NoAccess } from '~/ui/no-access'
 import { PageHeader } from '~/ui/page-header'
@@ -264,6 +265,21 @@ export function SchoolResultsScreen() {
         description={text.reportCard.title}
         closeLabel={shell.common.close}
       >
+        {selected ? (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button onClick={() => navigate(`/admin/schools/${code}/students/${selected.id}`)}>
+              {text.school.view}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/admin/schools/${code}/students/${selected.id}/print`)}
+            >
+              <Icon name="sheet" />
+              {text.student.print}
+            </Button>
+          </div>
+        ) : null}
+
         {filters.term === '' ? (
           <p className="text-small text-muted">{text.reportCard.pickTermPrompt}</p>
         ) : detail.isError ? (

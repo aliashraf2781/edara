@@ -3,14 +3,6 @@ import { flushSync } from 'react-dom'
 import { useNavigate, useParams } from 'react-router'
 import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
-import {
-  FAILED_LABEL,
-  PASSED_LABEL,
-  SUBJECT_BLUEPRINT,
-  gradeById,
-  gradeByLevel,
-  isQualitativePass,
-} from '~/mocks/curriculum'
 import { Button } from '~/ui/button'
 import { ErrorState } from '~/ui/error-state'
 import { Icon } from '~/ui/icon'
@@ -30,6 +22,19 @@ const TERM_PARAM = { term: '' } as const
 
 /** The post holder whose name is printed under the last signature slot. */
 const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
+
+/**
+ * Grade level -> the ordinal word used inside "الصف [ordinal] الابتدائي"
+ * and "منقول من/إلى الصف [ordinal]". A school's own Grade.name is free
+ * text (it might read "الرابع الابتدائي", "Grade 4", anything), so the
+ * one field guaranteed to mean the same thing everywhere is the numeric
+ * level — same mapping ResultSheetParser::detectGradeLevel() uses on the
+ * backend to go the other direction.
+ */
+const ORDINAL_WORDS: Record<number, string> = {
+  1: 'أول', 2: 'ثاني', 3: 'ثالث', 4: 'رابع', 5: 'خامس', 6: 'سادس',
+  7: 'سابع', 8: 'ثامن', 9: 'تاسع', 10: 'عاشر', 11: 'حادي عشر', 12: 'ثاني عشر',
+}
 
 /**
  * A dotted rule that carries a value when there is one, and stays empty to be
@@ -52,7 +57,7 @@ function Blank({
   )
 }
 
-/** The group headers printed across the top of the form, in printed order. */
+/** The group headers printed across the top of the grade 4-6 form, in printed order. */
 const GROUP_LABEL: Record<SubjectGroup, string> = {
   pass_fail: 'مواد نجاح ورسوب',
   formative: 'تقييم تكويني',
@@ -60,23 +65,17 @@ const GROUP_LABEL: Record<SubjectGroup, string> = {
   blank: '',
 }
 
-const groupOf = (subjectId: string): SubjectGroup =>
-  SUBJECT_BLUEPRINT.find((blueprint) => subjectId.endsWith(`.${blueprint.key}`))?.group ?? 'blank'
-
-/** Run-length encodes the subjects into the form's four column groups. */
+/** Run-length encodes the subjects into the form's column groups, straight off each subject's own print_group. */
 function groupRuns(subjects: readonly StudentTermSubject[]) {
   const runs: { group: SubjectGroup; span: number }[] = []
   for (const subject of subjects) {
-    const group = groupOf(subject.subject_id)
+    const group: SubjectGroup = subject.print_group ?? 'blank'
     const last = runs.at(-1)
     if (last && last.group === group) last.span += 1
     else runs.push({ group, span: 1 })
   }
   return runs
 }
-
-const qualitativeVerdict = (subject: StudentTermSubject) =>
-  subject.is_absent ? 'غ' : isQualitativePass(subject.qualitative_rating) ? PASSED_LABEL : FAILED_LABEL
 
 /** `year-2025` → ٢٠٢٥ / ٢٠٢٦ as whole years (never `٢٠`+`٢٦`, which RTL paints as ٢٦٢٠). */
 const academicYears = (academicYearId: string | undefined) => {
@@ -131,6 +130,7 @@ function StudentExtract() {
   const data = detail.data
   const term = data.terms.find((row) => row.term_id === values.term) ?? data.terms[0]
   const classroom = reference.data?.classrooms.find((room) => room.id === data.student.classroom_id)
+  const grade = reference.data?.grades.find((row) => row.id === data.student.grade_id)
 
   return (
     <div className="extract-screen">
@@ -192,6 +192,7 @@ function StudentExtract() {
         <ExtractPage
           data={data}
           term={term}
+          gradeLevel={grade?.level}
           academicYearId={classroom?.academic_year_id}
           issue={issue}
         />
@@ -203,14 +204,16 @@ function StudentExtract() {
 type ExtractPageProps = {
   data: StudentDetail
   term: StudentTermStats
+  gradeLevel: number | undefined
   academicYearId: string | undefined
   issue: IssueDetails
 }
 
-function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
+function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractPageProps) {
+  const text = useDict(resultsText)
   const { student, school } = data
-  const grade = gradeById(student.grade_id)
-  const nextGrade = grade ? gradeByLevel(grade.level + 1) : null
+  const ordinal = gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel] : undefined
+  const nextOrdinal = gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel + 1] : undefined
   const fullName = [student.first_name, student.father_name, student.family_name]
     .filter((part) => part !== '')
     .join(' ')
@@ -218,6 +221,13 @@ function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
   const subjects = term.subjects
   const numeric = subjects.filter((subject) => subject.grading_type === 'numeric')
   const years = academicYears(academicYearId)
+  // Grades 1-2 never carry a numeric mark at all — the printed form for
+  // them is a single "تقديرات الطالب" row of ratings, not the four-row
+  // numeric table the other grades use.
+  const allQualitative = subjects.length > 0 && numeric.length === 0
+
+  const verdict = (subject: StudentTermSubject) =>
+    subject.is_absent ? text.print.absentMark : subject.passed ? text.student.passed : text.student.failed
 
   return (
     <div className="extract" dir="rtl" lang="ar">
@@ -242,7 +252,7 @@ function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
         <div className="title-wrap">
           <div className="title-box">
             <span>مستخرج رسمي بنتيجة الصف</span>
-            <span className="blank filled">{grade ? `ال${grade.ordinal}` : ''}</span>
+            <span className="blank filled">{ordinal ?? ''}</span>
             <span>الابتدائي</span>
           </div>
         </div>
@@ -263,78 +273,104 @@ function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
             <span className="txt">وجد اسم الطالب&nbsp;:</span>
             <span className="blank filled b-xl">{fullName}</span>
             <span className="txt">منقول من الصف</span>
-            <span className="blank filled b-md">{grade ? `ال${grade.ordinal}` : ''}</span>
+            <span className="blank filled b-md">{ordinal ?? ''}</span>
             <span className="txt">الابتدائي إلى الصف</span>
-            <span className="blank filled b-md">{nextGrade ? `ال${nextGrade.ordinal}` : ''}</span>
+            <span className="blank filled b-md">{nextOrdinal ?? ''}</span>
           </div>
           <div className="row">
             <span className="txt">تحت اشراف المديرية برقم جلوس</span>
             <span className="blank filled b-lg">{toArabicDigits(student.seat_no)}</span>
-            <span className="txt">قرار ١٥١ لسنة ٢٠٢٦ الدور</span>
-            <span className="blank filled b-md">الأول</span>
+            <span className="txt">طبقا للقرار الوزاري</span>
+            <Blank className="b-sm" />
+            <span className="txt">لسنة</span>
+            <Blank className="b-md" />
+            <span className="txt">الدور</span>
+            <Blank className="b-md" />
           </div>
         </div>
 
-        {/* ===== Grades table ===== */}
-        <table className="grades">
-          <thead>
-            <tr className="summary-row">
-              <td className="label-col" />
-              {groupRuns(subjects).map((run, index) => (
-                <td
-                  key={`${run.group}-${index}`}
-                  colSpan={run.span}
-                  className={run.group === 'blank' ? 'blank-cell' : undefined}
-                >
-                  {GROUP_LABEL[run.group]}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <th className="label-col">المادة</th>
-              {subjects.map((subject) => (
-                <th key={subject.subject_id}>{subject.subject_name}</th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr className="num-row">
-              <td className="label-col">الدرجة النهائية</td>
-              {subjects.map((subject) =>
-                subject.grading_type === 'numeric' ? (
-                  <td key={subject.subject_id}>{toArabicDigits(subject.max_score)}</td>
-                ) : (
-                  // The original spans one rotated «اجتياز» cell over all four
-                  // rows; here it carries this student's own verdict instead.
-                  <td key={subject.subject_id} rowSpan={4} className="vertical-text">
-                    <span>{qualitativeVerdict(subject)}</span>
+        {allQualitative ? (
+          /* ===== Grades 1-2: one row of ratings, no numeric section ===== */
+          <table className="grades">
+            <thead>
+              <tr>
+                <th className="label-col">المادة</th>
+                {subjects.map((subject) => (
+                  <th key={subject.subject_id}>{subject.subject_name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="fill-row">
+                <td className="label-col">تقديرات الطالب</td>
+                {subjects.map((subject) => (
+                  <td key={subject.subject_id}>{verdict(subject)}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          /* ===== Grades 3-6: full numeric + qualitative-verdict table ===== */
+          <table className="grades">
+            <thead>
+              <tr className="summary-row">
+                <td className="label-col" />
+                {groupRuns(subjects).map((run, index) => (
+                  <td
+                    key={`${run.group}-${index}`}
+                    colSpan={run.span}
+                    className={run.group === 'blank' ? 'blank-cell' : undefined}
+                  >
+                    {GROUP_LABEL[run.group]}
                   </td>
-                ),
-              )}
-            </tr>
-            <tr className="num-row">
-              <td className="label-col">الدرجة الصغرى</td>
-              {numeric.map((subject) => (
-                <td key={subject.subject_id}>{toArabicDigits(subject.pass_score)}</td>
-              ))}
-            </tr>
-            <tr className="fill-row">
-              <td className="label-col">درجة الطالب</td>
-              {numeric.map((subject) => (
-                <td key={subject.subject_id}>
-                  {subject.is_absent ? 'غ' : toArabicDigits(subject.score)}
-                </td>
-              ))}
-            </tr>
-            <tr className="fill-row">
-              <td className="label-col">التقييم</td>
-              {numeric.map((subject) => (
-                <td key={subject.subject_id}>{subject.passed ? 'ناجح' : 'راسب'}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+                ))}
+              </tr>
+              <tr>
+                <th className="label-col">المادة</th>
+                {subjects.map((subject) => (
+                  <th key={subject.subject_id}>{subject.subject_name}</th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr className="num-row">
+                <td className="label-col">الدرجة النهائية</td>
+                {subjects.map((subject) =>
+                  subject.grading_type === 'numeric' ? (
+                    <td key={subject.subject_id}>{toArabicDigits(subject.max_score)}</td>
+                  ) : (
+                    // The original spans one rotated «اجتياز» cell over all four
+                    // rows; here it carries this student's own verdict instead.
+                    <td key={subject.subject_id} rowSpan={4} className="vertical-text">
+                      <span>{verdict(subject)}</span>
+                    </td>
+                  ),
+                )}
+              </tr>
+              <tr className="num-row">
+                <td className="label-col">الدرجة الصغرى</td>
+                {numeric.map((subject) => (
+                  <td key={subject.subject_id}>{toArabicDigits(subject.pass_score)}</td>
+                ))}
+              </tr>
+              <tr className="fill-row">
+                <td className="label-col">درجة الطالب</td>
+                {numeric.map((subject) => (
+                  <td key={subject.subject_id}>
+                    {subject.is_absent ? text.print.absentMark : toArabicDigits(subject.score)}
+                  </td>
+                ))}
+              </tr>
+              <tr className="fill-row">
+                <td className="label-col">التقييم</td>
+                {numeric.map((subject) => (
+                  <td key={subject.subject_id}>{subject.passed ? text.student.passed : text.student.failed}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        )}
 
         {/* ===== After-table text ===== */}
         <div className="after-table">
@@ -382,6 +418,14 @@ function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
               <span className="blank" style={{ minWidth: 36 }} />م
             </span>
           </div>
+        </div>
+
+        {/* ===== Rating-band legend ===== */}
+        <div className="legend">
+          <span className="legend-item legend-blue">{text.print.legend.blue}</span>
+          <span className="legend-item legend-green">{text.print.legend.green}</span>
+          <span className="legend-item legend-yellow">{text.print.legend.yellow}</span>
+          <span className="legend-item legend-red">{text.print.legend.red}</span>
         </div>
       </div>
     </div>
