@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router'
+import { useParams, useSearchParams } from 'react-router'
 import { formatDate } from '~/lib/format'
 import { useLocale } from '~/lib/i18n/locale-context'
 import { useDict } from '~/lib/i18n/use-dict'
@@ -12,11 +12,13 @@ import { ErrorState } from '~/ui/error-state'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
 import { Spinner } from '~/ui/spinner'
-import { useEnrollments, useStudent } from '../../api/students'
+import { useEnrollments, useStudent, useStudentTermResults } from '../../api/students'
 import type { Enrollment } from '../../api/types'
 import { useClassroomOptions, useGradeOptions, useYearOptions } from '../../api/use-options'
+import { TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { EnrollDrawer } from './enroll-drawer'
+import { ReportCardTable } from './report-card-table'
 import { StudentDrawer } from './student-drawer'
 import { fullName } from './student-name'
 import { studentsText } from './students.i18n'
@@ -38,6 +40,10 @@ export function StudentDetailScreen() {
 
   const [editing, setEditing] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
+  // Carried from the results screen when arriving via a student's name link.
+  const [searchParams] = useSearchParams()
+  const [reportTermId, setReportTermId] = useState(searchParams.get('term') ?? '')
+  const report = useStudentTermResults(id, reportTermId)
 
   if (student.isPending) {
     return (
@@ -143,6 +149,31 @@ export function StudentDetailScreen() {
             />
           }
         />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-h1 font-semibold text-ink">{text.reportCard.title}</h2>
+          <p className="text-small text-muted">{text.reportCard.description}</p>
+        </div>
+
+        <TermField
+          value={reportTermId}
+          onChange={setReportTermId}
+          placeholder={text.reportCard.pickTerm}
+          className="max-w-xs"
+        />
+
+        {reportTermId === '' ? null : report.isError ? (
+          <ErrorState error={report.error} onRetry={() => void report.refetch()} labels={shell.error} />
+        ) : report.isPending ? (
+          <div className="flex items-center gap-3 text-muted">
+            <Spinner className="text-accent" label={shell.guard.loading} />
+            <p className="text-small">{shell.guard.loading}</p>
+          </div>
+        ) : (
+          <ReportCardTable subjects={report.data.subjects} />
+        )}
       </div>
 
       <StudentDrawer open={editing} student={record} onClose={() => setEditing(false)} />

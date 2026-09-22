@@ -9,13 +9,20 @@ export const IMPORT_EXTENSIONS = ['.xlsx', '.xls', '.csv']
 
 export type UploadResultsInput = {
   file: File
-  gradeId: string
-  termId: string
+  /**
+   * Only needed when a first attempt came back 422 asking for one of
+   * these explicitly — some sheets (e.g. grades 1-2, which don't split
+   * results by term at all) genuinely carry no detectable grade/term.
+   */
+  gradeId?: string
+  termId?: string
 }
 
 /**
- * One step: the sheet the operator uploads is the template this screen handed
- * them, so its columns are already the subjects and there is nothing to map.
+ * One step in the common case: just the file. The backend reads the
+ * academic year, grade and term straight off the sheet's own metadata
+ * text — gradeId/termId are only sent when a previous attempt asked for
+ * one explicitly (see ImportsScreen's fallback picker).
  */
 export function useUploadResults() {
   const client = useQueryClient()
@@ -23,8 +30,8 @@ export function useUploadResults() {
     mutationFn: ({ file, gradeId, termId }: UploadResultsInput) => {
       const form = new FormData()
       form.append('file', file)
-      form.append('grade_id', gradeId)
-      form.append('term_id', termId)
+      if (gradeId) form.append('grade_id', gradeId)
+      if (termId) form.append('term_id', termId)
       return schoolApi.upload<ImportReport>('/school/result-imports', form)
     },
     onSuccess: (report) => {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { formatPercent, formatScore } from '~/lib/format'
 import { useDebouncedValue } from '~/lib/hooks/use-debounced-value'
@@ -7,16 +8,19 @@ import { Button } from '~/ui/button'
 import { DataTable, type Column } from '~/ui/data-table'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
+import { Icon } from '~/ui/icon'
+import { Modal } from '~/ui/modal'
 import { NoAccess } from '~/ui/no-access'
 import { PageHeader } from '~/ui/page-header'
 import { Pagination } from '~/ui/pagination'
+import { Spinner } from '~/ui/spinner'
 import { adminText } from '../../admin.i18n'
-import { useAdminReference, useSchoolResults, useSchoolStats } from '../../api/insights'
+import { useAdminReference, useSchoolStats, useSchoolStudent, useSchoolStudents } from '../../api/insights'
 import { PERMISSION } from '../../api/permissions'
-import type { GradeStat, SchoolResultRow, SubjectStat } from '../../api/types'
+import type { GradeStat, SchoolStudentRow, SubjectStat } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
-import { narrowFilters } from './filters'
-import { MarkCell, VerdictStamp } from './result-cells'
+import { narrowFilters, type FilterKey } from './filters'
+import { ReportCardTable } from './report-card-table'
 import { resultsText } from './results.i18n'
 import { ResultsToolbar } from './results-toolbar'
 import { SchoolNav } from './school-nav'
@@ -24,6 +28,9 @@ import { StatCards } from './stat-cards'
 
 const PER_PAGE = 25
 const DEFAULTS = { term: '', grade: '', classroom: '', subject: '', search: '' } as const
+// No subject filter — this screen lists students, not one row per subject,
+// and a subject only means something once a grade narrows which one.
+const TOOLBAR_FIELDS: readonly FilterKey[] = ['search', 'term', 'grade', 'classroom']
 
 export function SchoolResultsScreen() {
   const text = useDict(resultsText)
@@ -33,60 +40,43 @@ export function SchoolResultsScreen() {
   const code = useParams().code ?? ''
   const { values, page, setValue, setPage, clear } = useTableParams(DEFAULTS)
   const search = useDebouncedValue(values.search)
+  const [selected, setSelected] = useState<{ id: string; name: string } | null>(null)
 
   const allowed = can(PERMISSION.viewTenant) || can(PERMISSION.viewTenants)
-  const reference = useAdminReference()
+  const reference = useAdminReference(code)
   const filters = narrowFilters(reference.data, values)
   const stats = useSchoolStats(code, filters.term, allowed)
-  const results = useSchoolResults(
+  const students = useSchoolStudents(
     code,
-    {
-      page,
-      perPage: PER_PAGE,
-      search,
-      gradeId: filters.grade,
-      classroomId: filters.classroom,
-      termId: filters.term,
-      subjectId: filters.subject,
-    },
+    { page, perPage: PER_PAGE, search, gradeId: filters.grade, classroomId: filters.classroom },
     allowed,
   )
+  const detail = useSchoolStudent(code, selected?.id ?? '', selected !== null)
 
   if (!allowed) {
     return <NoAccess title={text.school.resultsTitle} description={shell.guard.noAccess} />
   }
 
-  const verdicts = { passed: text.student.passed, failed: text.student.failed }
+  const selectedTerm = detail.data?.terms.find((term) => term.term_id === filters.term)
+
   const hasFilters = Object.values(values).some((value) => value !== '')
 
-  const columns: readonly Column<SchoolResultRow>[] = [
-    { key: 'student', header: text.school.resultColumns.student, cell: (row) => row.student_name },
+  const columns: readonly Column<SchoolStudentRow>[] = [
+    { key: 'name', header: text.school.studentColumns.name, cell: (row) => row.name },
     {
       key: 'code',
-      header: text.school.resultColumns.code,
+      header: text.school.studentColumns.code,
       cell: (row) => (
         <span className="font-mono text-small" dir="ltr">
           {row.student_code}
         </span>
       ),
     },
-    { key: 'grade', header: text.school.resultColumns.grade, cell: (row) => row.grade_name },
+    { key: 'grade', header: text.school.studentColumns.grade, cell: (row) => row.grade_name },
     {
       key: 'classroom',
-      header: text.school.resultColumns.classroom,
+      header: text.school.studentColumns.classroom,
       cell: (row) => row.classroom_name,
-    },
-    { key: 'subject', header: text.school.resultColumns.subject, cell: (row) => row.subject_name },
-    {
-      key: 'mark',
-      header: text.school.resultColumns.mark,
-      numeric: true,
-      cell: (row) => <MarkCell value={row} />,
-    },
-    {
-      key: 'verdict',
-      header: text.school.resultColumns.verdict,
-      cell: (row) => <VerdictStamp passed={row.passed} labels={verdicts} />,
     },
   ]
 
@@ -181,6 +171,7 @@ export function SchoolResultsScreen() {
 
       <ResultsToolbar
         reference={reference.data}
+        fields={TOOLBAR_FIELDS}
         values={filters}
         onChange={(key, value) => setValue(key, value)}
       />
@@ -200,10 +191,10 @@ export function SchoolResultsScreen() {
         />
       ) : null}
 
-      {results.isError ? (
+      {students.isError ? (
         <ErrorState
-          error={results.error}
-          onRetry={() => void results.refetch()}
+          error={students.error}
+          onRetry={() => void students.refetch()}
           labels={shell.error}
         />
       ) : (
@@ -211,10 +202,10 @@ export function SchoolResultsScreen() {
           <DataTable
             caption={text.school.resultsTitle}
             columns={columns}
-            rows={results.data?.data ?? []}
+            rows={students.data?.data ?? []}
             rowKey={(row) => row.id}
-            onRowActivate={(row) => navigate(`/admin/schools/${code}/students/${row.student_id}`)}
-            isLoading={results.isLoading}
+            onRowActivate={(row) => setSelected({ id: row.id, name: row.name })}
+            isLoading={students.isLoading}
             empty={
               <EmptyState
                 title={hasFilters ? text.school.noResultsTitle : text.school.emptyTitle}
@@ -224,9 +215,9 @@ export function SchoolResultsScreen() {
             }
           />
 
-          {results.data ? (
+          {students.data ? (
             <Pagination
-              meta={results.data.meta}
+              meta={students.data.meta}
               onPageChange={setPage}
               labels={{
                 previous: shell.common.previous,
@@ -266,6 +257,42 @@ export function SchoolResultsScreen() {
           </section>
         </div>
       ) : null}
+
+      <Modal
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? ''}
+        description={text.reportCard.title}
+        closeLabel={shell.common.close}
+      >
+        {selected ? (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button onClick={() => navigate(`/admin/schools/${code}/students/${selected.id}`)}>
+              {text.school.view}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/admin/schools/${code}/students/${selected.id}/print`)}
+            >
+              <Icon name="sheet" />
+              {text.student.print}
+            </Button>
+          </div>
+        ) : null}
+
+        {filters.term === '' ? (
+          <p className="text-small text-muted">{text.reportCard.pickTermPrompt}</p>
+        ) : detail.isError ? (
+          <ErrorState error={detail.error} onRetry={() => void detail.refetch()} labels={shell.error} />
+        ) : detail.isPending ? (
+          <div className="flex items-center gap-3 text-muted">
+            <Spinner className="text-accent" label={shell.guard.loading} />
+            <p className="text-small">{shell.guard.loading}</p>
+          </div>
+        ) : (
+          <ReportCardTable subjects={selectedTerm?.subjects ?? []} />
+        )}
+      </Modal>
     </div>
   )
 }

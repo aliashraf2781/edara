@@ -1,24 +1,12 @@
 import type { Dict } from '~/lib/i18n/locales'
-import type { GradingType, ImportErrorCode } from '../../api/types'
+import type { ImportErrorCode } from '../../api/types'
 
 export const importsText: Dict<{
   title: string
   description: string
-  chooseTitle: string
-  howTitle: string
-  howSteps: readonly string[]
-  columnsTitle: string
-  columnsHint: string
-  columnHeaders: { order: string; subject: string; gradingType: string; max: string; pass: string }
-  gradingTypes: Record<GradingType, string>
-  download: string
-  downloadingRoster: string
-  downloaded: string
-  pickBoth: string
-  rosterEmpty: string
-  studentCount: (count: number) => string
   uploadTitle: string
   uploadHint: string
+  detectionFailed: string
   file: string
   fileHint: string
   upload: string
@@ -28,6 +16,8 @@ export const importsText: Dict<{
   partialBanner: (valid: number, total: number, invalid: number) => string
   summaryTitle: string
   importedResultsHint: (count: number) => string
+  studentsCreatedHint: (count: number) => string
+  detectedFromSheet: (grade: string | null, term: string | null) => string
   stats: { total: string; valid: string; invalid: string; imported: string }
   errorsTitle: string
   errorColumns: { row: string; code: string; message: string; payload: string }
@@ -49,36 +39,10 @@ export const importsText: Dict<{
 }> = {
   ar: {
     title: 'رفع النتائج',
-    description:
-      'نزّل قالب الصف جاهزًا بأسماء الطلاب وأعمدة المواد، املأ الدرجات، ثم ارفع الملف نفسه. لا حاجة لمطابقة أعمدة.',
-    chooseTitle: 'الخطوة ١ — اختر الترم والصف',
-    howTitle: 'كيف تسير العملية',
-    howSteps: [
-      'اختر الترم والصف من القائمتين أعلاه.',
-      'نزّل قالب النتائج — يفتح بأسماء طلاب الصف وأعمدة المواد الثلاث عشرة.',
-      'اكتب الدرجة من ١٠٠ في مواد الدرجات، و«اجتياز» أو «لم يجتز» في مواد الاجتياز. لا تغيّر أسماء الأعمدة ولا كود الطالب.',
-      'ارفع الملف نفسه في الخطوة الثانية، وستظهر نتيجة الرفع فورًا.',
-    ],
-    columnsTitle: 'أعمدة القالب',
-    columnsHint:
-      'هذه هي أعمدة المواد التي سيحتويها الملف، بالترتيب المطبوع. الأعمدة الأربعة الأولى (م، كود الطالب، اسم الطالب، الفصل) تأتي مملوءة.',
-    columnHeaders: {
-      order: 'م',
-      subject: 'المادة',
-      gradingType: 'نوع التقييم',
-      max: 'الدرجة النهائية',
-      pass: 'درجة النجاح',
-    },
-    gradingTypes: { numeric: 'درجات', qualitative: 'اجتياز / لم يجتز' },
-    download: 'تنزيل قالب النتائج (Excel)',
-    downloadingRoster: 'جارٍ تجهيز كشف الصف',
-    downloaded: 'تم تنزيل القالب.',
-    pickBoth: 'اختر الترم والصف أولًا لتفعيل التنزيل.',
-    rosterEmpty: 'لا يوجد طلاب مقيّدون في هذا الصف.',
-    studentCount: (count) => `${count} طالبًا في هذا الصف.`,
-    uploadTitle: 'الخطوة ٢ — ارفع الملف بعد ملئه',
-    uploadHint:
-      'ارفع القالب نفسه بعد تعبئته. رفع القالب كما نُزِّل دون تعديل يُسجَّل بنجاح أيضًا.',
+    description: 'ارفع ملف النتائج مباشرة — السنة والصف والترم تُقرأ من الملف نفسه.',
+    uploadTitle: 'رفع النتائج',
+    uploadHint: 'اختر ملف النتائج (xlsx أو xls أو csv) وارفعه. لا حاجة لاختيار الترم أو الصف مسبقًا.',
+    detectionFailed: 'لم نتمكن من التعرف على الصف أو الترم من هذا الملف — اخترهما يدويًا ثم أعد الرفع.',
     file: 'ملف النتائج',
     fileHint: 'xlsx أو xls أو csv، بحد أقصى ١٠ ميجابايت.',
     upload: 'رفع النتائج',
@@ -90,6 +54,14 @@ export const importsText: Dict<{
       `تم رفع نتائج ${valid} من ${total} طالبًا. ${invalid} يحتاجون تصحيحًا أدناه.`,
     summaryTitle: 'نتيجة الرفع',
     importedResultsHint: (count) => `${count} درجة مادة فردية سُجِّلت ونُشرت.`,
+    studentsCreatedHint: (count) =>
+      count === 0
+        ? ''
+        : `تم إنشاء ${count} سجل طالب جديد من أكواد لم تكن موجودة في النظام — راجع بياناتهم لاحقًا.`,
+    detectedFromSheet: (grade, term) => {
+      const parts = [grade ? `الصف: ${grade}` : null, term ? `الترم: ${term}` : null].filter(Boolean)
+      return `تم التعرف عليها من الملف — ${parts.join('، ')}`
+    },
     stats: {
       total: 'إجمالي الطلاب',
       valid: 'طلاب بلا أخطاء',
@@ -106,6 +78,8 @@ export const importsText: Dict<{
       not_enrolled: 'الطالب غير مقيّد بهذا الصف',
       invalid_score: 'درجة غير صالحة',
       invalid_rating: 'تقدير غير معروف',
+      processing_error: 'خطأ غير متوقع في هذا الصف',
+      no_classroom_available: 'لا يوجد فصل لهذا الصف الدراسي لتسجيل الطالب فيه',
     },
     startOver: 'رفع ملف آخر',
     historyTitle: 'آخر عمليات الرفع',
@@ -122,36 +96,10 @@ export const importsText: Dict<{
   },
   en: {
     title: 'Upload results',
-    description:
-      'Download the grade’s template — it arrives filled with the roster and the subject columns — enter the marks, then upload the same file back. No column mapping.',
-    chooseTitle: 'Step 1 — choose the term and grade',
-    howTitle: 'How this works',
-    howSteps: [
-      'Pick the term and the grade above.',
-      'Download the results template: it opens with this grade’s students and all thirteen subject columns.',
-      'Enter a mark out of 100 for the graded subjects, and “اجتياز” or “لم يجتز” for the pass/fail ones. Do not rename the columns or edit a student code.',
-      'Upload that same file in step 2 — the result appears straight away.',
-    ],
-    columnsTitle: 'Template columns',
-    columnsHint:
-      'These are the subject columns the sheet carries, in printed order. The first four columns (serial, student code, name, classroom) come pre-filled.',
-    columnHeaders: {
-      order: '#',
-      subject: 'Subject',
-      gradingType: 'Grading',
-      max: 'Out of',
-      pass: 'Pass mark',
-    },
-    gradingTypes: { numeric: 'Marks', qualitative: 'Pass / fail' },
-    download: 'Download the results template (Excel)',
-    downloadingRoster: 'Preparing the grade roster',
-    downloaded: 'Template downloaded.',
-    pickBoth: 'Choose a term and a grade to enable the download.',
-    rosterEmpty: 'No students are enrolled in this grade.',
-    studentCount: (count) => `${count} students in this grade.`,
-    uploadTitle: 'Step 2 — upload the filled sheet',
-    uploadHint:
-      'Upload the same template once it is filled in. Uploading it back exactly as downloaded also succeeds.',
+    description: 'Upload the results file directly — the year, grade and term are read from the file itself.',
+    uploadTitle: 'Upload results',
+    uploadHint: 'Choose the results file (xlsx, xls or csv) and upload it. No need to pick a term or grade first.',
+    detectionFailed: "Couldn't detect the grade or term from this file — pick them manually, then upload again.",
     file: 'Results file',
     fileHint: 'xlsx, xls or csv, 10 MB maximum.',
     upload: 'Upload results',
@@ -163,6 +111,14 @@ export const importsText: Dict<{
       `${valid} of ${total} students uploaded. ${invalid} need correcting below.`,
     summaryTitle: 'Upload result',
     importedResultsHint: (count) => `${count} individual subject marks were recorded and published.`,
+    studentsCreatedHint: (count) =>
+      count === 0
+        ? ''
+        : `${count} new student record${count === 1 ? '' : 's'} were created from codes not already in the system — review their details later.`,
+    detectedFromSheet: (grade, term) => {
+      const parts = [grade ? `Grade: ${grade}` : null, term ? `Term: ${term}` : null].filter(Boolean)
+      return `Detected from the file — ${parts.join(', ')}`
+    },
     stats: {
       total: 'Students in sheet',
       valid: 'Students with no errors',
@@ -179,6 +135,8 @@ export const importsText: Dict<{
       not_enrolled: 'Student is not enrolled in this grade',
       invalid_score: 'Score is not a usable mark',
       invalid_rating: 'Unrecognised pass/fail text',
+      processing_error: 'Unexpected error on this row',
+      no_classroom_available: 'No classroom exists for this grade to enroll the student into',
     },
     startOver: 'Upload another file',
     historyTitle: 'Recent uploads',

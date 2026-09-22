@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
+import { isValidationError } from '~/lib/api/error'
 import { validationText } from '~/lib/forms/validation.i18n'
 import { formatDateTime } from '~/lib/format'
 import { useLocale } from '~/lib/i18n/locale-context'
 import { useDict } from '~/lib/i18n/use-dict'
-import { downloadResultsTemplate } from '~/lib/sheets/results-template'
-import { subjectsForGrade, type CurriculumSubject } from '~/mocks/curriculum'
 import { Button } from '~/ui/button'
 import { Card, CardBody, CardHeader } from '~/ui/card'
 import { DataTable, type Column } from '~/ui/data-table'
@@ -13,12 +12,11 @@ import { ErrorState } from '~/ui/error-state'
 import { Field } from '~/ui/field'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
-import { ProgressBar, Spinner } from '~/ui/spinner'
+import { ProgressBar } from '~/ui/spinner'
 import { useToast } from '~/ui/toast'
 import { IMPORT_EXTENSIONS, IMPORT_MAX_BYTES, useImportHistory, useUploadResults } from '../../api/imports'
-import { useRoster } from '../../api/roster'
 import type { ImportReport } from '../../api/types'
-import { gradeName, termName } from '../../components/curriculum-options'
+import { useCurriculumNames } from '../../api/use-options'
 import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { ImportReportPanel } from './import-report-panel'
@@ -33,78 +31,50 @@ export function ImportsScreen() {
   const { locale } = useLocale()
   const { notify, notifyError } = useToast()
   const fileInput = useRef<HTMLInputElement>(null)
+  const { termName, gradeName } = useCurriculumNames()
 
-  const [termId, setTermId] = useState('')
-  const [gradeId, setGradeId] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
+  // Set only after a 422 asks for one explicitly — most sheets never need
+  // these, so they stay hidden until the backend says it can't detect one.
+  const [needsGrade, setNeedsGrade] = useState(false)
+  const [needsTerm, setNeedsTerm] = useState(false)
+  const [gradeId, setGradeId] = useState('')
+  const [termId, setTermId] = useState('')
 
-  // Fetched as soon as a grade is picked, so the download itself is instant.
-  const roster = useRoster(gradeId)
   const history = useImportHistory()
   const upload = useUploadResults()
-
-  const chosen = termId !== '' && gradeId !== ''
-  const subjects = gradeId === '' ? [] : subjectsForGrade(gradeId)
-
-  const download = () => {
-    if (!roster.data) return
-    downloadResultsTemplate({
-      schoolName: roster.data.school.name,
-      gradeName: roster.data.grade.name,
-      termName: termName(termId),
-      subjects: roster.data.subjects,
-      students: roster.data.students,
-      prefill: true,
-    })
-    notify('success', text.downloaded)
-  }
 
   const resetUpload = () => {
     setReport(null)
     setFile(null)
+    setNeedsGrade(false)
+    setNeedsTerm(false)
+    setGradeId('')
+    setTermId('')
     if (fileInput.current) fileInput.current.value = ''
     upload.reset()
   }
 
   const submit = async () => {
     if (!file) return notify('danger', text.noFile)
-    // The only client-side check: the sheet itself is never second-guessed here.
     if (file.size > IMPORT_MAX_BYTES) return notify('danger', v.fileTooLarge(MAX_MB))
 
     try {
-      setReport(await upload.mutateAsync({ file, gradeId, termId }))
+      setReport(await upload.mutateAsync({ file, gradeId: gradeId || undefined, termId: termId || undefined }))
+      setNeedsGrade(false)
+      setNeedsTerm(false)
     } catch (error) {
+      // A sheet with no detectable grade/term (grades 1-2 never split
+      // results by term at all) — reveal the matching picker instead of
+      // just showing the error, so the operator can retry immediately.
+      if (isValidationError(error)) {
+        if (error.fieldErrors.grade_id) setNeedsGrade(true)
+        if (error.fieldErrors.term_id) setNeedsTerm(true)
+      }
       notifyError(error, shell.error.title)
     }
   }
-
-  const subjectColumns: readonly Column<CurriculumSubject>[] = [
-    {
-      key: 'order',
-      header: text.columnHeaders.order,
-      numeric: true,
-      cell: (row) => subjects.indexOf(row) + 1,
-    },
-    { key: 'subject', header: text.columnHeaders.subject, cell: (row) => row.name },
-    {
-      key: 'type',
-      header: text.columnHeaders.gradingType,
-      cell: (row) => text.gradingTypes[row.grading_type],
-    },
-    {
-      key: 'max',
-      header: text.columnHeaders.max,
-      numeric: true,
-      cell: (row) => row.max_score ?? shell.common.none,
-    },
-    {
-      key: 'pass',
-      header: text.columnHeaders.pass,
-      numeric: true,
-      cell: (row) => row.pass_score ?? shell.common.none,
-    },
-  ]
 
   const historyColumns: readonly Column<ImportReport>[] = [
     { key: 'file', header: text.historyColumns.file, cell: (row) => row.file_name },
@@ -126,86 +96,26 @@ export function ImportsScreen() {
       <PageHeader title={text.title} description={text.description} />
 
       <Card>
-        <CardHeader title={text.chooseTitle} />
-        <CardBody className="flex flex-col gap-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:max-w-2xl">
-            <TermField
-              value={termId}
-              onChange={setTermId}
-              placeholder={shell.pickers.pickTerm}
-              required
-            />
-            <GradeField
-              value={gradeId}
-              onChange={setGradeId}
-              placeholder={shell.pickers.pickGrade}
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-control border border-line border-s-2 border-s-accent bg-sunken px-4 py-3">
-            <p className="flex items-center gap-2 text-h2 font-semibold text-ink">
-              <Icon name="info" className="size-4 text-accent" />
-              {text.howTitle}
-            </p>
-            <ol className="flex list-inside list-decimal flex-col gap-1.5 text-small text-muted">
-              {text.howSteps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="primary"
-              disabled={!chosen || !roster.data}
-              loading={chosen && roster.isPending}
-              onClick={download}
-            >
-              <Icon name="download" />
-              {text.download}
-            </Button>
-            {!chosen ? (
-              <span className="text-small text-muted">{text.pickBoth}</span>
-            ) : roster.isPending ? (
-              <span className="flex items-center gap-2 text-small text-muted">
-                <Spinner className="text-accent" label={text.downloadingRoster} />
-                {text.downloadingRoster}
-              </span>
-            ) : roster.data ? (
-              <span className="text-small text-muted">
-                {roster.data.students.length === 0
-                  ? text.rosterEmpty
-                  : text.studentCount(roster.data.students.length)}
-              </span>
-            ) : null}
-          </div>
-
-          {roster.isError ? (
-            <ErrorState error={roster.error} onRetry={() => void roster.refetch()} labels={shell.error} />
-          ) : null}
-
-          {subjects.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <h3 className="text-h2 font-semibold text-ink">{text.columnsTitle}</h3>
-                <p className="max-w-prose text-small text-muted">{text.columnsHint}</p>
-              </div>
-              <DataTable
-                caption={text.columnsTitle}
-                columns={subjectColumns}
-                rows={subjects}
-                rowKey={(row) => row.id}
-              />
-            </div>
-          ) : null}
-        </CardBody>
-      </Card>
-
-      <Card>
         <CardHeader title={text.uploadTitle} />
         <CardBody className="flex flex-col gap-4">
           <p className="max-w-prose text-small text-muted">{text.uploadHint}</p>
+
+          {needsGrade || needsTerm ? (
+            <div className="flex flex-col gap-3 rounded-control border border-line border-s-2 border-s-attention bg-sunken px-4 py-3">
+              <p className="flex items-center gap-2 text-small text-attention">
+                <Icon name="alert" className="size-4" />
+                {text.detectionFailed}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
+                {needsGrade ? (
+                  <GradeField value={gradeId} onChange={setGradeId} placeholder={shell.pickers.pickGrade} required />
+                ) : null}
+                {needsTerm ? (
+                  <TermField value={termId} onChange={setTermId} placeholder={shell.pickers.pickTerm} required />
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           <Field label={text.file} hint={text.fileHint} required>
             {(props) => (
@@ -226,7 +136,7 @@ export function ImportsScreen() {
             <Button
               variant="primary"
               loading={upload.isPending}
-              disabled={!chosen || file === null}
+              disabled={file === null || (needsGrade && gradeId === '') || (needsTerm && termId === '')}
               onClick={submit}
             >
               <Icon name="upload" />
@@ -236,7 +146,14 @@ export function ImportsScreen() {
         </CardBody>
       </Card>
 
-      {report ? <ImportReportPanel report={report} onStartOver={resetUpload} /> : null}
+      {report ? (
+        <ImportReportPanel
+          report={report}
+          onStartOver={resetUpload}
+          detectedGradeName={report.gradeDetectedFromSheet ? gradeName(report.grade_id) : null}
+          detectedTermName={report.termDetectedFromSheet ? termName(report.term_id) : null}
+        />
+      ) : null}
 
       <div className="flex flex-col gap-3">
         <h2 className="text-h1 font-semibold text-ink">{text.historyTitle}</h2>

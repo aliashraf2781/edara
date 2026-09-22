@@ -14,6 +14,8 @@ export const schoolKeys = {
   studentList: (params: QueryParams) => [...schoolKeys.students(), 'list', params] as const,
   student: (id: string) => [...schoolKeys.students(), 'detail', id] as const,
   enrollments: (studentId: string) => [...schoolKeys.student(studentId), 'enrollments'] as const,
+  studentResults: (studentId: string, termId: string) =>
+    [...schoolKeys.student(studentId), 'results', termId] as const,
   results: () => [...schoolKeys.all, 'results'] as const,
   resultList: (params: QueryParams) => [...schoolKeys.results(), 'list', params] as const,
   result: (id: string) => [...schoolKeys.results(), 'detail', id] as const,

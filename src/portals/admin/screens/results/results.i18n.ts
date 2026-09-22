@@ -125,6 +125,15 @@ export const resultsText: Dict<{
     action: string
     back: string
     loading: string
+    absentMark: string
+    legend: { blue: string; green: string; yellow: string; red: string }
+  }
+  reportCard: {
+    title: string
+    rows: { max: string; pass: string; score: string; verdict: string }
+    none: string
+    absent: string
+    pickTermPrompt: string
   }
   issue: {
     title: string
@@ -271,6 +280,25 @@ export const resultsText: Dict<{
       action: 'طباعة',
       back: 'عودة إلى صفحة الطالب',
       loading: 'جارٍ تجهيز المستخرج',
+      absentMark: 'غ',
+      legend: {
+        blue: 'اللون الأزرق : يفوق التوقعات (من ٨٥ إلى ١٠٠)',
+        green: 'اللون الأخضر يلبي التوقعات (٦٥ إلى ٨٥)',
+        yellow: 'اللون الأصفر يلبي التوقعات أحيانا (من ٥٠ إلى ٦٥)',
+        red: 'اللون الأحمر أقل من التوقعات (من ٠ إلى ٥٠)',
+      },
+    },
+    reportCard: {
+      title: 'كشف الدرجات',
+      rows: {
+        max: 'النهاية العظمى',
+        pass: 'النهاية الصغرى',
+        score: 'درجة الطالب',
+        verdict: 'التقييم',
+      },
+      none: '—',
+      absent: 'غ',
+      pickTermPrompt: 'اختر الترم من أعلى الصفحة لعرض كشف الدرجات.',
     },
     issue: {
       title: 'بيانات استخراج المستخرج',
@@ -418,6 +446,25 @@ export const resultsText: Dict<{
       action: 'Print',
       back: 'Back to the student',
       loading: 'Preparing the extract',
+      absentMark: 'Abs',
+      legend: {
+        blue: 'Blue: exceeds expectations (85 to 100)',
+        green: 'Green: meets expectations (65 to 85)',
+        yellow: 'Yellow: sometimes meets expectations (50 to 65)',
+        red: 'Red: below expectations (0 to 50)',
+      },
+    },
+    reportCard: {
+      title: 'Report card',
+      rows: {
+        max: 'Full mark',
+        pass: 'Pass mark',
+        score: "Student's mark",
+        verdict: 'Verdict',
+      },
+      none: '—',
+      absent: 'Abs',
+      pickTermPrompt: 'Choose a term above to see the report card.',
     },
     issue: {
       title: 'Extract issue details',

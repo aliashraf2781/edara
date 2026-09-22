@@ -123,13 +123,14 @@ export type ReferenceClassroom = {
 export type ReferenceSubject = {
   id: string
   grade_id: string
-  educational_stage_id: string
+  educational_stage_id: string | null
   code: string
   name: string
   grading_type: GradingType
+  /** Null prints a blank header cell on the extract's group-header row. */
+  print_group: Exclude<SubjectGroup, 'blank'> | null
   max_score: number | null
   pass_score: number | null
-  group: SubjectGroup
 }
 
 /** Grades, terms, classrooms and subjects — everything the filters need. */
@@ -219,6 +220,7 @@ export type StudentTermSubject = {
   subject_id: string
   subject_name: string
   grading_type: GradingType
+  print_group: Exclude<SubjectGroup, 'blank'> | null
   score: number | null
   max_score: number | null
   pass_score: number | null

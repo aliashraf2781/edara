@@ -70,6 +70,13 @@ export type ExamPeriod = {
 
 export type GradingType = 'numeric' | 'qualitative'
 
+/**
+ * The column-group header this subject prints under on the official
+ * grade 4-6 result extract — unrelated to grading_type. Null prints a
+ * blank header cell.
+ */
+export type PrintGroup = 'pass_fail' | 'formative' | 'attendance'
+
 export type Subject = {
   id: string
   grade_id: string | null
@@ -77,6 +84,7 @@ export type Subject = {
   code: string
   name: string
   grading_type: GradingType
+  print_group: PrintGroup | null
   /** Null for qualitative subjects. */
   max_score: number | null
   /** Null for qualitative subjects. */
@@ -108,6 +116,22 @@ export type Student = {
   guardian_phone: string | null
   status: string | null
   enrollments?: Enrollment[]
+  /** The current-year enrollment, when the list endpoint eager-loads it. */
+  current_enrollment?: { grade_id: string; classroom_id: string; classroom?: { name: string } } | null
+}
+
+/** One subject row in a student's report-card table for one term. */
+export type StudentTermSubject = {
+  subject_id: string
+  subject_name: string
+  grading_type: GradingType
+  score: number | null
+  max_score: number | null
+  pass_score: number | null
+  qualitative_rating: QualitativeRating | null
+  is_absent: boolean
+  status: ResultStatus
+  passed: boolean
 }
 
 /** The workflow is a fixed graph; the UI only ever offers a legal next move. */
@@ -173,6 +197,8 @@ export type ImportErrorCode =
   | 'not_enrolled'
   | 'invalid_score'
   | 'invalid_rating'
+  | 'processing_error'
+  | 'no_classroom_available'
 
 export type ImportRowError = {
   row_number: number
@@ -186,7 +212,9 @@ export type ImportReport = {
   status: string
   file_name: string
   grade_id: string
+  gradeDetectedFromSheet: boolean
   term_id: string
+  termDetectedFromSheet: boolean
   created_at: string
   /** Student rows in the sheet. */
   total_rows: number
@@ -196,6 +224,8 @@ export type ImportReport = {
   invalid_rows: number
   /** Individual subject results written — not student count. */
   imported_rows: number
+  /** New Student records created from sheet rows with an unrecognized code. */
+  studentsCreated: number
   errors: ImportRowError[]
 }
 

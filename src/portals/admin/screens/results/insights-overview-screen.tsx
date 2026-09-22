@@ -28,7 +28,11 @@ export function InsightsOverviewScreen() {
   const { values, setValue } = useTableParams(DEFAULTS)
 
   const allowed = can(PERMISSION.viewTenants)
-  const reference = useAdminReference()
+  // No single school in view here — there is no cross-school reference
+  // to ask for (see useAdminReference), so this stays empty until the
+  // term picker gets its own cross-school design (matching by label,
+  // like the bulk archive and school-insights endpoints already do).
+  const reference = useAdminReference('')
   const insights = useSchoolInsights(values.term)
 
   const rows = useMemo(

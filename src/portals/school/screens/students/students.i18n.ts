@@ -49,6 +49,16 @@ export const studentsText: Dict<{
     emptyBody: string
     enrolled: string
   }
+  reportCard: {
+    title: string
+    description: string
+    pickTerm: string
+    rows: { max: string; pass: string; score: string; verdict: string }
+    verdicts: { passed: string; failed: string }
+    absent: string
+    none: string
+    empty: string
+  }
 }> = {
   ar: {
     title: 'الطلاب',
@@ -97,6 +107,21 @@ export const studentsText: Dict<{
       empty: 'لا قيود دراسية',
       emptyBody: 'سجّل الطالب في فصل ليظهر في كشوف النتائج.',
       enrolled: 'تم تسجيل الطالب.',
+    },
+    reportCard: {
+      title: 'كشف الدرجات',
+      description: 'كل مواد الطالب في الترم المختار في جدول واحد.',
+      pickTerm: 'اختر الترم لعرض الدرجات',
+      rows: {
+        max: 'النهاية العظمى',
+        pass: 'النهاية الصغرى',
+        score: 'درجة الطالب',
+        verdict: 'التقييم',
+      },
+      verdicts: { passed: 'ناجح', failed: 'راسب' },
+      absent: 'غ',
+      none: '—',
+      empty: 'لا توجد نتائج لهذا الطالب في هذا الترم.',
     },
   },
   en: {
@@ -148,6 +173,21 @@ export const studentsText: Dict<{
       empty: 'No enrollments',
       emptyBody: 'Enroll this student in a classroom so they appear in result sheets.',
       enrolled: 'Student enrolled.',
+    },
+    reportCard: {
+      title: 'Report card',
+      description: 'Every subject for the selected term, in one table.',
+      pickTerm: 'Choose a term to see marks',
+      rows: {
+        max: 'Full mark',
+        pass: 'Pass mark',
+        score: "Student's mark",
+        verdict: 'Verdict',
+      },
+      verdicts: { passed: 'Passed', failed: 'Failed' },
+      absent: 'Abs',
+      none: '—',
+      empty: 'No results for this student in this term.',
     },
   },
 }

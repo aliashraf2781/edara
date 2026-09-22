@@ -22,6 +22,7 @@ export function AdminSidebar() {
   ]
   const results: NavItem[] = [
     { to: '/admin/insights', label: text.nav.insights, icon: 'chart', permission: PERMISSION.viewTenants },
+    { to: '/admin/documents', label: text.nav.documents, icon: 'sheet', permission: PERMISSION.viewTenants },
   ]
   const access: NavItem[] = [
     { to: '/admin/users', label: text.nav.users, icon: 'users', permission: PERMISSION.viewGlobalUsers },

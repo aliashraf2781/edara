@@ -17,11 +17,21 @@ import type {
  * switch portals to read a figure.
  */
 
-/** Grades, terms, classrooms and subjects change once a year at most. */
-export function useAdminReference() {
+/**
+ * Grades, terms, classrooms and subjects — but one school's own, never a
+ * cross-school "canonical" set, since each school defines its structure
+ * freely (there is no shared curriculum to fall back to). `code` is
+ * required; pass '' only where there genuinely is no single school in
+ * view (the cross-school overview screen), which disables the query
+ * rather than hitting an endpoint that can't answer for many schools at
+ * once — that screen needs its own term-by-name design, not this.
+ */
+export function useAdminReference(code: string) {
   return useQuery({
-    queryKey: adminKeys.reference(),
-    queryFn: ({ signal }) => adminApi.get<AdminReference>('/admin/reference', undefined, { signal }),
+    queryKey: adminKeys.reference(code),
+    queryFn: ({ signal }) =>
+      adminApi.get<AdminReference>(`/admin/tenants/${code}/reference`, undefined, { signal }),
+    enabled: code !== '',
     staleTime: 30 * 60 * 1000,
   })
 }
