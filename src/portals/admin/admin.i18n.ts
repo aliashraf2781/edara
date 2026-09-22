@@ -5,6 +5,7 @@ export const adminText: Dict<{
   nav: {
     schools: string
     insights: string
+    documents: string
     users: string
     roles: string
     audit: string
@@ -31,6 +32,7 @@ export const adminText: Dict<{
     nav: {
       schools: 'المدارس',
       insights: 'نتائج المدارس',
+      documents: 'المستندات',
       users: 'مستخدمين المنصة',
       roles: 'الأدوار',
       audit: 'سجل التدقيق',
@@ -70,6 +72,7 @@ export const adminText: Dict<{
     nav: {
       schools: 'Schools',
       insights: 'School results',
+      documents: 'Documents',
       users: 'Global users',
       roles: 'Roles',
       audit: 'Audit log',

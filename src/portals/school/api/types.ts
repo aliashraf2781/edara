@@ -70,6 +70,13 @@ export type ExamPeriod = {
 
 export type GradingType = 'numeric' | 'qualitative'
 
+/**
+ * The column-group header this subject prints under on the official
+ * grade 4-6 result extract — unrelated to grading_type. Null prints a
+ * blank header cell.
+ */
+export type PrintGroup = 'pass_fail' | 'formative' | 'attendance'
+
 export type Subject = {
   id: string
   grade_id: string | null
@@ -77,6 +84,7 @@ export type Subject = {
   code: string
   name: string
   grading_type: GradingType
+  print_group: PrintGroup | null
   /** Null for qualitative subjects. */
   max_score: number | null
   /** Null for qualitative subjects. */

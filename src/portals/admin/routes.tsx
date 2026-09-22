@@ -27,6 +27,12 @@ export const adminRoutes: RouteObject = {
       }),
     },
     {
+      path: 'schools/:code/students/:id/enrollment-statement',
+      lazy: async () => ({
+        Component: (await import('./screens/results/enrollment-statement-screen')).EnrollmentStatementScreen,
+      }),
+    },
+    {
       lazy: async () => ({ Component: (await import('./layout/admin-shell')).AdminShell }),
       children: [
         {
@@ -47,6 +53,10 @@ export const adminRoutes: RouteObject = {
             Component: (await import('./screens/results/insights-overview-screen'))
               .InsightsOverviewScreen,
           }),
+        },
+        {
+          path: 'documents',
+          lazy: async () => ({ Component: (await import('./screens/documents/documents-screen')).DocumentsScreen }),
         },
         {
           path: 'schools/:code/results',
