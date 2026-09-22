@@ -17,7 +17,6 @@ import { useToast } from '~/ui/toast'
 import { useSaveResult } from '../../api/results'
 import { QUALITATIVE_RATINGS, type QualitativeRating } from '../../api/types'
 import { useSubjectOptions, useSubjects } from '../../api/use-options'
-import { DEFAULT_TERM_ID } from '../../components/curriculum-options'
 import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { resultsText } from './results.i18n'
@@ -74,7 +73,7 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
     defaultValues: {
       student_enrollment_id: '',
       subject_id: '',
-      exam_period_id: DEFAULT_TERM_ID,
+      exam_period_id: '',
       score: '',
       max_score: '100',
       qualitative_rating: '',

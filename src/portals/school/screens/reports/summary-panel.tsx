@@ -8,7 +8,7 @@ import { Icon } from '~/ui/icon'
 import { Spinner } from '~/ui/spinner'
 import { useReportSummary } from '../../api/reports'
 import type { ReportSummary } from '../../api/types'
-import { gradeName } from '../../components/curriculum-options'
+import { useCurriculumNames } from '../../api/use-options'
 import { schoolText } from '../../school.i18n'
 import { reportsText } from './reports.i18n'
 
@@ -29,6 +29,7 @@ export function SummaryPanel({ termId, showByGrade }: { termId: string; showByGr
   const text = useDict(reportsText)
   const shell = useDict(schoolText)
   const summary = useReportSummary(termId)
+  const { gradeName } = useCurriculumNames()
 
   if (summary.isPending) {
     return (

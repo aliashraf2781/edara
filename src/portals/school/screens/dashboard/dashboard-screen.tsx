@@ -4,14 +4,13 @@ import { useDict } from '~/lib/i18n/use-dict'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
 import { useSchoolSession } from '../../auth/session-context'
-import { DEFAULT_TERM_ID } from '../../components/curriculum-options'
 import { TermField } from '../../components/term-grade-fields'
 import { reportsText } from '../reports/reports.i18n'
 import { SummaryPanel } from '../reports/summary-panel'
 
-// Temporary: the term replaces the academic year and exam period pickers, and
-// it always holds a value so the landing screen never opens empty.
-const DEFAULTS = { term: DEFAULT_TERM_ID } as const
+// No default term — there is no single "current" exam period to assume,
+// so the summary simply waits for the operator to pick one.
+const DEFAULTS = { term: '' } as const
 
 /** The landing screen is the reports summary, with the per-grade pass rates. */
 export function DashboardScreen() {

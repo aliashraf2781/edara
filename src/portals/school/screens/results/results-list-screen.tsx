@@ -15,7 +15,6 @@ import { Stamp } from '~/ui/stamp'
 import { useResultList } from '../../api/results'
 import { RESULT_STATUSES, type Result } from '../../api/types'
 import { useClassroomOptions, useSubjectOptions } from '../../api/use-options'
-import { DEFAULT_TERM_ID } from '../../components/curriculum-options'
 import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { markLabel } from './mark'
@@ -24,8 +23,7 @@ import { resultsText } from './results.i18n'
 import { STATUS_TONE } from './workflow'
 
 const PER_PAGE = 20
-// Temporary: term and grade replace the year and exam-period filters.
-const DEFAULTS = { term: DEFAULT_TERM_ID, grade: '', classroom: '', subject: '', status: '' } as const
+const DEFAULTS = { term: '', grade: '', classroom: '', subject: '', status: '' } as const
 
 export function ResultsListScreen() {
   const text = useDict(resultsText)

@@ -14,8 +14,8 @@ import { Stamp } from '~/ui/stamp'
 import { useToast } from '~/ui/toast'
 import { useResult, useTransitionResult } from '../../api/results'
 import type { ResultStatus } from '../../api/types'
+import { useCurriculumNames } from '../../api/use-options'
 import { useSchoolSession } from '../../auth/session-context'
-import { gradeName, termName } from '../../components/curriculum-options'
 import { schoolText } from '../../school.i18n'
 import { markLabel } from './mark'
 import { resultsText } from './results.i18n'
@@ -33,6 +33,7 @@ export function ResultDetailScreen() {
   const result = useResult(id)
   const transition = useTransitionResult(id)
   const [target, setTarget] = useState<ResultStatus | null>(null)
+  const { termName, gradeName } = useCurriculumNames()
 
   if (result.isPending) {
     return (
