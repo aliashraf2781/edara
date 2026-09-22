@@ -53,6 +53,7 @@ export const resultsText: Dict<{
   pickStudentPrompt: string
   noStudentsTitle: string
   noStudentsBody: string
+  reportCardTitle: string
   detailTitle: string
   timeline: string
   timelineEmpty: string
@@ -131,6 +132,7 @@ export const resultsText: Dict<{
     pickStudentPrompt: 'اختر طالبًا من القائمة لعرض كشف درجاته.',
     noStudentsTitle: 'لا يوجد طلاب مطابقون',
     noStudentsBody: 'جرّب اسمًا أو كودًا آخر، أو غيّر الصف والفصل.',
+    reportCardTitle: 'كشف الدرجات',
     detailTitle: 'تفاصيل النتيجة',
     timeline: 'سجل الحالات',
     timelineEmpty: 'لم تتغير حالة هذه النتيجة بعد.',
@@ -210,6 +212,7 @@ export const resultsText: Dict<{
     pickStudentPrompt: 'Pick a student from the list to see their report card.',
     noStudentsTitle: 'No matching students',
     noStudentsBody: 'Try a different name or code, or change the grade and classroom.',
+    reportCardTitle: 'Report card',
     detailTitle: 'Result details',
     timeline: 'Status history',
     timelineEmpty: 'This result has not changed status yet.',

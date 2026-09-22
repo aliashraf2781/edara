@@ -3,8 +3,8 @@ import { useDebouncedValue } from '~/lib/hooks/use-debounced-value'
 import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
 import { Button } from '~/ui/button'
-import { Card, CardBody, CardHeader } from '~/ui/card'
 import { DataTable, type Column } from '~/ui/data-table'
+import { Drawer } from '~/ui/drawer'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
 import { Field } from '~/ui/field'
@@ -138,25 +138,26 @@ export function ResultsListScreen() {
         </>
       )}
 
-      <Card>
-        <CardHeader title={selectedStudent ? fullName(selectedStudent) : text.title} />
-        <CardBody>
-          {values.term === '' ? (
-            <p className="text-small text-muted">{text.pickTermPrompt}</p>
-          ) : selectedStudent === null ? (
-            <p className="text-small text-muted">{text.pickStudentPrompt}</p>
-          ) : report.isError ? (
-            <ErrorState error={report.error} onRetry={() => void report.refetch()} labels={shell.error} />
-          ) : report.isPending ? (
-            <div className="flex items-center gap-3 text-muted">
-              <Spinner className="text-accent" label={shell.guard.loading} />
-              <p className="text-small">{shell.guard.loading}</p>
-            </div>
-          ) : (
-            <ReportCardTable subjects={report.data.subjects} />
-          )}
-        </CardBody>
-      </Card>
+      <Drawer
+        open={selectedStudent !== null}
+        onClose={() => setSelectedStudent(null)}
+        title={selectedStudent ? fullName(selectedStudent) : ''}
+        description={text.reportCardTitle}
+        closeLabel={shell.common.close}
+      >
+        {values.term === '' ? (
+          <p className="text-small text-muted">{text.pickTermPrompt}</p>
+        ) : report.isError ? (
+          <ErrorState error={report.error} onRetry={() => void report.refetch()} labels={shell.error} />
+        ) : report.isPending ? (
+          <div className="flex items-center gap-3 text-muted">
+            <Spinner className="text-accent" label={shell.guard.loading} />
+            <p className="text-small">{shell.guard.loading}</p>
+          </div>
+        ) : (
+          <ReportCardTable subjects={report.data.subjects} />
+        )}
+      </Drawer>
 
       <ResultEntryDrawer open={entering} onClose={() => setEntering(false)} />
     </div>

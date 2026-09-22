@@ -27,7 +27,12 @@ export function TermField({ value, onChange, placeholder, label, required, error
           value={value}
           onChange={(event) => onChange(event.target.value)}
           options={options}
-          placeholder={placeholder}
+          // Without a placeholder, a controlled empty value has nothing to
+          // match: the browser just shows the first real option (often the
+          // only one there is) with nothing actually selected, so the
+          // operator sees a term "already picked" that onChange never
+          // fired for. Always give the native <select> a real empty slot.
+          placeholder={placeholder ?? text.pickers.pickTerm}
         />
       )}
     </Field>
@@ -46,7 +51,7 @@ export function GradeField({ value, onChange, placeholder, label, required, erro
           value={value}
           onChange={(event) => onChange(event.target.value)}
           options={options}
-          placeholder={placeholder}
+          placeholder={placeholder ?? text.pickers.pickGrade}
         />
       )}
     </Field>
