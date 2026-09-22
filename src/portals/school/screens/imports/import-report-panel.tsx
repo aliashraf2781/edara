@@ -25,9 +25,14 @@ function StatTile({ label, value }: { label: string; value: number }) {
 export function ImportReportPanel({
   report,
   onStartOver,
+  detectedGradeName,
+  detectedTermName,
 }: {
   report: ImportReport
   onStartOver?: () => void
+  /** Set when the backend read the grade/term off the sheet itself, not an explicit param. */
+  detectedGradeName?: string | null
+  detectedTermName?: string | null
 }) {
   const text = useDict(importsText)
   const [expanded, setExpanded] = useState<number | null>(null)
@@ -92,6 +97,13 @@ export function ImportReportPanel({
           </p>
 
           <p className="text-small text-muted">{text.importedResultsHint(report.imported_rows)}</p>
+
+          {detectedGradeName || detectedTermName ? (
+            <p className="flex items-center gap-2 text-small text-muted">
+              <Icon name="info" className="size-4 text-accent" />
+              {text.detectedFromSheet(detectedGradeName ?? null, detectedTermName ?? null)}
+            </p>
+          ) : null}
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile label={text.stats.total} value={report.total_rows} />

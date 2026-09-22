@@ -186,7 +186,9 @@ export type ImportReport = {
   status: string
   file_name: string
   grade_id: string
+  gradeDetectedFromSheet: boolean
   term_id: string
+  termDetectedFromSheet: boolean
   created_at: string
   /** Student rows in the sheet. */
   total_rows: number

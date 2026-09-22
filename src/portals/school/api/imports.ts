@@ -9,22 +9,19 @@ export const IMPORT_EXTENSIONS = ['.xlsx', '.xls', '.csv']
 
 export type UploadResultsInput = {
   file: File
-  gradeId: string
-  termId: string
 }
 
 /**
- * One step: the sheet the operator uploads is the template this screen handed
- * them, so its columns are already the subjects and there is nothing to map.
+ * One step, one field: the file. The backend reads the academic year,
+ * grade and term straight off the sheet's own metadata text — there is
+ * nothing left for the operator to pick beforehand.
  */
 export function useUploadResults() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ file, gradeId, termId }: UploadResultsInput) => {
+    mutationFn: ({ file }: UploadResultsInput) => {
       const form = new FormData()
       form.append('file', file)
-      form.append('grade_id', gradeId)
-      form.append('term_id', termId)
       return schoolApi.upload<ImportReport>('/school/result-imports', form)
     },
     onSuccess: (report) => {

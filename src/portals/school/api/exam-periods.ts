@@ -19,6 +19,15 @@ export function useExamPeriods(academicYearId: string, enabled = true) {
   })
 }
 
+/** Every exam period across every academic year — backs pickers that don't scope by year. */
+export function useAllExamPeriods() {
+  return useQuery({
+    queryKey: schoolKeys.examPeriodList('all'),
+    queryFn: async ({ signal }) => toArray(await schoolApi.get('/school/exam-periods', undefined, { signal })),
+    staleTime: 60 * 1000,
+  })
+}
+
 export function useSaveExamPeriod() {
   const client = useQueryClient()
   return useMutation({

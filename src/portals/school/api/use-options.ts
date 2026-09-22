@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { SelectOption } from '~/ui/select'
 import { useAcademicList } from './academics'
-import { useExamPeriods } from './exam-periods'
+import { useAllExamPeriods, useExamPeriods } from './exam-periods'
 import type { AcademicYear, Classroom, EducationalStage, ExamPeriod, Grade, Subject } from './types'
 
 type Named = { id: string; name: string; code?: string }
@@ -58,4 +58,24 @@ export function useSubjects(gradeId?: string) {
 export function useExamPeriodOptions(academicYearId: string): SelectOption[] {
   const list = useExamPeriods(academicYearId, academicYearId !== '')
   return useMemo(() => toOptions(list.data as ExamPeriod[] | undefined), [list.data])
+}
+
+/** Not scoped to one academic year — backs pickers that filter by term alone. */
+export function useAllExamPeriodOptions(): SelectOption[] {
+  const list = useAllExamPeriods()
+  return useMemo(() => toOptions(list.data), [list.data])
+}
+
+/** Live id -> name lookups for table cells, replacing the old fixed mock curriculum. */
+export function useCurriculumNames() {
+  const grades = useAcademicList<Grade>('grades', {})
+  const terms = useAllExamPeriods()
+
+  const gradeById = new Map((grades.data ?? []).map((grade) => [grade.id, grade.name]))
+  const termById = new Map((terms.data ?? []).map((term) => [term.id, term.name]))
+
+  return {
+    gradeName: (id: string) => gradeById.get(id) ?? id,
+    termName: (id: string) => termById.get(id) ?? id,
+  }
 }
