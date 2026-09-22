@@ -126,6 +126,23 @@ export const resultsText: Dict<{
     back: string
     loading: string
   }
+  issue: {
+    title: string
+    description: string
+    submittedTo: string
+    submittedToPlaceholder: string
+    transferNumber: string
+    transferDate: string
+    transferDateHint: string
+    day: string
+    month: string
+    year: string
+    amount: string
+    fill: string
+    apply: string
+    clear: string
+    print: string
+  }
 }> = {
   ar: {
     overview: {
@@ -253,6 +270,24 @@ export const resultsText: Dict<{
       back: 'عودة إلى صفحة الطالب',
       loading: 'جارٍ تجهيز المستخرج',
     },
+    issue: {
+      title: 'بيانات استخراج المستخرج',
+      description:
+        'املأ الجهة ورقم الحوالة وتاريخها والمبلغ. الحقول اختيارية — اتركها فارغة لتبقى الأسطر منقّطة وتُملأ بخط اليد.',
+      submittedTo: 'وقد استخرج هذا البيان لتقديمه إلى',
+      submittedToPlaceholder: 'الجهة المقدَّم إليها البيان',
+      transferNumber: 'رقم الحوالة',
+      transferDate: 'تاريخ الحوالة',
+      transferDateHint: 'يوم / شهر / سنة (خانتان) — تُطبع كالسنة كاملة ٢٠xx.',
+      day: 'يوم',
+      month: 'شهر',
+      year: 'سنة',
+      amount: 'المبلغ',
+      fill: 'تعبئة البيانات',
+      apply: 'حفظ على المستخرج',
+      clear: 'مسح الحقول',
+      print: 'طباعة',
+    },
   },
   en: {
     overview: {
@@ -379,6 +414,24 @@ export const resultsText: Dict<{
       action: 'Print',
       back: 'Back to the student',
       loading: 'Preparing the extract',
+    },
+    issue: {
+      title: 'Extract issue details',
+      description:
+        'Fill the destination, transfer number, date, and amount. Every field is optional — leave them blank to keep the dotted rules for handwriting.',
+      submittedTo: 'Issued for submission to',
+      submittedToPlaceholder: 'The body the extract is submitted to',
+      transferNumber: 'Transfer number',
+      transferDate: 'Transfer date',
+      transferDateHint: 'Day / month / year (2 digits) — printed as the full 20xx year.',
+      day: 'Day',
+      month: 'Month',
+      year: 'Year',
+      amount: 'Amount',
+      fill: 'Fill details',
+      apply: 'Apply to extract',
+      clear: 'Clear fields',
+      print: 'Print',
     },
   },
 }

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate, useParams } from 'react-router'
 import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
@@ -20,9 +22,35 @@ import type { StudentDetail, StudentTermStats, StudentTermSubject, SubjectGroup 
 import { RequireAdmin } from '../../layout/require-admin'
 import { toArabicDigits } from './arabic-digits'
 import { EXTRACT_CSS } from './extract-styles'
+import { EMPTY_ISSUE_DETAILS, type IssueDetails } from './issue-details'
+import { IssueDetailsDialog } from './issue-details-dialog'
 import { resultsText } from './results.i18n'
 
 const TERM_PARAM = { term: '' } as const
+
+/** The post holder whose name is printed under the last signature slot. */
+const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
+
+/**
+ * A dotted rule that carries a value when there is one, and stays empty to be
+ * filled in by hand when there is not.
+ */
+function Blank({
+  value,
+  className = '',
+  style,
+}: {
+  value?: string
+  className?: string
+  style?: React.CSSProperties
+}) {
+  const filled = value !== undefined && value !== ''
+  return (
+    <span className={`blank ${filled ? 'filled ' : ''}${className}`.trim()} style={style}>
+      {filled ? value : null}
+    </span>
+  )
+}
 
 /** The group headers printed across the top of the form, in printed order. */
 const GROUP_LABEL: Record<SubjectGroup, string> = {
@@ -50,12 +78,15 @@ function groupRuns(subjects: readonly StudentTermSubject[]) {
 const qualitativeVerdict = (subject: StudentTermSubject) =>
   subject.is_absent ? 'غ' : isQualitativePass(subject.qualitative_rating) ? PASSED_LABEL : FAILED_LABEL
 
-/** `year-2025` → ٢٠٢٥ / ٢٠٢٦, the only place the academic year is available. */
+/** `year-2025` → ٢٠٢٥ / ٢٠٢٦ as whole years (never `٢٠`+`٢٦`, which RTL paints as ٢٦٢٠). */
 const academicYears = (academicYearId: string | undefined) => {
   const start = Number(academicYearId?.match(/(\d{4})/)?.[1] ?? NaN)
   if (!Number.isFinite(start)) return null
-  return { from: toArabicDigits(String(start).slice(2)), to: toArabicDigits(String(start + 1).slice(2)) }
+  return { from: toArabicDigits(start), to: toArabicDigits(start + 1) }
 }
+
+/** Two-digit year fragment → full `٢٠٢٦`, kept as one string so bidi cannot flip it to ٢٦٢٠. */
+const fullArabicYear = (yy: string) => (yy === '' ? '' : toArabicDigits(`20${yy}`))
 
 export function StudentPrintScreen() {
   return (
@@ -76,6 +107,9 @@ function StudentExtract() {
 
   const reference = useAdminReference()
   const detail = useSchoolStudent(code, id)
+
+  const [askingDetails, setAskingDetails] = useState(false)
+  const [issue, setIssue] = useState<IssueDetails>(EMPTY_ISSUE_DETAILS)
 
   if (detail.isPending) {
     return (
@@ -117,13 +151,51 @@ function StudentExtract() {
           />
         </div>
 
-        <Button variant="primary" onClick={() => window.print()}>
-          <Icon name="download" />
-          {text.print.action}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={() => setAskingDetails(true)}>
+            <Icon name="pencil" />
+            {text.issue.fill}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              window.print()
+            }}
+          >
+            <Icon name="download" />
+            {text.print.action}
+          </Button>
+        </div>
       </div>
 
-      {term ? <ExtractPage data={data} term={term} academicYearId={classroom?.academic_year_id} /> : null}
+      {askingDetails ? (
+        <IssueDetailsDialog
+          initial={issue}
+          onClose={() => setAskingDetails(false)}
+          onApply={(details) => {
+            setIssue(details)
+            setAskingDetails(false)
+          }}
+          onPrint={(details) => {
+            // The values have to be on the page — and the dialog gone — before
+            // the browser's print preview reads the DOM.
+            flushSync(() => {
+              setIssue(details)
+              setAskingDetails(false)
+            })
+            window.print()
+          }}
+        />
+      ) : null}
+
+      {term ? (
+        <ExtractPage
+          data={data}
+          term={term}
+          academicYearId={classroom?.academic_year_id}
+          issue={issue}
+        />
+      ) : null}
     </div>
   )
 }
@@ -132,9 +204,10 @@ type ExtractPageProps = {
   data: StudentDetail
   term: StudentTermStats
   academicYearId: string | undefined
+  issue: IssueDetails
 }
 
-function ExtractPage({ data, term, academicYearId }: ExtractPageProps) {
+function ExtractPage({ data, term, academicYearId, issue }: ExtractPageProps) {
   const { student, school } = data
   const grade = gradeById(student.grade_id)
   const nextGrade = grade ? gradeByLevel(grade.level + 1) : null
@@ -151,17 +224,18 @@ function ExtractPage({ data, term, academicYearId }: ExtractPageProps) {
       <div className="page">
         {/* ===== Header ===== */}
         <div className="top-row">
-          <div className="seal" title="شعار الجهة" />
+          {/* `top-row` is forced LTR, so this crest sits on the left. */}
+          <img className="crest crest-start" src="/topleft.png" alt="شعار إدارة شئون الطلبة والامتحانات" />
           <div className="date-field">
-            التاريخ : <span className="blank" style={{ minWidth: 34 }} /> /{' '}
-            <span className="blank" style={{ minWidth: 34 }} /> / ٢٠
-            <span className="blank" style={{ minWidth: 34 }} /> م
+            التاريخ :{' '}
+            {/* Digits + slashes must stay LTR or bidi flips day/month/year. */}
+            <span className="date-run" dir="ltr">
+              <span className="blank" style={{ minWidth: 34 }} /> /{' '}
+              <span className="blank" style={{ minWidth: 34 }} /> /{' '}
+              <span className="blank" style={{ minWidth: 48 }} /> م
+            </span>
           </div>
-          <div className="letterhead">
-            <div>وزارة التربية والتعليم</div>
-            <div>مديرية التربية والتعليم بـ {school.governorate ?? '..........................'}</div>
-            <div>إدارة {school.directorate} التعليمية</div>
-          </div>
+          <img className="crest crest-end" src="/topright.png" alt="محافظة الدقهلية — مديرية التربية والتعليم" />
         </div>
 
         {/* ===== Title box ===== */}
@@ -178,13 +252,12 @@ function ExtractPage({ data, term, academicYearId }: ExtractPageProps) {
           <div className="row">
             <span className="txt">بالكشف في سجلات القيد بمدرسة&nbsp;:</span>
             <span className="blank filled b-xl">{school.name}</span>
-            <span className="txt">في العام الدراسي ٢٠</span>
-            <span className="blank filled b-sm">{years?.from ?? ''}</span>
-            <span className="txt">/ ٢٠</span>
-            <span className="blank filled b-sm">{years?.to ?? ''}</span>
-            <span className="txt">م&nbsp;(</span>
-            <span className="blank filled b-lg">{term.term_name}</span>
-            <span className="txt">)</span>
+            <span className="txt">في العام الدراسي </span>
+            <span className="date-run" dir="ltr">
+              <span className="blank filled b-md">{years?.from ?? ''}</span>
+              /
+              <span className="blank filled b-md">{years?.to ?? ''}</span>م
+            </span>
           </div>
           <div className="row">
             <span className="txt">وجد اسم الطالب&nbsp;:</span>
@@ -197,7 +270,7 @@ function ExtractPage({ data, term, academicYearId }: ExtractPageProps) {
           <div className="row">
             <span className="txt">تحت اشراف المديرية برقم جلوس</span>
             <span className="blank filled b-lg">{toArabicDigits(student.seat_no)}</span>
-            <span className="txt">طبقاً للقرار الوزاري رقم ١٩٥ لسنة ٢٠٢٣م الدور</span>
+            <span className="txt">قرار ١٥١ لسنة ٢٠٢٦ الدور</span>
             <span className="blank filled b-md">الأول</span>
           </div>
         </div>
@@ -267,19 +340,19 @@ function ExtractPage({ data, term, academicYearId }: ExtractPageProps) {
         <div className="after-table">
           <p className="submit-line">
             <span>وقد استخرج هذا البيان لتقديمه إلى&nbsp;:</span>
-            <span className="blank" />
+            <Blank value={issue.submittedTo} />
           </p>
           <p className="pay-line">
             <span>بناء على طلب الطالب بعد سداد الرسم المقرر بالحوالة رقم&nbsp;:</span>
-            <span className="blank b-md" />
+            <Blank className="b-md" value={toArabicDigits(issue.transferNumber)} />
             <span>بتاريخ&nbsp;:</span>
-            <span>
-              <span className="blank" style={{ minWidth: 20 }} />/
-              <span className="blank" style={{ minWidth: 20 }} />/٢٠
-              <span className="blank" style={{ minWidth: 20 }} />م
+            <span className="date-run" dir="ltr">
+              <Blank style={{ minWidth: 20 }} value={toArabicDigits(issue.transferDay)} />/
+              <Blank style={{ minWidth: 20 }} value={toArabicDigits(issue.transferMonth)} />/
+              <Blank style={{ minWidth: 40 }} value={fullArabicYear(issue.transferYear)} />م
             </span>
             <span>&nbsp;&nbsp;مبلغ&nbsp;:</span>
-            <span className="blank b-md" />
+            <Blank className="b-md" value={toArabicDigits(issue.amount)} />
           </p>
           <p>
             وعلى الجهة المقدم لها البيان التحقق من أن صاحب البيان هو نفس الشخص المدون أعلاه ولا يجوز
@@ -291,17 +364,23 @@ function ExtractPage({ data, term, academicYearId }: ExtractPageProps) {
         {/* ===== Signatures ===== */}
         <div className="signatures">
           <div>المحرر</div>
-          <div>مراجع أول</div>
-          <div>مراجع ثان</div>
-          <div>مدير إدارة شئون الطلبة والامتحانات</div>
+          <div>مراجع</div>
+          <div>مراجع</div>
+          <div>
+            <span>مدير إدارة شئون الطلبة والامتحانات</span>
+            <span className="holder-name">{EXAMS_DIRECTOR}</span>
+          </div>
         </div>
 
         <div className="office-stamp">
           <div className="seal" />
           <div className="date-field">
-            التاريخ : <span className="blank" style={{ minWidth: 18 }} />/
-            <span className="blank" style={{ minWidth: 18 }} />/٢٠
-            <span className="blank" style={{ minWidth: 18 }} />م
+            التاريخ :{' '}
+            <span className="date-run" dir="ltr">
+              <span className="blank" style={{ minWidth: 18 }} />/
+              <span className="blank" style={{ minWidth: 18 }} />/
+              <span className="blank" style={{ minWidth: 36 }} />م
+            </span>
           </div>
         </div>
       </div>

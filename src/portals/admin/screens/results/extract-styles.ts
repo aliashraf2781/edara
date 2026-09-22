@@ -47,6 +47,14 @@ export const EXTRACT_CSS = `
   background:repeating-conic-gradient(from 0deg, #cfcfc9 0deg 8deg, transparent 8deg 16deg);
   flex:0 0 auto;
 }
+/* The two supplied crests replace the drawn placeholders at the top.
+   Their flat JPEG gray is already knocked out, so the paper shows through. */
+.extract .crest{
+  flex:0 0 auto;
+  width:auto;
+}
+.extract .crest-start{ height:92px; }
+.extract .crest-end{ height:76px; padding-top:4px; }
 .extract .date-field{
   direction:rtl;
   font-size:15px;
@@ -58,6 +66,13 @@ export const EXTRACT_CSS = `
   min-width:26px;
   border-bottom:1px dotted #000;
   margin:0 3px;
+}
+/* Isolates day/month/year (and academic-year pairs) so RTL flex/bidi
+   cannot reverse ٢٠٢٥/٢٠٢٦ into ٢٠٢٦/٢٠٢٥. */
+.extract .date-run{
+  display:inline-block;
+  direction:ltr;
+  unicode-bidi:isolate;
 }
 .extract .letterhead{
   direction:rtl;
@@ -117,8 +132,9 @@ export const EXTRACT_CSS = `
 .extract .b-lg{ min-width:140px; }
 .extract .b-md{ min-width:80px; }
 .extract .b-sm{ min-width:34px; }
+/* Under dir=rtl, flex-start packs to the right — where Arabic lines begin. */
 .extract .info-lines .row{
-  display:flex;justify-content:flex-end;flex-wrap:wrap;
+  display:flex;justify-content:flex-start;flex-wrap:wrap;
   row-gap:2px;
 }
 
@@ -179,19 +195,28 @@ export const EXTRACT_CSS = `
   font-size:13.5px;
   text-align:right;
 }
-.extract .submit-line{ display:flex;align-items:baseline;justify-content:flex-end; }
+.extract .submit-line{ display:flex;align-items:baseline;justify-content:flex-start; }
 .extract .submit-line .blank{ flex:1 1 auto;max-width:520px;margin-inline-start:6px; }
-.extract .pay-line{ display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px; }
+.extract .pay-line{ display:flex;justify-content:flex-start;flex-wrap:wrap;gap:4px; }
 
 /* ---------- signatures ---------- */
 .extract .signatures{
   display:flex;
+  align-items:flex-start;
   justify-content:space-between;
   margin-top:56px;
   font-size:14px;
   font-weight:700;
   padding:0 6px;
 }
+.extract .signatures > div{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+/* The post holder's name, printed under the title of the post. */
+.extract .signatures .holder-name{ font-weight:400;font-size:13px; }
 .extract .office-stamp{
   position:absolute;
   left:34px;
@@ -206,6 +231,8 @@ export const EXTRACT_CSS = `
 
 @media print{
   body{ background:#fff; }
+  /* Keep the crests when the browser's "background graphics" box is off. */
+  .extract .crest{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .extract-chrome{ display:none !important; }
   .extract-screen{ background:#fff; }
   .extract{ background:#fff; padding:0; }
