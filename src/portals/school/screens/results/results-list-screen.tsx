@@ -55,7 +55,22 @@ export function ResultsListScreen() {
   const markLabels = { absent: text.absent, none: shell.common.none, qualitative: text.qualitative }
 
   const columns: readonly Column<Result>[] = [
-    { key: 'student', header: text.columns.student, cell: (row) => row.student_name },
+    {
+      key: 'student',
+      header: text.columns.student,
+      cell: (row) => (
+        <button
+          type="button"
+          className="text-start text-accent underline-offset-2 hover:underline"
+          onClick={(event) => {
+            event.stopPropagation()
+            navigate(`/school/students/${row.student_id}${values.term ? `?term=${values.term}` : ''}`)
+          }}
+        >
+          {row.student_name}
+        </button>
+      ),
+    },
     {
       key: 'code',
       header: text.columns.code,

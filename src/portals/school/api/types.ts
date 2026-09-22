@@ -108,6 +108,22 @@ export type Student = {
   guardian_phone: string | null
   status: string | null
   enrollments?: Enrollment[]
+  /** The current-year enrollment, when the list endpoint eager-loads it. */
+  current_enrollment?: { grade_id: string; classroom_id: string; classroom?: { name: string } } | null
+}
+
+/** One subject row in a student's report-card table for one term. */
+export type StudentTermSubject = {
+  subject_id: string
+  subject_name: string
+  grading_type: GradingType
+  score: number | null
+  max_score: number | null
+  pass_score: number | null
+  qualitative_rating: QualitativeRating | null
+  is_absent: boolean
+  status: ResultStatus
+  passed: boolean
 }
 
 /** The workflow is a fixed graph; the UI only ever offers a legal next move. */

@@ -3,14 +3,22 @@ import { normalizePage } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { schoolApi } from './client'
 import { schoolKeys } from './keys'
-import type { Enrollment, Student } from './types'
+import type { Enrollment, Student, StudentTermSubject } from './types'
 
-export type StudentListParams = { page: number; perPage: number; search: string }
+export type StudentListParams = {
+  page: number
+  perPage: number
+  search: string
+  gradeId?: string
+  classroomId?: string
+}
 
 const toQuery = (params: StudentListParams): QueryParams => ({
   page: params.page,
   per_page: params.perPage,
   search: params.search,
+  grade_id: params.gradeId,
+  classroom_id: params.classroomId,
 })
 
 /** Search covers student code, national ID and first/family name. */
@@ -99,5 +107,19 @@ export function useEnrollStudent(studentId: string) {
       void client.invalidateQueries({ queryKey: schoolKeys.enrollments(studentId) })
       void client.invalidateQueries({ queryKey: schoolKeys.student(studentId) })
     },
+  })
+}
+
+/** One student's full subject breakdown for one term — the report card table. */
+export function useStudentTermResults(studentId: string, termId: string) {
+  return useQuery({
+    queryKey: schoolKeys.studentResults(studentId, termId),
+    queryFn: ({ signal }) =>
+      schoolApi.get<{ subjects: StudentTermSubject[] }>(
+        `/school/students/${studentId}/results`,
+        { term_id: termId },
+        { signal },
+      ),
+    enabled: studentId !== '' && termId !== '',
   })
 }
