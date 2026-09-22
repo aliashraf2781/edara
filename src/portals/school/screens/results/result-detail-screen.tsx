@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router'
-import { formatDateTime, formatScore } from '~/lib/format'
+import { formatDateTime } from '~/lib/format'
 import { useLocale } from '~/lib/i18n/locale-context'
 import { useDict } from '~/lib/i18n/use-dict'
 import { Button } from '~/ui/button'
@@ -15,7 +15,9 @@ import { useToast } from '~/ui/toast'
 import { useResult, useTransitionResult } from '../../api/results'
 import type { ResultStatus } from '../../api/types'
 import { useSchoolSession } from '../../auth/session-context'
+import { gradeName, termName } from '../../components/curriculum-options'
 import { schoolText } from '../../school.i18n'
+import { markLabel } from './mark'
 import { resultsText } from './results.i18n'
 import { TransitionDialog } from './transition-dialog'
 import { nextStatuses, STATUS_TONE } from './workflow'
@@ -64,8 +66,8 @@ export function ResultDetailScreen() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={record.student_name ?? text.detailTitle}
-        description={record.subject_name ?? undefined}
+        title={record.student_name}
+        description={record.subject_name}
         meta={<Stamp tone={STATUS_TONE[record.status]}>{text.statuses[record.status]}</Stamp>}
         actions={
           moves.length === 0 ? null : (
@@ -99,23 +101,20 @@ export function ResultDetailScreen() {
             columns={3}
             items={[
               {
-                term: text.columns.score,
-                value: record.is_absent
-                  ? text.absent
-                  : record.qualitative_rating
-                    ? text.ratings[record.qualitative_rating]
-                    : formatScore(record.score),
-                mono: true,
+                term: text.columns.mark,
+                value: markLabel(record, {
+                  absent: text.absent,
+                  none: shell.common.none,
+                  qualitative: text.qualitative,
+                }),
+                // Only a numeric mark is a numeral — اجتياز must stay RTL.
+                mono: record.grading_type === 'numeric',
               },
-              {
-                term: text.columns.maxScore,
-                value: record.qualitative_rating ? '—' : record.max_score,
-                mono: true,
-              },
-              { term: shell.examPeriodGap.label, value: record.exam_period_id, mono: true },
-              ...(record.reason
-                ? [{ term: text.reason, value: record.reason }]
-                : []),
+              { term: text.gradingTypeLabel, value: text.gradingTypes[record.grading_type] },
+              { term: shell.pickers.term, value: termName(record.term_id) },
+              { term: shell.pickers.grade, value: gradeName(record.grade_id) },
+              { term: text.columns.code, value: record.student_code, mono: true },
+              ...(record.reason ? [{ term: text.reason, value: record.reason }] : []),
             ]}
           />
         </CardBody>

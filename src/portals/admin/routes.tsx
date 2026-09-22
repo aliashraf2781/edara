@@ -18,6 +18,14 @@ export const adminRoutes: RouteObject = {
       path: 'verify',
       lazy: async () => ({ Component: (await import('./screens/auth/verify-screen')).AdminVerifyScreen }),
     },
+    // The printed extract is an official form, so it renders without the app
+    // chrome around it — it guards itself instead of sitting under the shell.
+    {
+      path: 'schools/:code/students/:id/print',
+      lazy: async () => ({
+        Component: (await import('./screens/results/student-print-screen')).StudentPrintScreen,
+      }),
+    },
     {
       lazy: async () => ({ Component: (await import('./layout/admin-shell')).AdminShell }),
       children: [
@@ -32,6 +40,32 @@ export const adminRoutes: RouteObject = {
         {
           path: 'schools/:code',
           lazy: async () => ({ Component: (await import('./screens/schools/school-detail-screen')).SchoolDetailScreen }),
+        },
+        {
+          path: 'insights',
+          lazy: async () => ({
+            Component: (await import('./screens/results/insights-overview-screen'))
+              .InsightsOverviewScreen,
+          }),
+        },
+        {
+          path: 'schools/:code/results',
+          lazy: async () => ({
+            Component: (await import('./screens/results/school-results-screen')).SchoolResultsScreen,
+          }),
+        },
+        {
+          path: 'schools/:code/students',
+          lazy: async () => ({
+            Component: (await import('./screens/results/school-students-screen'))
+              .SchoolStudentsScreen,
+          }),
+        },
+        {
+          path: 'schools/:code/students/:id',
+          lazy: async () => ({
+            Component: (await import('./screens/results/student-stats-screen')).StudentStatsScreen,
+          }),
         },
         {
           path: 'users',

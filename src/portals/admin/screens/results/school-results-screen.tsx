@@ -1,0 +1,271 @@
+import { useNavigate, useParams } from 'react-router'
+import { formatPercent, formatScore } from '~/lib/format'
+import { useDebouncedValue } from '~/lib/hooks/use-debounced-value'
+import { useTableParams } from '~/lib/hooks/use-table-params'
+import { useDict } from '~/lib/i18n/use-dict'
+import { Button } from '~/ui/button'
+import { DataTable, type Column } from '~/ui/data-table'
+import { EmptyState } from '~/ui/empty-state'
+import { ErrorState } from '~/ui/error-state'
+import { NoAccess } from '~/ui/no-access'
+import { PageHeader } from '~/ui/page-header'
+import { Pagination } from '~/ui/pagination'
+import { adminText } from '../../admin.i18n'
+import { useAdminReference, useSchoolResults, useSchoolStats } from '../../api/insights'
+import { PERMISSION } from '../../api/permissions'
+import type { GradeStat, SchoolResultRow, SubjectStat } from '../../api/types'
+import { useAdminSession } from '../../auth/session-context'
+import { narrowFilters } from './filters'
+import { MarkCell, VerdictStamp } from './result-cells'
+import { resultsText } from './results.i18n'
+import { ResultsToolbar } from './results-toolbar'
+import { SchoolNav } from './school-nav'
+import { StatCards } from './stat-cards'
+
+const PER_PAGE = 25
+const DEFAULTS = { term: '', grade: '', classroom: '', subject: '', search: '' } as const
+
+export function SchoolResultsScreen() {
+  const text = useDict(resultsText)
+  const shell = useDict(adminText)
+  const navigate = useNavigate()
+  const { can } = useAdminSession()
+  const code = useParams().code ?? ''
+  const { values, page, setValue, setPage, clear } = useTableParams(DEFAULTS)
+  const search = useDebouncedValue(values.search)
+
+  const allowed = can(PERMISSION.viewTenant) || can(PERMISSION.viewTenants)
+  const reference = useAdminReference()
+  const filters = narrowFilters(reference.data, values)
+  const stats = useSchoolStats(code, filters.term, allowed)
+  const results = useSchoolResults(
+    code,
+    {
+      page,
+      perPage: PER_PAGE,
+      search,
+      gradeId: filters.grade,
+      classroomId: filters.classroom,
+      termId: filters.term,
+      subjectId: filters.subject,
+    },
+    allowed,
+  )
+
+  if (!allowed) {
+    return <NoAccess title={text.school.resultsTitle} description={shell.guard.noAccess} />
+  }
+
+  const verdicts = { passed: text.student.passed, failed: text.student.failed }
+  const hasFilters = Object.values(values).some((value) => value !== '')
+
+  const columns: readonly Column<SchoolResultRow>[] = [
+    { key: 'student', header: text.school.resultColumns.student, cell: (row) => row.student_name },
+    {
+      key: 'code',
+      header: text.school.resultColumns.code,
+      cell: (row) => (
+        <span className="font-mono text-small" dir="ltr">
+          {row.student_code}
+        </span>
+      ),
+    },
+    { key: 'grade', header: text.school.resultColumns.grade, cell: (row) => row.grade_name },
+    {
+      key: 'classroom',
+      header: text.school.resultColumns.classroom,
+      cell: (row) => row.classroom_name,
+    },
+    { key: 'subject', header: text.school.resultColumns.subject, cell: (row) => row.subject_name },
+    {
+      key: 'mark',
+      header: text.school.resultColumns.mark,
+      numeric: true,
+      cell: (row) => <MarkCell value={row} />,
+    },
+    {
+      key: 'verdict',
+      header: text.school.resultColumns.verdict,
+      cell: (row) => <VerdictStamp passed={row.passed} labels={verdicts} />,
+    },
+  ]
+
+  const gradeColumns: readonly Column<GradeStat>[] = [
+    { key: 'grade', header: text.school.gradeColumns.grade, cell: (row) => row.grade_name },
+    {
+      key: 'students',
+      header: text.school.gradeColumns.students,
+      numeric: true,
+      cell: (row) => row.students,
+    },
+    {
+      key: 'results',
+      header: text.school.gradeColumns.results,
+      numeric: true,
+      cell: (row) => row.total,
+    },
+    {
+      key: 'passed',
+      header: text.school.gradeColumns.passed,
+      numeric: true,
+      cell: (row) => row.passed,
+    },
+    {
+      key: 'passRate',
+      header: text.school.gradeColumns.passRate,
+      numeric: true,
+      cell: (row) => formatPercent(row.passed, row.total),
+    },
+    {
+      key: 'average',
+      header: text.school.gradeColumns.average,
+      numeric: true,
+      cell: (row) => formatScore(row.average),
+    },
+  ]
+
+  const subjectColumns: readonly Column<SubjectStat>[] = [
+    { key: 'subject', header: text.school.subjectColumns.subject, cell: (row) => row.subject_name },
+    {
+      key: 'type',
+      header: text.school.subjectColumns.type,
+      cell: (row) => text.school.gradingType[row.grading_type],
+    },
+    {
+      key: 'results',
+      header: text.school.subjectColumns.results,
+      numeric: true,
+      cell: (row) => row.total,
+    },
+    {
+      key: 'passed',
+      header: text.school.subjectColumns.passed,
+      numeric: true,
+      cell: (row) => row.passed,
+    },
+    {
+      key: 'passRate',
+      header: text.school.subjectColumns.passRate,
+      numeric: true,
+      cell: (row) => formatPercent(row.passed, row.total),
+    },
+    {
+      key: 'average',
+      header: text.school.subjectColumns.average,
+      numeric: true,
+      // A pass/fail subject has no mean to report, only a pass count.
+      cell: (row) => (row.grading_type === 'numeric' ? formatScore(row.average) : '—'),
+    },
+  ]
+
+  const figures = stats.data
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={figures?.name ?? code}
+        description={text.school.resultsDescription}
+        meta={
+          <span className="font-mono text-small text-muted" dir="ltr">
+            {code}
+          </span>
+        }
+        actions={
+          <Button onClick={() => navigate(`/admin/schools/${code}`)}>
+            {text.school.backToSchool}
+          </Button>
+        }
+      />
+
+      <SchoolNav code={code} label={figures?.name ?? code} />
+
+      <ResultsToolbar
+        reference={reference.data}
+        values={filters}
+        onChange={(key, value) => setValue(key, value)}
+      />
+
+      {figures ? (
+        <StatCards
+          items={[
+            { label: text.overview.stats.students, value: String(figures.students) },
+            { label: text.overview.stats.results, value: String(figures.results) },
+            {
+              label: text.overview.stats.passRate,
+              value: formatPercent(figures.passed, figures.results),
+            },
+            { label: text.overview.stats.average, value: formatScore(figures.average) },
+          ]}
+          className="xl:grid-cols-4"
+        />
+      ) : null}
+
+      {results.isError ? (
+        <ErrorState
+          error={results.error}
+          onRetry={() => void results.refetch()}
+          labels={shell.error}
+        />
+      ) : (
+        <>
+          <DataTable
+            caption={text.school.resultsTitle}
+            columns={columns}
+            rows={results.data?.data ?? []}
+            rowKey={(row) => row.id}
+            onRowActivate={(row) => navigate(`/admin/schools/${code}/students/${row.student_id}`)}
+            isLoading={results.isLoading}
+            empty={
+              <EmptyState
+                title={hasFilters ? text.school.noResultsTitle : text.school.emptyTitle}
+                description={hasFilters ? text.school.noResultsBody : text.school.emptyBody}
+                action={hasFilters ? <Button onClick={clear}>{text.filters.clear}</Button> : null}
+              />
+            }
+          />
+
+          {results.data ? (
+            <Pagination
+              meta={results.data.meta}
+              onPageChange={setPage}
+              labels={{
+                previous: shell.common.previous,
+                next: shell.common.next,
+                summary: (meta) =>
+                  shell.common.pageSummary(meta.current_page, meta.last_page, meta.total),
+              }}
+            />
+          ) : null}
+        </>
+      )}
+
+      {stats.isError ? (
+        <ErrorState error={stats.error} onRetry={() => void stats.refetch()} labels={shell.error} />
+      ) : null}
+
+      {figures ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <section className="flex flex-col gap-3">
+            <h2 className="text-h2 font-semibold text-ink">{text.school.byGrade}</h2>
+            <DataTable
+              caption={text.school.byGrade}
+              columns={gradeColumns}
+              rows={figures.byGrade}
+              rowKey={(row) => row.grade_id}
+            />
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-h2 font-semibold text-ink">{text.school.bySubject}</h2>
+            <DataTable
+              caption={text.school.bySubject}
+              columns={subjectColumns}
+              rows={figures.bySubject}
+              rowKey={(row) => row.subject_id}
+            />
+          </section>
+        </div>
+      ) : null}
+    </div>
+  )
+}

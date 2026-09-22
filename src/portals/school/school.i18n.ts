@@ -33,6 +33,13 @@ export const schoolText: Dict<{
   }
   roles: Record<SchoolRole, string>
   roleDescriptions: Record<SchoolRole, string>
+  pickers: {
+    term: string
+    grade: string
+    pickTerm: string
+    pickGrade: string
+    allGrades: string
+  }
   examPeriodField: {
     label: string
     placeholder: string
@@ -54,7 +61,7 @@ export const schoolText: Dict<{
       examPeriods: 'فترات الامتحان',
       students: 'الطلاب',
       results: 'النتائج',
-      imports: 'الاستيراد',
+      imports: 'رفع النتائج',
       reports: 'التقارير',
       staff: 'حسابات الطاقم',
       profile: 'حسابي',
@@ -100,6 +107,13 @@ export const schoolText: Dict<{
       'school-data-entry':
         'نفس صلاحيات المعلّم: إدخال البيانات والنتائج دون تعديل الهيكل الدراسي أو اعتماد النتائج.',
     },
+    pickers: {
+      term: 'الترم',
+      grade: 'الصف',
+      pickTerm: 'اختر الترم',
+      pickGrade: 'اختر الصف',
+      allGrades: 'كل الصفوف',
+    },
     examPeriodField: {
       label: 'فترة الامتحان',
       placeholder: 'اختر فترة الامتحان',
@@ -121,7 +135,7 @@ export const schoolText: Dict<{
       examPeriods: 'Exam periods',
       students: 'Students',
       results: 'Results',
-      imports: 'Imports',
+      imports: 'Upload results',
       reports: 'Reports',
       staff: 'Staff accounts',
       profile: 'My profile',
@@ -166,6 +180,13 @@ export const schoolText: Dict<{
         'Add and enroll students, enter results, run imports, view reports. Cannot edit the academic structure or approve results.',
       'school-data-entry':
         'The same as a teacher: enter students and results, without editing structure or approving results.',
+    },
+    pickers: {
+      term: 'Term',
+      grade: 'Grade',
+      pickTerm: 'Choose a term',
+      pickGrade: 'Choose a grade',
+      allGrades: 'All grades',
     },
     examPeriodField: {
       label: 'Exam period',

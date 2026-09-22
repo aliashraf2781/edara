@@ -1,24 +1,23 @@
 import { Link } from 'react-router'
 import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
-import { Field } from '~/ui/field'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
-import { Select } from '~/ui/select'
-import { useYearOptions } from '../../api/use-options'
 import { useSchoolSession } from '../../auth/session-context'
-import { ExamPeriodField } from '../../components/exam-period-field'
+import { DEFAULT_TERM_ID } from '../../components/curriculum-options'
+import { TermField } from '../../components/term-grade-fields'
 import { reportsText } from '../reports/reports.i18n'
 import { SummaryPanel } from '../reports/summary-panel'
 
-const DEFAULTS = { year: '', examPeriod: '' } as const
+// Temporary: the term replaces the academic year and exam period pickers, and
+// it always holds a value so the landing screen never opens empty.
+const DEFAULTS = { term: DEFAULT_TERM_ID } as const
 
-/** The landing screen is the reports summary, without the per-grade table. */
+/** The landing screen is the reports summary, with the per-grade pass rates. */
 export function DashboardScreen() {
   const text = useDict(reportsText)
   const { school } = useSchoolSession()
   const { values, setValue } = useTableParams(DEFAULTS)
-  const years = useYearOptions()
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,26 +34,14 @@ export function DashboardScreen() {
           </Link>
         }
       />
-      <Field label={text.year} className="max-w-xs">
-        {(props) => (
-          <Select
-            {...props}
-            value={values.year}
-            onChange={(event) => {
-              setValue('year', event.target.value)
-              setValue('examPeriod', '')
-            }}
-            options={years}
-            placeholder={text.pickYear}
-          />
-        )}
-      </Field>
-      <ExamPeriodField
-        academicYearId={values.year}
-        value={values.examPeriod}
-        onChange={(value) => setValue('examPeriod', value)}
+
+      <TermField
+        value={values.term}
+        onChange={(value) => setValue('term', value)}
+        className="max-w-xs"
       />
-      <SummaryPanel examPeriodId={values.examPeriod} showByGrade={false} />
+
+      <SummaryPanel termId={values.term} showByGrade />
     </div>
   )
 }

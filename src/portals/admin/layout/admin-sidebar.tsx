@@ -20,6 +20,9 @@ export function AdminSidebar() {
   const overview: NavItem[] = [
     { to: '/admin/schools', label: text.nav.schools, icon: 'school', permission: PERMISSION.viewTenants },
   ]
+  const results: NavItem[] = [
+    { to: '/admin/insights', label: text.nav.insights, icon: 'chart', permission: PERMISSION.viewTenants },
+  ]
   const access: NavItem[] = [
     { to: '/admin/users', label: text.nav.users, icon: 'users', permission: PERMISSION.viewGlobalUsers },
     { to: '/admin/roles', label: text.nav.roles, icon: 'shield', permission: PERMISSION.viewGlobalUsers },
@@ -35,6 +38,12 @@ export function AdminSidebar() {
     <nav aria-label={text.portal} className="flex h-full flex-col gap-5 p-3">
       <SidebarNavGroup label={text.nav.groups.overview}>
         {visible(overview).map((item) => (
+          <SidebarNavLink key={item.to} to={item.to} icon={item.icon} label={item.label} />
+        ))}
+      </SidebarNavGroup>
+
+      <SidebarNavGroup label={text.nav.groups.results}>
+        {visible(results).map((item) => (
           <SidebarNavLink key={item.to} to={item.to} icon={item.icon} label={item.label} />
         ))}
       </SidebarNavGroup>

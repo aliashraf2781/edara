@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { formatScore } from '~/lib/format'
 import { useTableParams } from '~/lib/hooks/use-table-params'
 import { useDict } from '~/lib/i18n/use-dict'
 import { Button } from '~/ui/button'
 import { DataTable, type Column } from '~/ui/data-table'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
+import { Field } from '~/ui/field'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
 import { Pagination } from '~/ui/pagination'
@@ -14,15 +14,18 @@ import { Select } from '~/ui/select'
 import { Stamp } from '~/ui/stamp'
 import { useResultList } from '../../api/results'
 import { RESULT_STATUSES, type Result } from '../../api/types'
-import { useClassroomOptions, useSubjectOptions, useYearOptions } from '../../api/use-options'
-import { ExamPeriodField } from '../../components/exam-period-field'
+import { useClassroomOptions, useSubjectOptions } from '../../api/use-options'
+import { DEFAULT_TERM_ID } from '../../components/curriculum-options'
+import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
+import { markLabel } from './mark'
 import { ResultEntryDrawer } from './result-entry-drawer'
 import { resultsText } from './results.i18n'
 import { STATUS_TONE } from './workflow'
 
 const PER_PAGE = 20
-const DEFAULTS = { year: '', examPeriod: '', classroom: '', subject: '', status: '' } as const
+// Temporary: term and grade replace the year and exam-period filters.
+const DEFAULTS = { term: DEFAULT_TERM_ID, grade: '', classroom: '', subject: '', status: '' } as const
 
 export function ResultsListScreen() {
   const text = useDict(resultsText)
@@ -31,44 +34,46 @@ export function ResultsListScreen() {
   const { values, page, setValue, setPage } = useTableParams(DEFAULTS)
   const [entering, setEntering] = useState(false)
 
-  const years = useYearOptions()
-  const classrooms = useClassroomOptions({})
-  const subjects = useSubjectOptions()
+  const classrooms = useClassroomOptions({ gradeId: values.grade || undefined })
+  const subjects = useSubjectOptions(values.grade || undefined)
 
   const list = useResultList({
     page,
     perPage: PER_PAGE,
-    examPeriodId: values.examPeriod,
+    termId: values.term,
+    gradeId: values.grade,
     classroomId: values.classroom,
     subjectId: values.subject,
     status: values.status,
   })
 
+  // Narrowing the grade invalidates whatever classroom or subject was picked.
+  const changeGrade = (value: string) => {
+    setValue('grade', value)
+    setValue('classroom', '')
+    setValue('subject', '')
+  }
+
+  const markLabels = { absent: text.absent, none: shell.common.none, qualitative: text.qualitative }
+
   const columns: readonly Column<Result>[] = [
+    { key: 'student', header: text.columns.student, cell: (row) => row.student_name },
     {
-      key: 'student',
-      header: text.columns.student,
-      cell: (row) => row.student_name ?? row.student_enrollment_id,
+      key: 'code',
+      header: text.columns.code,
+      cell: (row) => <span className="font-mono">{row.student_code}</span>,
     },
-    { key: 'subject', header: text.columns.subject, cell: (row) => row.subject_name ?? row.subject_id },
+    { key: 'subject', header: text.columns.subject, cell: (row) => row.subject_name },
     {
-      key: 'score',
-      header: text.columns.score,
+      key: 'mark',
+      header: text.columns.mark,
       numeric: true,
       cell: (row) =>
         row.is_absent ? (
           <span className="text-muted">{text.absent}</span>
-        ) : row.qualitative_rating ? (
-          text.ratings[row.qualitative_rating]
         ) : (
-          formatScore(row.score)
+          markLabel(row, markLabels)
         ),
-    },
-    {
-      key: 'max',
-      header: text.columns.maxScore,
-      numeric: true,
-      cell: (row) => (row.qualitative_rating ? '—' : row.max_score),
     },
     {
       key: 'status',
@@ -90,52 +95,50 @@ export function ResultsListScreen() {
         }
       />
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <Select
-            aria-label={text.filters.year}
-            value={values.year}
-            onChange={(event) => {
-              setValue('year', event.target.value)
-              setValue('examPeriod', '')
-            }}
-            options={years}
-            placeholder={text.filters.year}
-          />
-          <ExamPeriodField
-            academicYearId={values.year}
-            value={values.examPeriod}
-            onChange={(value) => setValue('examPeriod', value)}
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Select
-            aria-label={text.filters.classroom}
-            value={values.classroom}
-            onChange={(event) => setValue('classroom', event.target.value)}
-            options={classrooms}
-            placeholder={text.filters.classroom}
-          />
-          <Select
-            aria-label={text.filters.subject}
-            value={values.subject}
-            onChange={(event) => setValue('subject', event.target.value)}
-            options={subjects}
-            placeholder={text.filters.subject}
-          />
-          {/* A filter, not a setter: choosing a status here never changes one. */}
-          <Select
-            aria-label={text.filters.status}
-            value={values.status}
-            onChange={(event) => setValue('status', event.target.value)}
-            options={RESULT_STATUSES.map((status) => ({
-              value: status,
-              label: text.statuses[status],
-            }))}
-            placeholder={text.filters.anyStatus}
-          />
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <TermField value={values.term} onChange={(value) => setValue('term', value)} />
+        <GradeField
+          value={values.grade}
+          onChange={changeGrade}
+          placeholder={shell.pickers.allGrades}
+        />
+        <Field label={text.filters.classroom}>
+          {(props) => (
+            <Select
+              {...props}
+              value={values.classroom}
+              onChange={(event) => setValue('classroom', event.target.value)}
+              options={classrooms}
+              placeholder={text.filters.anyClassroom}
+            />
+          )}
+        </Field>
+        <Field label={text.filters.subject}>
+          {(props) => (
+            <Select
+              {...props}
+              value={values.subject}
+              onChange={(event) => setValue('subject', event.target.value)}
+              options={subjects}
+              placeholder={text.filters.anySubject}
+            />
+          )}
+        </Field>
+        {/* A filter, not a setter: choosing a status here never changes one. */}
+        <Field label={text.filters.status}>
+          {(props) => (
+            <Select
+              {...props}
+              value={values.status}
+              onChange={(event) => setValue('status', event.target.value)}
+              options={RESULT_STATUSES.map((status) => ({
+                value: status,
+                label: text.statuses[status],
+              }))}
+              placeholder={text.filters.anyStatus}
+            />
+          )}
+        </Field>
       </div>
 
       {list.isError ? (

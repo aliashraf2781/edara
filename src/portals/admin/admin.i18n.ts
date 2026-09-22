@@ -4,12 +4,13 @@ export const adminText: Dict<{
   portal: string
   nav: {
     schools: string
+    insights: string
     users: string
     roles: string
     audit: string
     profile: string
     comingSoon: string
-    groups: { overview: string; access: string; account: string }
+    groups: { overview: string; results: string; access: string; account: string }
   }
   header: { signOut: string; theme: string; language: string; menu: string }
   guard: { loading: string; signedOut: string; noAccess: string }
@@ -29,12 +30,18 @@ export const adminText: Dict<{
     portal: 'إدارة المنصة',
     nav: {
       schools: 'المدارس',
+      insights: 'نتائج المدارس',
       users: 'مستخدمين المنصة',
       roles: 'الأدوار',
       audit: 'سجل التدقيق',
       profile: 'حسابي',
       comingSoon: 'قريبًا',
-      groups: { overview: 'نظرة عامة', access: 'الوصول والصلاحيات', account: 'الحساب' },
+      groups: {
+        overview: 'نظرة عامة',
+        results: 'النتائج والإحصاءات',
+        access: 'الوصول والصلاحيات',
+        account: 'الحساب',
+      },
     },
     header: { signOut: 'تسجيل الخروج', theme: 'المظهر', language: 'اللغة', menu: 'القائمة' },
     guard: {
@@ -62,12 +69,18 @@ export const adminText: Dict<{
     portal: 'Platform administration',
     nav: {
       schools: 'Schools',
+      insights: 'School results',
       users: 'Global users',
       roles: 'Roles',
       audit: 'Audit log',
       profile: 'My profile',
       comingSoon: 'Coming soon',
-      groups: { overview: 'Overview', access: 'Access control', account: 'Account' },
+      groups: {
+        overview: 'Overview',
+        results: 'Results & statistics',
+        access: 'Access control',
+        account: 'Account',
+      },
     },
     header: { signOut: 'Sign out', theme: 'Theme', language: 'Language', menu: 'Menu' },
     guard: {

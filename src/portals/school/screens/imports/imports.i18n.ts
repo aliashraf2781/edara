@@ -4,31 +4,29 @@ import type { GradingType, ImportErrorCode } from '../../api/types'
 export const importsText: Dict<{
   title: string
   description: string
+  chooseTitle: string
+  howTitle: string
+  howSteps: readonly string[]
+  columnsTitle: string
+  columnsHint: string
+  columnHeaders: { order: string; subject: string; gradingType: string; max: string; pass: string }
+  gradingTypes: Record<GradingType, string>
+  download: string
+  downloadingRoster: string
+  downloaded: string
+  pickBoth: string
+  rosterEmpty: string
+  studentCount: (count: number) => string
   uploadTitle: string
+  uploadHint: string
   file: string
   fileHint: string
-  year: string
-  preview: string
-  previewing: string
-  mappingTitle: string
-  mappingHint: string
-  sheetLabel: string
-  sheetSubject: string
-  gradingType: string
-  columns: string
-  mapTo: string
-  skip: string
-  unmatched: string
-  noSubjectsForType: string
-  confirm: string
-  confirming: string
-  back: string
-  startOver: string
-  previewRowsTitle: string
-  gradingTypes: Record<GradingType, string>
+  upload: string
+  uploading: string
+  noFile: string
+  successBanner: (students: number, marks: number) => string
+  partialBanner: (valid: number, total: number, invalid: number) => string
   summaryTitle: string
-  summary: (valid: number, total: number, invalid: number) => string
-  allImported: (valid: number, total: number) => string
   importedResultsHint: (count: number) => string
   stats: { total: string; valid: string; invalid: string; imported: string }
   errorsTitle: string
@@ -36,47 +34,67 @@ export const importsText: Dict<{
   showPayload: string
   hidePayload: string
   errorLabels: Record<ImportErrorCode, string>
-  historyBody: string
-  noFile: string
-  needMapping: string
+  startOver: string
+  historyTitle: string
+  historyEmpty: string
+  historyColumns: {
+    file: string
+    grade: string
+    term: string
+    students: string
+    imported: string
+    errors: string
+    date: string
+  }
 }> = {
   ar: {
-    title: 'استيراد النتائج',
+    title: 'رفع النتائج',
     description:
-      'ارفع كشف المدرسة كما هو — راجع مطابقة الأعمدة بالمواد ثم أكّد الاستيراد. الصفوف الصحيحة تُسجَّل حتى لو احتاج غيرها تصحيحًا.',
-    uploadTitle: 'رفع الكشف',
-    file: 'ملف الكشف',
-    fileHint: 'xlsx أو xls أو csv، بحد أقصى ١٠ ميجابايت. شكل الأعمدة يختلف من صف لآخر — لا يوجد نموذج ثابت.',
-    year: 'العام الدراسي',
-    preview: 'معاينة المطابقة',
-    previewing: 'جارٍ قراءة الكشف',
-    mappingTitle: 'تأكيد مطابقة المواد',
-    mappingHint:
-      'راجع كل مادة في الكشف واختر المادة المقابلة في النظام، أو اتركها بلا مطابقة لتخطيها. لا تتخطَّ هذه الخطوة حتى لو بدت الاقتراحات صحيحة.',
-    sheetLabel: 'ورقة الكشف',
-    sheetSubject: 'اسم المادة في الكشف',
-    gradingType: 'نوع التقييم',
-    columns: 'الأعمدة',
-    mapTo: 'المادة في النظام',
-    skip: 'تخطي هذه المادة',
-    unmatched: 'لم تُقترح مطابقة — اختر يدويًا أو أنشئ المادة أولًا',
-    noSubjectsForType: 'لا توجد مواد بهذا النوع في الهيكل الدراسي',
-    confirm: 'تأكيد الاستيراد',
-    confirming: 'جارٍ الاستيراد',
-    back: 'تعديل الملف',
-    startOver: 'استيراد ملف آخر',
-    previewRowsTitle: 'عينة من صفوف الكشف',
-    gradingTypes: { numeric: 'بالدرجات', qualitative: 'وصفي' },
-    summaryTitle: 'نتيجة الاستيراد',
-    summary: (valid, total, invalid) =>
-      `تم استيراد ${valid} من ${total} طالبًا. ${invalid} يحتاجون متابعة أدناه.`,
-    allImported: (valid, total) => `تم استيراد ${valid} من ${total} طالبًا دون أخطاء.`,
-    importedResultsHint: (count) => `${count} نتيجة مادة فردية سُجِّلت كمسودات.`,
+      'نزّل قالب الصف جاهزًا بأسماء الطلاب وأعمدة المواد، املأ الدرجات، ثم ارفع الملف نفسه. لا حاجة لمطابقة أعمدة.',
+    chooseTitle: 'الخطوة ١ — اختر الترم والصف',
+    howTitle: 'كيف تسير العملية',
+    howSteps: [
+      'اختر الترم والصف من القائمتين أعلاه.',
+      'نزّل قالب النتائج — يفتح بأسماء طلاب الصف وأعمدة المواد الثلاث عشرة.',
+      'اكتب الدرجة من ١٠٠ في مواد الدرجات، و«اجتياز» أو «لم يجتز» في مواد الاجتياز. لا تغيّر أسماء الأعمدة ولا كود الطالب.',
+      'ارفع الملف نفسه في الخطوة الثانية، وستظهر نتيجة الرفع فورًا.',
+    ],
+    columnsTitle: 'أعمدة القالب',
+    columnsHint:
+      'هذه هي أعمدة المواد التي سيحتويها الملف، بالترتيب المطبوع. الأعمدة الأربعة الأولى (م، كود الطالب، اسم الطالب، الفصل) تأتي مملوءة.',
+    columnHeaders: {
+      order: 'م',
+      subject: 'المادة',
+      gradingType: 'نوع التقييم',
+      max: 'الدرجة النهائية',
+      pass: 'درجة النجاح',
+    },
+    gradingTypes: { numeric: 'درجات', qualitative: 'اجتياز / لم يجتز' },
+    download: 'تنزيل قالب النتائج (Excel)',
+    downloadingRoster: 'جارٍ تجهيز كشف الصف',
+    downloaded: 'تم تنزيل القالب.',
+    pickBoth: 'اختر الترم والصف أولًا لتفعيل التنزيل.',
+    rosterEmpty: 'لا يوجد طلاب مقيّدون في هذا الصف.',
+    studentCount: (count) => `${count} طالبًا في هذا الصف.`,
+    uploadTitle: 'الخطوة ٢ — ارفع الملف بعد ملئه',
+    uploadHint:
+      'ارفع القالب نفسه بعد تعبئته. رفع القالب كما نُزِّل دون تعديل يُسجَّل بنجاح أيضًا.',
+    file: 'ملف النتائج',
+    fileHint: 'xlsx أو xls أو csv، بحد أقصى ١٠ ميجابايت.',
+    upload: 'رفع النتائج',
+    uploading: 'جارٍ رفع النتائج',
+    noFile: 'اختر ملفًا أولًا.',
+    successBanner: (students, marks) =>
+      `تم رفع نتائج ${students} طالبًا، وتسجيل ${marks} درجة. لا توجد أخطاء.`,
+    partialBanner: (valid, total, invalid) =>
+      `تم رفع نتائج ${valid} من ${total} طالبًا. ${invalid} يحتاجون تصحيحًا أدناه.`,
+    summaryTitle: 'نتيجة الرفع',
+    importedResultsHint: (count) => `${count} درجة مادة فردية سُجِّلت ونُشرت.`,
     stats: {
       total: 'إجمالي الطلاب',
       valid: 'طلاب بلا أخطاء',
-      invalid: 'طلاب يحتاجون متابعة',
-      imported: 'نتائج مستوردة',
+      invalid: 'طلاب يحتاجون تصحيحًا',
+      imported: 'درجات مسجَّلة',
     },
     errorsTitle: 'الصفوف التي تحتاج تصحيحًا',
     errorColumns: { row: 'رقم الصف', code: 'نوع الخطأ', message: 'التفاصيل', payload: 'بيانات الصف' },
@@ -85,51 +103,71 @@ export const importsText: Dict<{
     errorLabels: {
       duplicate_row: 'صف مكرر داخل الملف',
       unknown_student: 'كود الطالب غير موجود',
-      not_enrolled: 'الطالب غير مسجَّل في العام الدراسي المختار',
-      invalid_score: 'درجة غير صالحة وليست علامة غياب',
-      invalid_rating: 'تقييم وصفي غير معروف',
+      not_enrolled: 'الطالب غير مقيّد بهذا الصف',
+      invalid_score: 'درجة غير صالحة',
+      invalid_rating: 'تقدير غير معروف',
     },
-    historyBody: 'لا توفّر الواجهة البرمجية قائمة بكل عمليات الاستيراد، لذا يُعرض تقرير هذه العملية فقط.',
-    noFile: 'اختر ملفًا أولًا.',
-    needMapping: 'طابق مادة واحدة على الأقل قبل التأكيد.',
+    startOver: 'رفع ملف آخر',
+    historyTitle: 'آخر عمليات الرفع',
+    historyEmpty: 'لم تُرفع أي نتائج بعد.',
+    historyColumns: {
+      file: 'الملف',
+      grade: 'الصف',
+      term: 'الترم',
+      students: 'الطلاب',
+      imported: 'درجات مسجَّلة',
+      errors: 'أخطاء',
+      date: 'التاريخ',
+    },
   },
   en: {
-    title: 'Import results',
+    title: 'Upload results',
     description:
-      'Upload the school’s own mark sheet as-is — review column-to-subject mapping, then confirm. Valid students are imported even when others need attention.',
-    uploadTitle: 'Upload a sheet',
-    file: 'Mark sheet',
-    fileHint: 'xlsx, xls or csv, 10 MB maximum. Column layout varies — there is no fixed template.',
-    year: 'Academic year',
-    preview: 'Preview mapping',
-    previewing: 'Reading the sheet',
-    mappingTitle: 'Confirm subject mapping',
-    mappingHint:
-      'Review every subject found in the sheet and pick the matching system subject, or leave it unmapped to skip it. Always review — never skip this step even when every suggestion looks right.',
-    sheetLabel: 'Sheet',
-    sheetSubject: 'Name on the sheet',
-    gradingType: 'Grading type',
-    columns: 'Columns',
-    mapTo: 'System subject',
-    skip: 'Skip this subject',
-    unmatched: 'No suggestion — pick manually or create the subject first',
-    noSubjectsForType: 'No subjects of this grading type exist yet',
-    confirm: 'Confirm import',
-    confirming: 'Importing',
-    back: 'Change file',
-    startOver: 'Import another file',
-    previewRowsTitle: 'Sample rows from the sheet',
-    gradingTypes: { numeric: 'Numeric', qualitative: 'Qualitative' },
-    summaryTitle: 'Import result',
-    summary: (valid, total, invalid) =>
-      `${valid} of ${total} students imported. ${invalid} need attention below.`,
-    allImported: (valid, total) => `${valid} of ${total} students imported with no errors.`,
-    importedResultsHint: (count) => `${count} individual subject results were saved as drafts.`,
+      'Download the grade’s template — it arrives filled with the roster and the subject columns — enter the marks, then upload the same file back. No column mapping.',
+    chooseTitle: 'Step 1 — choose the term and grade',
+    howTitle: 'How this works',
+    howSteps: [
+      'Pick the term and the grade above.',
+      'Download the results template: it opens with this grade’s students and all thirteen subject columns.',
+      'Enter a mark out of 100 for the graded subjects, and “اجتياز” or “لم يجتز” for the pass/fail ones. Do not rename the columns or edit a student code.',
+      'Upload that same file in step 2 — the result appears straight away.',
+    ],
+    columnsTitle: 'Template columns',
+    columnsHint:
+      'These are the subject columns the sheet carries, in printed order. The first four columns (serial, student code, name, classroom) come pre-filled.',
+    columnHeaders: {
+      order: '#',
+      subject: 'Subject',
+      gradingType: 'Grading',
+      max: 'Out of',
+      pass: 'Pass mark',
+    },
+    gradingTypes: { numeric: 'Marks', qualitative: 'Pass / fail' },
+    download: 'Download the results template (Excel)',
+    downloadingRoster: 'Preparing the grade roster',
+    downloaded: 'Template downloaded.',
+    pickBoth: 'Choose a term and a grade to enable the download.',
+    rosterEmpty: 'No students are enrolled in this grade.',
+    studentCount: (count) => `${count} students in this grade.`,
+    uploadTitle: 'Step 2 — upload the filled sheet',
+    uploadHint:
+      'Upload the same template once it is filled in. Uploading it back exactly as downloaded also succeeds.',
+    file: 'Results file',
+    fileHint: 'xlsx, xls or csv, 10 MB maximum.',
+    upload: 'Upload results',
+    uploading: 'Uploading results',
+    noFile: 'Choose a file first.',
+    successBanner: (students, marks) =>
+      `${students} students uploaded and ${marks} marks recorded, with no errors.`,
+    partialBanner: (valid, total, invalid) =>
+      `${valid} of ${total} students uploaded. ${invalid} need correcting below.`,
+    summaryTitle: 'Upload result',
+    importedResultsHint: (count) => `${count} individual subject marks were recorded and published.`,
     stats: {
       total: 'Students in sheet',
       valid: 'Students with no errors',
-      invalid: 'Students needing attention',
-      imported: 'Subject results imported',
+      invalid: 'Students needing correction',
+      imported: 'Marks recorded',
     },
     errorsTitle: 'Rows that need correction',
     errorColumns: { row: 'Row', code: 'Problem', message: 'Details', payload: 'Row data' },
@@ -138,13 +176,21 @@ export const importsText: Dict<{
     errorLabels: {
       duplicate_row: 'Duplicate row in this file',
       unknown_student: 'Student code not found',
-      not_enrolled: 'Student not enrolled for the selected academic year',
-      invalid_score: 'Score is not a number or a recognised absence marker',
-      invalid_rating: 'Unrecognised qualitative rating text',
+      not_enrolled: 'Student is not enrolled in this grade',
+      invalid_score: 'Score is not a usable mark',
+      invalid_rating: 'Unrecognised pass/fail text',
     },
-    historyBody:
-      'The API has no endpoint that lists every import, so only this run’s report is shown here.',
-    noFile: 'Choose a file first.',
-    needMapping: 'Map at least one subject before confirming.',
+    startOver: 'Upload another file',
+    historyTitle: 'Recent uploads',
+    historyEmpty: 'Nothing has been uploaded yet.',
+    historyColumns: {
+      file: 'File',
+      grade: 'Grade',
+      term: 'Term',
+      students: 'Students',
+      imported: 'Marks recorded',
+      errors: 'Errors',
+      date: 'Date',
+    },
   },
 }

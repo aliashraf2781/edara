@@ -100,3 +100,163 @@ export type AuthTokens = {
   refreshToken: string
   refreshExpiresIn: number
 }
+
+/* ------------------------------------------------- management: curriculum */
+
+export type GradingType = 'numeric' | 'qualitative'
+
+/** The four column groups printed across the official extract, in order. */
+export type SubjectGroup = 'pass_fail' | 'formative' | 'attendance' | 'blank'
+
+export type ReferenceGrade = { id: string; code: string; name: string; level: number }
+export type ReferenceTerm = { id: string; code: string; name: string; term: number }
+
+export type ReferenceClassroom = {
+  id: string
+  grade_id: string
+  academic_year_id: string
+  code: string
+  name: string
+  capacity: number
+}
+
+export type ReferenceSubject = {
+  id: string
+  grade_id: string
+  educational_stage_id: string
+  code: string
+  name: string
+  grading_type: GradingType
+  max_score: number | null
+  pass_score: number | null
+  group: SubjectGroup
+}
+
+/** Grades, terms, classrooms and subjects — everything the filters need. */
+export type AdminReference = {
+  grades: ReferenceGrade[]
+  terms: ReferenceTerm[]
+  classrooms: ReferenceClassroom[]
+  subjects: ReferenceSubject[]
+}
+
+/* ----------------------------------------------------- management: figures */
+
+export type GradeStat = {
+  grade_id: string
+  grade_name: string
+  students: number
+  total: number
+  passed: number
+  average: number
+}
+
+export type SubjectStat = {
+  subject_id: string
+  subject_name: string
+  grading_type: GradingType
+  total: number
+  passed: number
+  average: number
+}
+
+/** `passRate` and `average` are fractions/means, not formatted percentages. */
+export type SchoolStats = {
+  code: string
+  name: string
+  students: number
+  results: number
+  passed: number
+  passRate: number
+  average: number
+  byGrade: GradeStat[]
+  bySubject: SubjectStat[]
+}
+
+export type ResultStatus =
+  | 'draft'
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'published'
+
+export type SchoolStudentRow = {
+  id: string
+  student_code: string
+  seat_no: string
+  name: string
+  gender: 'male' | 'female'
+  grade_id: string
+  grade_name: string
+  classroom_id: string
+  classroom_name: string
+}
+
+export type SchoolResultRow = {
+  id: string
+  student_id: string
+  student_code: string
+  student_name: string
+  grade_id: string
+  grade_name: string
+  classroom_name: string
+  subject_id: string
+  subject_name: string
+  grading_type: GradingType
+  term_id: string
+  term_name: string
+  score: number | null
+  max_score: number | null
+  pass_score: number | null
+  qualitative_rating: string | null
+  is_absent: boolean
+  status: ResultStatus
+  passed: boolean
+}
+
+export type StudentTermSubject = {
+  subject_id: string
+  subject_name: string
+  grading_type: GradingType
+  score: number | null
+  max_score: number | null
+  pass_score: number | null
+  qualitative_rating: string | null
+  is_absent: boolean
+  passed: boolean
+}
+
+export type StudentTermStats = {
+  term_id: string
+  term_name: string
+  total: number
+  out_of: number
+  passed: number
+  average: number
+  percent: number
+  verdict: 'passed' | 'failed'
+  subjects: StudentTermSubject[]
+}
+
+export type StudentRecord = {
+  id: string
+  student_code: string
+  seat_no: string
+  national_id: string
+  first_name: string
+  father_name: string
+  family_name: string
+  gender: 'male' | 'female'
+  birth_date: string
+  grade_id: string
+  classroom_id: string
+}
+
+export type StudentDetail = {
+  student: StudentRecord
+  grade_name: string
+  classroom_name: string
+  terms: StudentTermStats[]
+  school: { code: string; name: string; directorate: string; governorate: string | null }
+}

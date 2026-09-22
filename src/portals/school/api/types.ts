@@ -1,3 +1,5 @@
+import type { CurriculumSubject } from '~/mocks/curriculum'
+
 export type SchoolUserStatus = 'active' | 'suspended'
 
 export type SchoolUser = {
@@ -142,17 +144,26 @@ export type QualitativeRating = (typeof QUALITATIVE_RATINGS)[number]
 export type Result = {
   id: string
   student_enrollment_id: string
+  student_id: string
+  student_code: string
+  student_name: string
+  grade_id: string
+  classroom_id: string
   subject_id: string
+  subject_name: string
+  grading_type: GradingType
+  term_id: string
   exam_period_id: string
   /** Null when the subject is qualitative — see `qualitative_rating`. */
   score: number | null
   max_score: number | null
+  pass_score: number | null
   qualitative_rating: QualitativeRating | null
   is_absent: boolean
   status: ResultStatus
   reason: string | null
-  student_name?: string
-  subject_name?: string
+  /** The server's verdict: the 70-mark subject and the qualitative ones differ. */
+  passed: boolean
   transitions?: ResultTransition[]
 }
 
@@ -173,47 +184,36 @@ export type ImportRowError = {
 export type ImportReport = {
   id: string
   status: string
+  file_name: string
+  grade_id: string
+  term_id: string
+  created_at: string
   /** Student rows in the sheet. */
   total_rows: number
-  /** Students whose mapped subjects all imported cleanly. */
+  /** Students whose every filled subject column imported cleanly. */
   valid_rows: number
-  /** Students with at least one mapped-subject failure. */
+  /** Students with at least one unusable cell. */
   invalid_rows: number
   /** Individual subject results written — not student count. */
   imported_rows: number
   errors: ImportRowError[]
 }
 
-/** One subject block the sheet parser found. Field names match the preview envelope (camelCase). */
-export type ImportPreviewSubject = {
-  sheetIndex: number
-  sheetName: string
-  gradingType: GradingType
-  /** Column letter → component label (اعمال / نصف العام / اجمالي …). */
-  columns: Record<string, string>
-  /** Pre-filled suggestion only — null when nothing matched by name. */
-  suggestedSubjectId: string | number | null
-  suggestedSubjectName: string | null
+/** Everything the upload screen needs to build one grade's template. */
+export type RosterStudent = {
+  serial: number
+  id: string
+  student_code: string
+  seat_no: string
+  name: string
+  classroom: string
 }
 
-export type ImportPreview = {
-  resultImportId: string | number
-  sheet: string
-  idColumns: {
-    serial?: string
-    student_code?: string
-    student_name?: string
-    classroom?: string
-  }
-  subjects: ImportPreviewSubject[]
-  /** A handful of raw data rows for the mapping UI. */
-  previewRows: Record<string, string>[]
-}
-
-/** Confirm body — integers only. Never round-trip column letters or Arabic labels. */
-export type ImportSubjectMapping = {
-  sheet_index: number
-  subject_id: number | string
+export type Roster = {
+  school: { code: string; name: string; directorate: string; governorate: string }
+  grade: { id: string; name: string; level: number }
+  subjects: CurriculumSubject[]
+  students: RosterStudent[]
 }
 
 export type ReportSummary = {

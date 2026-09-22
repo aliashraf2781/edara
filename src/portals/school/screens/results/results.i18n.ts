@@ -1,14 +1,26 @@
 import type { Dict } from '~/lib/i18n/locales'
+import { FAILED_LABEL, PASSED_LABEL } from '~/mocks/curriculum'
 import type { QualitativeRating, ResultStatus } from '../../api/types'
 
 export const resultsText: Dict<{
   title: string
   description: string
   newResult: string
-  filters: { year: string; classroom: string; subject: string; status: string; anyStatus: string }
+  filters: {
+    term: string
+    grade: string
+    classroom: string
+    subject: string
+    status: string
+    anyStatus: string
+    anyClassroom: string
+    anySubject: string
+  }
   columns: {
     student: string
+    code: string
     subject: string
+    mark: string
     score: string
     maxScore: string
     status: string
@@ -16,6 +28,10 @@ export const resultsText: Dict<{
   statuses: Record<ResultStatus, string>
   actions: Record<ResultStatus, string>
   ratings: Record<QualitativeRating, string>
+  /** The two words a pass/fail subject may carry — the sheet's own vocabulary. */
+  qualitative: { passed: string; failed: string }
+  gradingTypeLabel: string
+  gradingTypes: { numeric: string; qualitative: string }
   absent: string
   entryTitle: string
   entryDescription: string
@@ -23,7 +39,6 @@ export const resultsText: Dict<{
   fields: {
     enrollment: string
     enrollmentHint: string
-    academicYear: string
     subject: string
     score: string
     maxScore: string
@@ -44,18 +59,23 @@ export const resultsText: Dict<{
 }> = {
   ar: {
     title: 'النتائج',
-    description: 'إدخال الدرجات ومتابعتها عبر مراحل المراجعة حتى النشر.',
+    description: 'مراجعة درجات الترم ومتابعتها عبر مراحل الاعتماد حتى النشر.',
     newResult: 'إدخال درجة',
     filters: {
-      year: 'العام الدراسي',
+      term: 'الترم',
+      grade: 'الصف',
       classroom: 'الفصل',
       subject: 'المادة',
       status: 'الحالة',
       anyStatus: 'كل الحالات',
+      anyClassroom: 'كل الفصول',
+      anySubject: 'كل المواد',
     },
     columns: {
       student: 'الطالب',
+      code: 'كود الطالب',
       subject: 'المادة',
+      mark: 'النتيجة',
       score: 'الدرجة',
       maxScore: 'من',
       status: 'الحالة',
@@ -77,19 +97,21 @@ export const resultsText: Dict<{
       published: 'نشر',
     },
     ratings: {
-      exceeds_expectations: 'يتجاوز التوقعات',
+      exceeds_expectations: 'يفوق التوقعات',
       meets_expectations: 'يحقق التوقعات',
       sometimes_meets_expectations: 'يحقق التوقعات أحيانًا',
-      below_expectations: 'دون التوقعات',
+      below_expectations: 'أقل من التوقعات',
     },
+    qualitative: { passed: PASSED_LABEL, failed: FAILED_LABEL },
+    gradingTypeLabel: 'نوع التقييم',
+    gradingTypes: { numeric: 'درجات', qualitative: 'اجتياز / لم يجتز' },
     absent: 'غائب',
     entryTitle: 'إدخال درجة',
     entryDescription: 'تُحفظ الدرجة كمسودة، ثم تمر بمراحل المراجعة.',
-    upsertNotice: 'إدخال نفس الطالب والمادة وفترة الامتحان يعدّل المسودة الموجودة ولا يُنشئ سجلًا جديدًا.',
+    upsertNotice: 'إدخال نفس الطالب والمادة والترم يعدّل المسودة الموجودة ولا يُنشئ سجلًا جديدًا.',
     fields: {
       enrollment: 'معرّف القيد الدراسي',
       enrollmentHint: 'من صفحة الطالب، تبويب القيود الدراسية.',
-      academicYear: 'العام الدراسي',
       subject: 'المادة',
       score: 'الدرجة',
       maxScore: 'الدرجة العظمى',
@@ -98,7 +120,7 @@ export const resultsText: Dict<{
     },
     saved: 'تم حفظ الدرجة كمسودة.',
     emptyTitle: 'لا نتائج',
-    emptyBody: 'أدخل أول درجة، أو استورد كشفًا من شاشة الاستيراد.',
+    emptyBody: 'ارفع كشف النتائج من شاشة رفع النتائج، أو أدخل درجة يدويًا.',
     detailTitle: 'تفاصيل النتيجة',
     timeline: 'سجل الحالات',
     timelineEmpty: 'لم تتغير حالة هذه النتيجة بعد.',
@@ -110,16 +132,27 @@ export const resultsText: Dict<{
   },
   en: {
     title: 'Results',
-    description: 'Enter marks and move them through review until they are published.',
+    description: 'Review a term’s marks and move them through approval until they are published.',
     newResult: 'Enter a mark',
     filters: {
-      year: 'Academic year',
+      term: 'Term',
+      grade: 'Grade',
       classroom: 'Classroom',
       subject: 'Subject',
       status: 'Status',
       anyStatus: 'Any status',
+      anyClassroom: 'All classrooms',
+      anySubject: 'All subjects',
     },
-    columns: { student: 'Student', subject: 'Subject', score: 'Score', maxScore: 'Out of', status: 'Status' },
+    columns: {
+      student: 'Student',
+      code: 'Student code',
+      subject: 'Subject',
+      mark: 'Result',
+      score: 'Score',
+      maxScore: 'Out of',
+      status: 'Status',
+    },
     statuses: {
       draft: 'Draft',
       submitted: 'Submitted',
@@ -142,15 +175,17 @@ export const resultsText: Dict<{
       sometimes_meets_expectations: 'Sometimes meets expectations',
       below_expectations: 'Below expectations',
     },
+    qualitative: { passed: 'Passed', failed: 'Not passed' },
+    gradingTypeLabel: 'Grading',
+    gradingTypes: { numeric: 'Marks', qualitative: 'Pass / fail' },
     absent: 'Absent',
     entryTitle: 'Enter a mark',
     entryDescription: 'The mark is saved as a draft, then moves through review.',
     upsertNotice:
-      'Entering the same student, subject and exam period again edits the existing draft — it does not create a second record.',
+      'Entering the same student, subject and term again edits the existing draft — it does not create a second record.',
     fields: {
       enrollment: 'Enrollment ID',
       enrollmentHint: 'From the student’s page, under enrollment history.',
-      academicYear: 'Academic year',
       subject: 'Subject',
       score: 'Score',
       maxScore: 'Maximum score',
@@ -159,7 +194,7 @@ export const resultsText: Dict<{
     },
     saved: 'Mark saved as a draft.',
     emptyTitle: 'No results',
-    emptyBody: 'Enter the first mark, or bring in a sheet from the Imports screen.',
+    emptyBody: 'Upload a results sheet from the upload screen, or enter a mark by hand.',
     detailTitle: 'Result details',
     timeline: 'Status history',
     timelineEmpty: 'This result has not changed status yet.',

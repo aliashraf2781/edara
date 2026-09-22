@@ -16,8 +16,9 @@ import { NumeralInput } from '~/ui/text-input'
 import { useToast } from '~/ui/toast'
 import { useSaveResult } from '../../api/results'
 import { QUALITATIVE_RATINGS, type QualitativeRating } from '../../api/types'
-import { useSubjectOptions, useSubjects, useYearOptions } from '../../api/use-options'
-import { ExamPeriodField } from '../../components/exam-period-field'
+import { useSubjectOptions, useSubjects } from '../../api/use-options'
+import { DEFAULT_TERM_ID } from '../../components/curriculum-options'
+import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { resultsText } from './results.i18n'
 
@@ -32,6 +33,9 @@ const FIELDS = [
 ] as const
 
 /**
+ * Temporary: the term stands in for the exam period, which the endpoint still
+ * names `exam_period_id`.
+ *
  * Only the fields whose shape never depends on the selected subject. Whether
  * score/max_score or qualitative_rating is actually required depends on the
  * subject's grading type, which is checked by hand in `onSubmit` instead of
@@ -59,19 +63,18 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
   const v = useDict(validationText)
   const { notify } = useToast()
   const saveResult = useSaveResult()
-  const subjects = useSubjectOptions()
-  const subjectList = useSubjects()
-  const years = useYearOptions()
   const [formMessage, setFormMessage] = useState<string | null>(null)
-  // Scopes the exam-period picker only — the saved result carries no year field.
-  const [yearId, setYearId] = useState('')
+  // Scopes the subject picker only — the saved result carries no grade field.
+  const [gradeId, setGradeId] = useState('')
+  const subjects = useSubjectOptions(gradeId || undefined)
+  const subjectList = useSubjects(gradeId || undefined)
 
   const form = useForm<ResultForm>({
     resolver: zodResolver(makeSchema(v)),
     defaultValues: {
       student_enrollment_id: '',
       subject_id: '',
-      exam_period_id: '',
+      exam_period_id: DEFAULT_TERM_ID,
       score: '',
       max_score: '100',
       qualitative_rating: '',
@@ -80,7 +83,7 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
   })
 
   const isAbsent = useWatch({ control: form.control, name: 'is_absent' })
-  const examPeriodId = useWatch({ control: form.control, name: 'exam_period_id' })
+  const termId = useWatch({ control: form.control, name: 'exam_period_id' })
   const subjectId = useWatch({ control: form.control, name: 'subject_id' })
 
   const selectedSubject = subjectList.data?.find((subject) => subject.id === subjectId)
@@ -125,7 +128,7 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
       })
       notify('success', text.saved)
       form.reset()
-      setYearId('')
+      setGradeId('')
       onClose()
     } catch (error) {
       const failure = applyFieldErrors(error, form.setError, FIELDS, shell.error.title)
@@ -170,14 +173,23 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
           {(props) => <NumeralInput {...props} {...form.register('student_enrollment_id')} />}
         </Field>
 
+        <GradeField
+          value={gradeId}
+          onChange={(value) => {
+            setGradeId(value)
+            form.setValue('subject_id', '', { shouldValidate: true })
+          }}
+          placeholder={shell.pickers.pickGrade}
+        />
+
         <Field label={text.fields.subject} error={errors.subject_id?.message} required>
           {(props) => (
             <Select {...props} {...form.register('subject_id')} options={subjects} placeholder={shell.common.none} />
           )}
         </Field>
 
-        <ExamPeriodField
-          value={examPeriodId}
+        <TermField
+          value={termId}
           onChange={(value) => form.setValue('exam_period_id', value, { shouldValidate: true })}
           error={errors.exam_period_id?.message}
           required
@@ -211,3 +223,6 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
           </>
         )}
       </form>
+    </Drawer>
+  )
+}

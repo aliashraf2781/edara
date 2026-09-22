@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useDict } from '~/lib/i18n/use-dict'
+import { Button } from '~/ui/button'
 import { ErrorState } from '~/ui/error-state'
+import { Icon } from '~/ui/icon'
 import { NoAccess } from '~/ui/no-access'
 import { PageHeader } from '~/ui/page-header'
 import { Spinner } from '~/ui/spinner'
@@ -14,6 +16,7 @@ import { DangerTab } from './danger-tab'
 import { OfficersTab } from './officers-tab'
 import { OverviewTab } from './overview-tab'
 import { ProvisionPanel } from './provision-panel'
+import { resultsText } from '../results/results.i18n'
 import { schoolFormText } from './school-detail.i18n'
 import { schoolsText } from './schools.i18n'
 import { ProvisioningStamp, TenantStatusStamp } from './tenant-stamps'
@@ -23,8 +26,10 @@ type TabId = 'overview' | 'officers' | 'danger'
 export function SchoolDetailScreen() {
   const text = useDict(schoolFormText)
   const labels = useDict(schoolsText)
+  const results = useDict(resultsText)
   const shell = useDict(adminText)
   const { can } = useAdminSession()
+  const navigate = useNavigate()
   const code = useParams().code ?? ''
   const [tab, setTab] = useState<TabId>('overview')
 
@@ -68,6 +73,18 @@ export function SchoolDetailScreen() {
               label={labels.provisioning[record.provisioningStatus]}
             />
           </div>
+        }
+        actions={
+          <>
+            <Button onClick={() => navigate(`/admin/schools/${record.code}/results`)}>
+              <Icon name="chart" />
+              {results.tabs.results}
+            </Button>
+            <Button onClick={() => navigate(`/admin/schools/${record.code}/students`)}>
+              <Icon name="users" />
+              {results.tabs.students}
+            </Button>
+          </>
         }
       />
 

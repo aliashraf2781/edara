@@ -17,9 +17,12 @@ export const schoolKeys = {
   results: () => [...schoolKeys.all, 'results'] as const,
   resultList: (params: QueryParams) => [...schoolKeys.results(), 'list', params] as const,
   result: (id: string) => [...schoolKeys.results(), 'detail', id] as const,
+  roster: (gradeId: string) => [...schoolKeys.all, 'roster', gradeId] as const,
   imports: () => [...schoolKeys.all, 'result-imports'] as const,
+  importList: (params: QueryParams) => [...schoolKeys.imports(), 'list', params] as const,
   import: (id: string) => [...schoolKeys.imports(), id] as const,
-  report: (examPeriodId: string) => [...schoolKeys.all, 'reports', examPeriodId] as const,
+  reports: () => [...schoolKeys.all, 'reports'] as const,
+  report: (termId: string) => [...schoolKeys.reports(), termId] as const,
   staff: () => [...schoolKeys.all, 'staff'] as const,
   staffList: (params: QueryParams) => [...schoolKeys.staff(), 'list', params] as const,
 }

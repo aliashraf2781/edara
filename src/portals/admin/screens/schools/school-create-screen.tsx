@@ -17,7 +17,7 @@ import { adminText } from '../../admin.i18n'
 import { PERMISSION } from '../../api/permissions'
 import { useCreateTenant } from '../../api/tenants'
 import { useAdminSession } from '../../auth/session-context'
-import { LoginEmailDialog } from './login-email-dialog'
+import { SchoolCreatedDialog } from './school-created-dialog'
 import { schoolFormText } from './school-detail.i18n'
 import {
   CREATE_FIELDS,
@@ -41,7 +41,11 @@ export function SchoolCreateScreen() {
   const { notify } = useToast()
   const createTenant = useCreateTenant()
   const [formMessage, setFormMessage] = useState<string | null>(null)
-  const [created, setCreated] = useState<{ code: string; loginEmail: string } | null>(null)
+  const [created, setCreated] = useState<{
+    code: string
+    loginEmail: string
+    typedEmail: string
+  } | null>(null)
 
   const schema = useMemo(() => makeCreateSchema(v), [v])
   const form = useForm<CreateFormValues>({
@@ -58,7 +62,11 @@ export function SchoolCreateScreen() {
     try {
       const result = await createTenant.mutateAsync(toCreatePayload(values))
       notify('success', text.created)
-      setCreated({ code: result.tenant.code, loginEmail: result.superAdmin.email })
+      setCreated({
+        code: result.tenant.code,
+        loginEmail: result.superAdmin.email,
+        typedEmail: values.admin_email,
+      })
     } catch (error) {
       const failure = applyFieldErrors(error, form.setError, CREATE_FIELDS, shell.error.title)
       setFormMessage(failure.formMessage)
@@ -137,7 +145,12 @@ export function SchoolCreateScreen() {
       </div>
 
       {created && (
-        <LoginEmailDialog open email={created.loginEmail} onAcknowledge={onAcknowledgeLoginEmail} />
+        <SchoolCreatedDialog
+          open
+          loginEmail={created.loginEmail}
+          typedEmail={created.typedEmail}
+          onAcknowledge={onAcknowledgeLoginEmail}
+        />
       )}
     </form>
   )

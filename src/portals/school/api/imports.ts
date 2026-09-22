@@ -1,45 +1,51 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { normalizePage } from '~/lib/api/normalize'
 import { schoolApi } from './client'
 import { schoolKeys } from './keys'
-import type { ImportPreview, ImportReport, ImportSubjectMapping } from './types'
+import type { ImportReport } from './types'
 
 export const IMPORT_MAX_BYTES = 10 * 1024 * 1024
 export const IMPORT_EXTENSIONS = ['.xlsx', '.xls', '.csv']
 
-export type PreviewImportInput = {
+export type UploadResultsInput = {
   file: File
-  academic_year_id: string
-  exam_period_id: string
+  gradeId: string
+  termId: string
 }
 
-export type ConfirmImportInput = {
-  resultImportId: string
-  mapping: ImportSubjectMapping[]
-}
-
-/** Step 1 — parse the sheet and return suggested column→subject mappings. Writes nothing. */
-export function usePreviewImport() {
+/**
+ * One step: the sheet the operator uploads is the template this screen handed
+ * them, so its columns are already the subjects and there is nothing to map.
+ */
+export function useUploadResults() {
+  const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ file, academic_year_id, exam_period_id }: PreviewImportInput) => {
+    mutationFn: ({ file, gradeId, termId }: UploadResultsInput) => {
       const form = new FormData()
       form.append('file', file)
-      form.append('academic_year_id', academic_year_id)
-      form.append('exam_period_id', exam_period_id)
-      return schoolApi.upload<ImportPreview>('/school/result-imports/preview', form)
+      form.append('grade_id', gradeId)
+      form.append('term_id', termId)
+      return schoolApi.upload<ImportReport>('/school/result-imports', form)
+    },
+    onSuccess: (report) => {
+      client.setQueryData(schoolKeys.import(String(report.id)), report)
+      void client.invalidateQueries({ queryKey: schoolKeys.imports() })
+      // Marks land published, so the lists and the report figures both move.
+      void client.invalidateQueries({ queryKey: schoolKeys.results() })
+      void client.invalidateQueries({ queryKey: schoolKeys.reports() })
     },
   })
 }
 
-/** Step 2 — commit the operator-confirmed mapping. Integers only; never column letters or Arabic labels. */
-export function useConfirmImport() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: ({ resultImportId, mapping }: ConfirmImportInput) =>
-      schoolApi.post<ImportReport>(`/school/result-imports/${resultImportId}/confirm`, { mapping }),
-    onSuccess: (report) => {
-      client.setQueryData(schoolKeys.import(String(report.id)), report)
-      void client.invalidateQueries({ queryKey: schoolKeys.results() })
-    },
+export function useImportHistory(perPage = 5) {
+  const query = { page: 1, per_page: perPage }
+  return useQuery({
+    queryKey: schoolKeys.importList(query),
+    queryFn: async ({ signal }) =>
+      normalizePage<ImportReport>(
+        await schoolApi.get('/school/result-imports', query, { signal }),
+        perPage,
+      ),
   })
 }
 

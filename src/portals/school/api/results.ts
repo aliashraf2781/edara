@@ -8,7 +8,8 @@ import type { QualitativeRating, Result, ResultStatus } from './types'
 export type ResultListParams = {
   page: number
   perPage: number
-  examPeriodId: string
+  termId: string
+  gradeId: string
   classroomId: string
   subjectId: string
   status: string
@@ -17,7 +18,8 @@ export type ResultListParams = {
 const toQuery = (params: ResultListParams): QueryParams => ({
   page: params.page,
   per_page: params.perPage,
-  exam_period_id: params.examPeriodId,
+  term_id: params.termId,
+  grade_id: params.gradeId,
   classroom_id: params.classroomId,
   subject_id: params.subjectId,
   status: params.status,
@@ -36,6 +38,29 @@ export function useResultList(params: ResultListParams) {
   })
 }
 
+/** One grade's marks for a term, unpaginated — 13 subjects × one roster. */
+const BREAKDOWN_PER_PAGE = 2000
+
+/** Backs the reports by-subject table, which the summary endpoint does not cover. */
+export function useGradeTermResults(termId: string, gradeId: string) {
+  const query: QueryParams = {
+    term_id: termId,
+    grade_id: gradeId,
+    page: 1,
+    per_page: BREAKDOWN_PER_PAGE,
+  }
+  return useQuery({
+    queryKey: schoolKeys.resultList(query),
+    queryFn: async ({ signal }) =>
+      normalizePage<Result>(
+        await schoolApi.get('/school/results', query, { signal }),
+        BREAKDOWN_PER_PAGE,
+      ).data,
+    enabled: termId !== '' && gradeId !== '',
+    staleTime: 0,
+  })
+}
+
 export function useResult(id: string) {
   return useQuery({
     queryKey: schoolKeys.result(id),
@@ -47,6 +72,7 @@ export function useResult(id: string) {
 export type ResultDraft = {
   student_enrollment_id: string
   subject_id: string
+  /** The chosen term id — the endpoint still names the field after the period. */
   exam_period_id: string
   is_absent: boolean
   // Numeric subjects send score/max_score; qualitative subjects send
@@ -57,8 +83,8 @@ export type ResultDraft = {
 }
 
 /**
- * Upserts: the same enrollment, subject and exam period updates the existing
- * draft instead of creating a second row. Always lands in `draft`.
+ * Upserts: the same enrollment, subject and term updates the existing draft
+ * instead of creating a second row. Always lands in `draft`.
  */
 export function useSaveResult() {
   const client = useQueryClient()

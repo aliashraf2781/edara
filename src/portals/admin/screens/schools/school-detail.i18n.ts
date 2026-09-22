@@ -24,6 +24,11 @@ export const schoolFormText: Dict<{
     body: string
     warning: string
     email: string
+    typedEmail: string
+    eitherWorks: string
+    password: string
+    passwordNote: string
+    openPortal: string
     copy: string
     copied: string
     copyFailed: string
@@ -106,10 +111,15 @@ export const schoolFormText: Dict<{
     loginEmail: {
       title: 'بريد تسجيل دخول المدير العام',
       body:
-        'يضيف الخادم كود المدرسة إلى البريد الذي أدخلته، فيصبح بريد الدخول الفعلي مختلفًا عمّا كتبته. هذه هي المرة الوحيدة التي يُعرض فيها — سلّمه للمدير العام.',
-      warning: 'لن يُعرض هذا البريد مرة أخرى. انسخه الآن.',
-      email: 'بريد تسجيل الدخول',
-      copy: 'نسخ البريد',
+        'يضيف الخادم كود المدرسة إلى البريد الذي أدخلته، فيصبح بريد الدخول المركّب مختلفًا عمّا كتبته. هذه هي المرة الوحيدة التي يُعرض فيها — سلّمه للمدير العام.',
+      warning: 'لن يُعرض البريد المركّب مرة أخرى. انسخه الآن.',
+      email: 'بريد الدخول المركّب',
+      typedEmail: 'البريد الذي أدخلته',
+      eitherWorks: 'بوابة المدرسة تقبل أيًا من البريدين لتسجيل الدخول ورفع البيانات.',
+      password: 'كلمة المرور',
+      passwordNote: 'هي كلمة المرور التي اخترتها الآن — لم تُنشأ كلمة مرور أخرى.',
+      openPortal: 'فتح بوابة المدرسة',
+      copy: 'نسخ',
       copied: 'تم النسخ',
       copyFailed: 'تعذّر النسخ. حدّد النص وانسخه يدويًا.',
       acknowledge: 'نسختُه — إغلاق',
@@ -192,10 +202,15 @@ export const schoolFormText: Dict<{
     loginEmail: {
       title: 'Super Admin login email',
       body:
-        'The server embeds the school’s code into the email you entered, so the real login email differs from what you typed. This is the only time it is shown — hand it to the Super Admin.',
-      warning: 'This email will not be shown again. Copy it now.',
-      email: 'Login email',
-      copy: 'Copy email',
+        'The server embeds the school’s code into the email you entered, so the composite login email differs from what you typed. This is the only time it is shown — hand it to the Super Admin.',
+      warning: 'The composite email will not be shown again. Copy it now.',
+      email: 'Composite login email',
+      typedEmail: 'The email you typed',
+      eitherWorks: 'The school portal accepts either address to sign in and upload data.',
+      password: 'Password',
+      passwordNote: 'It is the password you just chose — no other password was generated.',
+      openPortal: 'Open the school portal',
+      copy: 'Copy',
       copied: 'Copied',
       copyFailed: 'Copying failed. Select the text and copy it manually.',
       acknowledge: 'I have copied it — close',

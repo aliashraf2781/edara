@@ -11,9 +11,9 @@ export function SchoolSidebar() {
   const { can } = useSchoolSession()
 
   const overview: NavItem[] = [{ to: '/school/dashboard', label: text.nav.dashboard, icon: 'chart' }]
+  // Temporary: the structure and exam-period entries are hidden while the
+  // curriculum is fixed to grades 4–6 and the two terms.
   const academic: NavItem[] = [
-    { to: '/school/academics', label: text.nav.academics, icon: 'ledger' },
-    { to: '/school/exam-periods', label: text.nav.examPeriods, icon: 'clock' },
     { to: '/school/students', label: text.nav.students, icon: 'users' },
     { to: '/school/results', label: text.nav.results, icon: 'sheet' },
   ]

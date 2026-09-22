@@ -7,8 +7,8 @@ import { ErrorState } from '~/ui/error-state'
 import { Icon } from '~/ui/icon'
 import { Spinner } from '~/ui/spinner'
 import { useReportSummary } from '../../api/reports'
-import { useGradeOptions } from '../../api/use-options'
 import type { ReportSummary } from '../../api/types'
+import { gradeName } from '../../components/curriculum-options'
 import { schoolText } from '../../school.i18n'
 import { reportsText } from './reports.i18n'
 
@@ -25,21 +25,10 @@ function StatCard({ label, value, detail }: { label: string; value: string; deta
   )
 }
 
-export function SummaryPanel({
-  examPeriodId,
-  showByGrade,
-}: {
-  examPeriodId: string
-  showByGrade: boolean
-}) {
+export function SummaryPanel({ termId, showByGrade }: { termId: string; showByGrade: boolean }) {
   const text = useDict(reportsText)
   const shell = useDict(schoolText)
-  const summary = useReportSummary(examPeriodId)
-  const grades = useGradeOptions()
-
-  if (examPeriodId === '') {
-    return <EmptyState title={text.emptyTitle} description={text.pickPeriod} />
-  }
+  const summary = useReportSummary(termId)
 
   if (summary.isPending) {
     return (
@@ -59,8 +48,6 @@ export function SummaryPanel({
   if (overall.total === 0) {
     return <EmptyState title={text.noData} description={text.emptyBody} />
   }
-
-  const gradeName = (id: string) => grades.find((option) => option.value === id)?.label ?? id
 
   const columns: readonly Column<GradeRow>[] = [
     { key: 'grade', header: text.columns.grade, cell: (row) => gradeName(row.grade_id) },

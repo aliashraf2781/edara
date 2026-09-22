@@ -12,4 +12,15 @@ export const adminKeys = {
   userList: (params: QueryParams) => [...adminKeys.users(), 'list', params] as const,
   roles: () => [...adminKeys.all, 'roles'] as const,
   auditLogs: (params: QueryParams) => [...adminKeys.all, 'audit-logs', params] as const,
+  reference: () => [...adminKeys.all, 'reference'] as const,
+  insights: () => [...adminKeys.all, 'insights'] as const,
+  schoolInsights: (termId: string) => [...adminKeys.insights(), 'schools', termId] as const,
+  schoolStats: (code: string, termId: string) =>
+    [...adminKeys.insights(), 'stats', code, termId] as const,
+  schoolStudents: (code: string, params: QueryParams) =>
+    [...adminKeys.insights(), 'students', code, params] as const,
+  schoolStudent: (code: string, id: string) =>
+    [...adminKeys.insights(), 'student', code, id] as const,
+  schoolResults: (code: string, params: QueryParams) =>
+    [...adminKeys.insights(), 'results', code, params] as const,
 }
