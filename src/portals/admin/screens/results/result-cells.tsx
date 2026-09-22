@@ -19,8 +19,9 @@ export function MarkCell({ value }: { value: MarkSource }) {
   if (value.is_absent) return <span className="text-muted">—</span>
 
   if (value.grading_type === 'qualitative') {
+    // The column sets mono for numerals; Arabic has no place in that face.
     return (
-      <span className="text-body">
+      <span className="font-sans text-body">
         {isQualitativePass(value.qualitative_rating) ? PASSED_LABEL : FAILED_LABEL}
       </span>
     )

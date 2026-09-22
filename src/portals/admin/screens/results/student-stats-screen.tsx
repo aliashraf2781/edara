@@ -84,7 +84,7 @@ export function StudentStatsScreen() {
   ]
 
   const termFigures = (term: StudentTermStats) => [
-    { label: text.student.totals.total, value: formatScore(term.total) },
+    { label: text.student.totals.total, value: String(term.total) },
     { label: text.student.totals.outOf, value: String(term.out_of) },
     { label: text.student.totals.percent, value: `${term.percent.toFixed(1)}%` },
     { label: text.student.totals.average, value: formatScore(term.average) },
