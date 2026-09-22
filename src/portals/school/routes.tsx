@@ -17,11 +17,16 @@ export const schoolRoutes: RouteObject = {
           path: 'dashboard',
           lazy: async () => ({ Component: (await import('./screens/dashboard/dashboard-screen')).DashboardScreen }),
         },
-        // Temporary: the structure and exam-period screens are hidden for the
-        // fixed grades 4–6 curriculum. The screen files stay on disk, so
-        // re-enabling either one is a matter of restoring its route.
-        { path: 'academics', element: <Navigate to="/school/dashboard" replace /> },
-        { path: 'exam-periods', element: <Navigate to="/school/dashboard" replace /> },
+        {
+          path: 'academics',
+          lazy: async () => ({ Component: (await import('./screens/academics/academics-screen')).AcademicsScreen }),
+        },
+        {
+          path: 'exam-periods',
+          lazy: async () => ({
+            Component: (await import('./screens/exam-periods/exam-periods-screen')).ExamPeriodsScreen,
+          }),
+        },
         {
           path: 'students',
           lazy: async () => ({ Component: (await import('./screens/students/students-list-screen')).StudentsListScreen }),
