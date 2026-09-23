@@ -1,4 +1,4 @@
-import { isQualitativePass } from '~/mocks/curriculum'
+import { isQualitativePass } from '~/lib/curriculum'
 import type { Result } from '../../api/types'
 
 type MarkLabels = {

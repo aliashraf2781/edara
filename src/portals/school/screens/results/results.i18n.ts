@@ -1,5 +1,5 @@
 import type { Dict } from '~/lib/i18n/locales'
-import { FAILED_LABEL, PASSED_LABEL } from '~/mocks/curriculum'
+import { FAILED_LABEL, PASSED_LABEL } from '~/lib/curriculum'
 import type { QualitativeRating, ResultStatus } from '../../api/types'
 
 export const resultsText: Dict<{
@@ -35,6 +35,8 @@ export const resultsText: Dict<{
   absent: string
   entryTitle: string
   entryDescription: string
+  editTitle: string
+  editDescription: string
   upsertNotice: string
   fields: {
     enrollment: string
@@ -114,6 +116,8 @@ export const resultsText: Dict<{
     absent: 'غائب',
     entryTitle: 'إدخال درجة',
     entryDescription: 'تُحفظ الدرجة كمسودة، ثم تمر بمراحل المراجعة.',
+    editTitle: 'تصحيح الدرجة',
+    editDescription: 'عدّل الدرجة أو المستوى ثم احفظ — سيحل محل القيمة الحالية.',
     upsertNotice: 'إدخال نفس الطالب والمادة والترم يعدّل المسودة الموجودة ولا يُنشئ سجلًا جديدًا.',
     fields: {
       enrollment: 'معرّف القيد الدراسي',
@@ -193,6 +197,8 @@ export const resultsText: Dict<{
     absent: 'Absent',
     entryTitle: 'Enter a mark',
     entryDescription: 'The mark is saved as a draft, then moves through review.',
+    editTitle: 'Fix this mark',
+    editDescription: 'Edit the score or rating, then save — this replaces the current value.',
     upsertNotice:
       'Entering the same student, subject and term again edits the existing draft — it does not create a second record.',
     fields: {

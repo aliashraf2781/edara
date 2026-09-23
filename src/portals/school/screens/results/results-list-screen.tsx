@@ -15,13 +15,13 @@ import { SearchInput } from '~/ui/search-input'
 import { Select } from '~/ui/select'
 import { Spinner } from '~/ui/spinner'
 import { useStudentList, useStudentTermResults } from '../../api/students'
-import type { Student } from '../../api/types'
-import { useClassroomOptions } from '../../api/use-options'
+import type { Student, StudentTermSubject } from '../../api/types'
+import { useClassroomOptions, useCurriculumNames } from '../../api/use-options'
 import { GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { ReportCardTable } from '../students/report-card-table'
 import { fullName } from '../students/student-name'
-import { ResultEntryDrawer } from './result-entry-drawer'
+import { ResultEntryDrawer, type ResultEditContext } from './result-entry-drawer'
 import { resultsText } from './results.i18n'
 
 const PER_PAGE = 20
@@ -38,9 +38,11 @@ const DEFAULTS = { term: '', grade: '', classroom: '', search: '' } as const
 export function ResultsListScreen() {
   const text = useDict(resultsText)
   const shell = useDict(schoolText)
-  const { values, page, setValue, setPage } = useTableParams(DEFAULTS)
+  const { values, page, setValue, setValues, setPage } = useTableParams(DEFAULTS)
   const [entering, setEntering] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [editingSubject, setEditingSubject] = useState<StudentTermSubject | null>(null)
+  const { termName } = useCurriculumNames()
 
   const search = useDebouncedValue(values.search)
   const classrooms = useClassroomOptions({ gradeId: values.grade || undefined })
@@ -55,11 +57,29 @@ export function ResultsListScreen() {
 
   const report = useStudentTermResults(selectedStudent?.id ?? '', values.term)
 
-  // Narrowing the grade invalidates whatever classroom was picked.
-  const changeGrade = (value: string) => {
-    setValue('grade', value)
-    setValue('classroom', '')
-  }
+  // Narrowing the grade invalidates whatever classroom was picked. Both
+  // must go through one setValues() call — two separate setValue() calls
+  // in the same tick race each other in react-router's setSearchParams and
+  // only the last one's change actually lands (see useTableParams).
+  const changeGrade = (value: string) => setValues({ grade: value, classroom: '' })
+
+  const enrollmentId = selectedStudent?.current_enrollment?.id
+  const editContext: ResultEditContext | undefined =
+    editingSubject && selectedStudent && enrollmentId
+      ? {
+          studentEnrollmentId: enrollmentId,
+          studentName: fullName(selectedStudent),
+          subjectId: editingSubject.subject_id,
+          subjectName: editingSubject.subject_name,
+          examPeriodId: values.term,
+          termName: termName(values.term),
+          gradingType: editingSubject.grading_type,
+          score: editingSubject.score,
+          maxScore: editingSubject.max_score,
+          qualitativeRating: editingSubject.qualitative_rating,
+          isAbsent: editingSubject.is_absent,
+        }
+      : undefined
 
   const columns: readonly Column<Student>[] = [
     { key: 'name', header: text.columns.student, cell: (row) => fullName(row) },
@@ -155,11 +175,19 @@ export function ResultsListScreen() {
             <p className="text-small">{shell.guard.loading}</p>
           </div>
         ) : (
-          <ReportCardTable subjects={report.data.subjects} />
+          <ReportCardTable
+            subjects={report.data.subjects}
+            onEditSubject={enrollmentId ? setEditingSubject : undefined}
+          />
         )}
       </Modal>
 
       <ResultEntryDrawer open={entering} onClose={() => setEntering(false)} />
+      <ResultEntryDrawer
+        open={editingSubject !== null}
+        onClose={() => setEditingSubject(null)}
+        editContext={editContext}
+      />
     </div>
   )
 }

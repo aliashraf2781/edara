@@ -12,20 +12,11 @@ import { ResourcePanel } from './resource-panel'
 
 const GRADING_TYPES: readonly GradingType[] = ['numeric', 'qualitative']
 
-const FIELDS = [
-  'grade_id',
-  'educational_stage_id',
-  'code',
-  'name',
-  'grading_type',
-  'max_score',
-  'pass_score',
-] as const
+const FIELDS = ['grade_id', 'educational_stage_id', 'name', 'grading_type', 'max_score', 'pass_score'] as const
 
 type SubjectFormValues = {
   grade_id: string
   educational_stage_id: string
-  code: string
   name: string
   grading_type: GradingType
   max_score: number
@@ -68,9 +59,11 @@ export function SubjectsPanel({ editable }: { editable: boolean }) {
 
   const schema: z.ZodType<SubjectFormValues> = z
     .object({
-      grade_id: z.string(),
+      // A subject with no grade isn't offered anywhere — every row here is
+      // really "this subject, as offered in this grade" (see the Subject
+      // type's own doc comment), so a grade is always required, not optional.
+      grade_id: z.string().trim().min(1, v.required),
       educational_stage_id: z.string(),
-      code: z.string().trim().min(1, v.required),
       name: z.string().trim().min(1, v.required),
       grading_type: z.enum(GRADING_TYPES as [GradingType, ...GradingType[]]),
       max_score: z.coerce.number().min(0),
@@ -98,18 +91,16 @@ export function SubjectsPanel({ editable }: { editable: boolean }) {
       defaults={{
         grade_id: '',
         educational_stage_id: '',
-        code: '',
         name: '',
         grading_type: 'numeric',
         max_score: 100,
         pass_score: 50,
       }}
-      rowKey={(row) => row.id}
+      rowKey={(row) => row.grade_subject_id}
       rowLabel={(row) => row.name}
       toForm={(row) => ({
-        grade_id: row.grade_id ?? '',
+        grade_id: row.grade_id,
         educational_stage_id: row.educational_stage_id ?? '',
-        code: row.code,
         name: row.name,
         grading_type: row.grading_type,
         max_score: row.max_score ?? 0,
@@ -130,17 +121,25 @@ export function SubjectsPanel({ editable }: { editable: boolean }) {
         { key: 'max', header: text.fields.maxScore, numeric: true, cell: (row) => row.max_score ?? '—' },
         { key: 'pass', header: text.fields.passScore, numeric: true, cell: (row) => row.pass_score ?? '—' },
       ]}
-      renderFields={(form) => (
+      renderFields={(form, isEditing) => (
         <>
-          <Field label={text.fields.code} error={form.formState.errors.code?.message} required>
-            {(props) => <TextInput {...props} {...form.register('code')} dir="ltr" className="font-mono" />}
+          <Field
+            label={text.fields.name}
+            hint={isEditing ? text.nameLockedHint : undefined}
+            error={form.formState.errors.name?.message}
+            required
+          >
+            {(props) => <TextInput {...props} {...form.register('name')} disabled={isEditing} />}
           </Field>
-          <Field label={text.fields.name} error={form.formState.errors.name?.message} required>
-            {(props) => <TextInput {...props} {...form.register('name')} />}
-          </Field>
-          <Field label={text.fields.grade} error={form.formState.errors.grade_id?.message}>
+          <Field label={text.fields.grade} error={form.formState.errors.grade_id?.message} required>
             {(props) => (
-              <Select {...props} {...form.register('grade_id')} options={grades} placeholder={text.pickGrade} />
+              <Select
+                {...props}
+                {...form.register('grade_id')}
+                options={grades}
+                placeholder={text.pickGrade}
+                disabled={isEditing}
+              />
             )}
           </Field>
           <Field label={text.fields.stage} error={form.formState.errors.educational_stage_id?.message}>

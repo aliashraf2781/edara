@@ -18,7 +18,14 @@ const QUALITATIVE_LABEL: Record<string, string> = {
  * why this isn't built on the shared DataTable (rows there are records,
  * not a fixed set of labels).
  */
-export function ReportCardTable({ subjects }: { subjects: StudentTermSubject[] }) {
+export function ReportCardTable({
+  subjects,
+  onEditSubject,
+}: {
+  subjects: StudentTermSubject[]
+  /** Omitted where the report card is read-only (e.g. the printed extract). */
+  onEditSubject?: (subject: StudentTermSubject) => void
+}) {
   const text = useDict(studentsText).reportCard
 
   if (subjects.length === 0) {
@@ -80,7 +87,18 @@ export function ReportCardTable({ subjects }: { subjects: StudentTermSubject[] }
             </th>
             {subjects.map((subject) => (
               <td key={subject.subject_id} className="px-4 text-center font-mono">
-                {scoreCell(subject)}
+                {onEditSubject ? (
+                  <button
+                    type="button"
+                    onClick={() => onEditSubject(subject)}
+                    className="rounded-control px-2 py-1 underline decoration-dotted underline-offset-4 hover:bg-sunken hover:text-accent"
+                    title={text.editHint}
+                  >
+                    {scoreCell(subject)}
+                  </button>
+                ) : (
+                  scoreCell(subject)
+                )}
               </td>
             ))}
           </tr>

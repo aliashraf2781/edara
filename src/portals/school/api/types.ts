@@ -1,4 +1,4 @@
-import type { CurriculumSubject } from '~/mocks/curriculum'
+import type { CurriculumSubject } from '~/lib/curriculum'
 
 export type SchoolUserStatus = 'active' | 'suspended'
 
@@ -77,9 +77,20 @@ export type GradingType = 'numeric' | 'qualitative'
  */
 export type PrintGroup = 'pass_fail' | 'formative' | 'attendance'
 
+/**
+ * One row here is a GradeSubject — a subject as offered in one grade, not
+ * the bare Subject catalog entry (a subject like "لغة عربية" can be a
+ * single catalog row shared across several grades, each with its own
+ * grading_type/max_score/pass_score). `id`/`grade_subject_id` are the same
+ * value — the offering's own id, what every other screen's "subject_id"
+ * means; `subject_id` is the underlying catalog entry, only used to
+ * pick-or-create it when adding a new offering.
+ */
 export type Subject = {
   id: string
-  grade_id: string | null
+  grade_subject_id: string
+  subject_id: string
+  grade_id: string
   educational_stage_id: string | null
   code: string
   name: string
@@ -89,6 +100,7 @@ export type Subject = {
   max_score: number | null
   /** Null for qualitative subjects. */
   pass_score: number | null
+  is_active: boolean
 }
 
 export type Gender = 'male' | 'female'
@@ -117,7 +129,7 @@ export type Student = {
   status: string | null
   enrollments?: Enrollment[]
   /** The current-year enrollment, when the list endpoint eager-loads it. */
-  current_enrollment?: { grade_id: string; classroom_id: string; classroom?: { name: string } } | null
+  current_enrollment?: { id: string; grade_id: string; classroom_id: string; classroom?: { name: string } } | null
 }
 
 /** One subject row in a student's report-card table for one term. */

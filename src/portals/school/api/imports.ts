@@ -12,34 +12,43 @@ export type UploadResultsInput = {
   /**
    * Only needed when a first attempt came back 422 asking for one of
    * these explicitly — some sheets (e.g. grades 1-2, which don't split
-   * results by term at all) genuinely carry no detectable grade/term.
+   * results by term at all) genuinely carry no detectable grade/term,
+   * and a sheet with no "العام الدراسى ..." metadata line needs an
+   * explicit academic year when the school also has none marked current.
    */
   gradeId?: string
   termId?: string
+  academicYearId?: string
 }
 
 /**
  * One step in the common case: just the file. The backend reads the
  * academic year, grade and term straight off the sheet's own metadata
- * text — gradeId/termId are only sent when a previous attempt asked for
- * one explicitly (see ImportsScreen's fallback picker).
+ * text — gradeId/termId/academicYearId are only sent when a previous
+ * attempt asked for one explicitly (see ImportsScreen's fallback picker).
  */
 export function useUploadResults() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ file, gradeId, termId }: UploadResultsInput) => {
+    mutationFn: ({ file, gradeId, termId, academicYearId }: UploadResultsInput) => {
       const form = new FormData()
       form.append('file', file)
       if (gradeId) form.append('grade_id', gradeId)
       if (termId) form.append('term_id', termId)
+      if (academicYearId) form.append('academic_year_id', academicYearId)
       return schoolApi.upload<ImportReport>('/school/result-imports', form)
     },
     onSuccess: (report) => {
       client.setQueryData(schoolKeys.import(String(report.id)), report)
-      void client.invalidateQueries({ queryKey: schoolKeys.imports() })
-      // Marks land published, so the lists and the report figures both move.
-      void client.invalidateQueries({ queryKey: schoolKeys.results() })
-      void client.invalidateQueries({ queryKey: schoolKeys.reports() })
+      // A single-call import can silently create almost anything it
+      // doesn't find already set up — grade, educational stage, subjects,
+      // exam period, classroom, students, enrollments — on top of the
+      // results themselves (see the backend's ResultImportController
+      // resolve*() methods). Invalidating the whole school cache, not
+      // just imports/results/reports, is what keeps pickers like the
+      // grade/term filters from showing stale options right after an
+      // import that just created the very grade being filtered on.
+      void client.invalidateQueries({ queryKey: schoolKeys.all })
     },
   })
 }

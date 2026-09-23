@@ -6,7 +6,7 @@
  * unchanged is therefore a complete, successful import — which is exactly the
  * round trip the upload screen asks an operator to make.
  *
- * Column names come from `~/mocks/curriculum`, so the sheet, the importer and
+ * Column names come from `~/lib/curriculum`, so the sheet, the importer and
  * the printed extract can never drift apart.
  */
 
@@ -15,7 +15,7 @@ import {
   FAILED_LABEL,
   PASSED_LABEL,
   type CurriculumSubject,
-} from '~/mocks/curriculum'
+} from '~/lib/curriculum'
 
 export type TemplateStudent = {
   serial: number

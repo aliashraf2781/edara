@@ -21,13 +21,24 @@ export function useTableParams<K extends string>(defaults: Readonly<Record<K, st
 
   const page = Math.max(1, Number(params.get(PAGE_KEY)) || 1)
 
-  const setValue = useCallback(
-    (key: K, value: string) => {
+  /**
+   * Applies one or more key/value changes in a single history update.
+   * setSearchParams doesn't compose the way useState's functional updates
+   * do — two separate calls in the same tick (e.g. narrowing the grade,
+   * which also clears whatever classroom was picked) race each other, and
+   * only the last one's diff survives, silently dropping the first. Every
+   * caller that used to change more than one key via back-to-back
+   * setValue() calls must go through this instead.
+   */
+  const setValues = useCallback(
+    (changes: Partial<Record<K, string>>) => {
       setParams(
         (current) => {
           const next = new URLSearchParams(current)
-          if (value === '' || value === defaults[key]) next.delete(key)
-          else next.set(key, value)
+          for (const [key, value] of Object.entries(changes) as [K, string][]) {
+            if (value === '' || value === defaults[key]) next.delete(key)
+            else next.set(key, value)
+          }
           next.delete(PAGE_KEY)
           return next
         },
@@ -36,6 +47,10 @@ export function useTableParams<K extends string>(defaults: Readonly<Record<K, st
     },
     [setParams, defaults],
   )
+
+  const setValue = useCallback((key: K, value: string) => setValues({ [key]: value } as Partial<Record<K, string>>), [
+    setValues,
+  ])
 
   const setPage = useCallback(
     (nextPage: number) => {
@@ -54,5 +69,5 @@ export function useTableParams<K extends string>(defaults: Readonly<Record<K, st
 
   const clear = useCallback(() => setParams(new URLSearchParams(), { replace: true }), [setParams])
 
-  return { values, page, setValue, setPage, clear }
+  return { values, page, setValue, setValues, setPage, clear }
 }

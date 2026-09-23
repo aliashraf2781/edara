@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { formatPercent, formatScore } from '~/lib/format'
 import { useDict } from '~/lib/i18n/use-dict'
-import { subjectsForGrade } from '~/mocks/curriculum'
+import { subjectsForGrade } from '~/lib/curriculum'
 import { Card, CardBody, CardHeader } from '~/ui/card'
 import { DataTable, type Column } from '~/ui/data-table'
 import { ErrorState } from '~/ui/error-state'

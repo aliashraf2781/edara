@@ -36,8 +36,10 @@ export const schoolText: Dict<{
   pickers: {
     term: string
     grade: string
+    year: string
     pickTerm: string
     pickGrade: string
+    pickYear: string
     allGrades: string
   }
   examPeriodField: {
@@ -110,8 +112,10 @@ export const schoolText: Dict<{
     pickers: {
       term: 'الترم',
       grade: 'الصف',
+      year: 'العام الدراسي',
       pickTerm: 'اختر الترم',
       pickGrade: 'اختر الصف',
+      pickYear: 'اختر العام الدراسي',
       allGrades: 'كل الصفوف',
     },
     examPeriodField: {
@@ -184,8 +188,10 @@ export const schoolText: Dict<{
     pickers: {
       term: 'Term',
       grade: 'Grade',
+      year: 'Academic year',
       pickTerm: 'Choose a term',
       pickGrade: 'Choose a grade',
+      pickYear: 'Choose the academic year',
       allGrades: 'All grades',
     },
     examPeriodField: {

@@ -90,7 +90,14 @@ export function useSaveResult() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: (values: ResultDraft) => schoolApi.post<Result>('/school/results', values),
-    onSuccess: () => client.invalidateQueries({ queryKey: schoolKeys.results() }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: schoolKeys.results() })
+      // A student's report card (useStudentTermResults) lives under
+      // schoolKeys.students(), not schoolKeys.results() — without this,
+      // saving a mark from the report-card view left the just-edited cell
+      // showing its old value until an unrelated refetch happened to run.
+      void client.invalidateQueries({ queryKey: schoolKeys.students() })
+    },
   })
 }
 

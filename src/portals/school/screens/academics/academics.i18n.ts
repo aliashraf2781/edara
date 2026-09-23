@@ -29,6 +29,7 @@ export const academicsText: Dict<{
   }
   gradingTypes: Record<GradingType, string>
   gradingTypeHint: string
+  nameLockedHint: string
   empty: Record<'years' | 'stages' | 'grades' | 'classrooms' | 'subjects', { title: string; body: string }>
   readOnlyEmpty: string
   created: string
@@ -69,6 +70,7 @@ export const academicsText: Dict<{
     },
     gradingTypes: { numeric: 'بالدرجات', qualitative: 'وصفي' },
     gradingTypeHint: 'المواد الوصفية تُقيَّم بمستوى (يتجاوز التوقعات … دون التوقعات) بدلًا من درجة رقمية.',
+    nameLockedHint: 'اسم المادة مشترك بين كل الصفوف التي تُدرَّس فيها، ولا يمكن تعديله من هنا.',
     empty: {
       years: { title: 'لا أعوام دراسية', body: 'أضف العام الدراسي أولًا — كل شيء آخر يرتبط به.' },
       stages: { title: 'لا مراحل تعليمية', body: 'أضف المراحل مثل الابتدائي والإعدادي.' },
@@ -117,6 +119,7 @@ export const academicsText: Dict<{
     gradingTypes: { numeric: 'Numeric', qualitative: 'Qualitative' },
     gradingTypeHint:
       'Qualitative subjects are rated on a band (exceeds expectations … below expectations) instead of a numeric score.',
+    nameLockedHint: "This subject's name is shared across every grade that offers it, and can't be edited from here.",
     empty: {
       years: { title: 'No academic years', body: 'Add the academic year first — everything else hangs off it.' },
       stages: { title: 'No educational stages', body: 'Add stages such as Primary and Preparatory.' },

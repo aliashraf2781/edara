@@ -58,6 +58,7 @@ export const studentsText: Dict<{
     absent: string
     none: string
     empty: string
+    editHint: string
   }
 }> = {
   ar: {
@@ -122,6 +123,7 @@ export const studentsText: Dict<{
       absent: 'غ',
       none: '—',
       empty: 'لا توجد نتائج لهذا الطالب في هذا الترم.',
+      editHint: 'اضغط لتصحيح الدرجة',
     },
   },
   en: {
@@ -188,6 +190,7 @@ export const studentsText: Dict<{
       absent: 'Abs',
       none: '—',
       empty: 'No results for this student in this term.',
+      editHint: 'Click to fix this mark',
     },
   },
 }

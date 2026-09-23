@@ -1,7 +1,7 @@
 import { useDict } from '~/lib/i18n/use-dict'
 import { Field } from '~/ui/field'
 import { Select } from '~/ui/select'
-import { useAllExamPeriodOptions, useGradeOptions } from '../api/use-options'
+import { useAllExamPeriodOptions, useGradeOptions, useYearOptions } from '../api/use-options'
 import { schoolText } from '../school.i18n'
 
 type PickerProps = {
@@ -52,6 +52,25 @@ export function GradeField({ value, onChange, placeholder, label, required, erro
           onChange={(event) => onChange(event.target.value)}
           options={options}
           placeholder={placeholder ?? text.pickers.pickGrade}
+        />
+      )}
+    </Field>
+  )
+}
+
+export function AcademicYearField({ value, onChange, placeholder, label, required, error, className }: PickerProps) {
+  const text = useDict(schoolText)
+  const options = useYearOptions()
+
+  return (
+    <Field label={label ?? text.pickers.year} required={required} error={error} className={className}>
+      {(props) => (
+        <Select
+          {...props}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          options={options}
+          placeholder={placeholder ?? text.pickers.pickYear}
         />
       )}
     </Field>

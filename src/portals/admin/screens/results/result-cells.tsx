@@ -1,4 +1,4 @@
-import { FAILED_LABEL, PASSED_LABEL, isQualitativePass } from '~/mocks/curriculum'
+import { FAILED_LABEL, PASSED_LABEL, isQualitativePass } from '~/lib/curriculum'
 import { Stamp } from '~/ui/stamp'
 import type { GradingType } from '../../api/types'
 

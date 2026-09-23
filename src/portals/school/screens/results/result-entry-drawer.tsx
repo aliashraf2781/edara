@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { applyFieldErrors } from '~/lib/forms/apply-field-errors'
@@ -56,7 +56,49 @@ const makeSchema = (v: ValidationText) =>
 
 type ResultForm = z.infer<ReturnType<typeof makeSchema>>
 
-export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+/**
+ * Set when opened from a student's report card to fix one already-known
+ * cell (e.g. a blank draft an import left behind because its raw value
+ * didn't parse) — student_enrollment_id/subject_id/exam_period_id are
+ * already correct from that context, so the form shows them as read-only
+ * facts instead of asking the operator to re-identify what they just
+ * clicked on.
+ */
+export type ResultEditContext = {
+  studentEnrollmentId: string
+  studentName: string
+  subjectId: string
+  subjectName: string
+  examPeriodId: string
+  termName: string
+  gradingType: 'numeric' | 'qualitative'
+  score: number | null
+  maxScore: number | null
+  qualitativeRating: string | null
+  isAbsent: boolean
+}
+
+const valuesFromEditContext = (editContext: ResultEditContext | undefined): ResultForm => ({
+  student_enrollment_id: editContext?.studentEnrollmentId ?? '',
+  subject_id: editContext?.subjectId ?? '',
+  exam_period_id: editContext?.examPeriodId ?? '',
+  score: editContext?.score !== null && editContext?.score !== undefined ? String(editContext.score) : '',
+  max_score: editContext?.maxScore !== null && editContext?.maxScore !== undefined
+    ? String(editContext.maxScore)
+    : '100',
+  qualitative_rating: editContext?.qualitativeRating ?? '',
+  is_absent: editContext?.isAbsent ?? false,
+})
+
+export function ResultEntryDrawer({
+  open,
+  onClose,
+  editContext,
+}: {
+  open: boolean
+  onClose: () => void
+  editContext?: ResultEditContext
+}) {
   const text = useDict(resultsText)
   const shell = useDict(schoolText)
   const v = useDict(validationText)
@@ -70,23 +112,26 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
 
   const form = useForm<ResultForm>({
     resolver: zodResolver(makeSchema(v)),
-    defaultValues: {
-      student_enrollment_id: '',
-      subject_id: '',
-      exam_period_id: '',
-      score: '',
-      max_score: '100',
-      qualitative_rating: '',
-      is_absent: false,
-    },
+    defaultValues: valuesFromEditContext(editContext),
   })
+
+  // The drawer stays mounted between opens (only its visibility toggles), so
+  // useForm's defaultValues only ever apply once — without this, reopening
+  // to fix a different cell would keep showing whichever subject/score was
+  // loaded the first time this drawer opened.
+  useEffect(() => {
+    if (open) form.reset(valuesFromEditContext(editContext))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editContext])
 
   const isAbsent = useWatch({ control: form.control, name: 'is_absent' })
   const termId = useWatch({ control: form.control, name: 'exam_period_id' })
   const subjectId = useWatch({ control: form.control, name: 'subject_id' })
 
   const selectedSubject = subjectList.data?.find((subject) => subject.id === subjectId)
-  const isQualitative = selectedSubject?.grading_type === 'qualitative'
+  const isQualitative = editContext
+    ? editContext.gradingType === 'qualitative'
+    : selectedSubject?.grading_type === 'qualitative'
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormMessage(null)
@@ -136,63 +181,96 @@ export function ResultEntryDrawer({ open, onClose }: { open: boolean; onClose: (
   })
 
   const { errors } = form.formState
+  // Distinguishes the two ResultEntryDrawer instances results-list-screen
+  // renders side by side (the blank "new result" one and this edit one) —
+  // without it, both forms shared id="result-form" and each footer's save
+  // button could end up submitting whichever form the browser resolved
+  // that duplicate id to, not necessarily its own.
+  const formId = editContext ? 'result-form-edit' : 'result-form-new'
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
-      title={text.entryTitle}
-      description={text.entryDescription}
+      title={editContext ? text.editTitle : text.entryTitle}
+      description={editContext ? text.editDescription : text.entryDescription}
       closeLabel={shell.common.close}
       footer={
         <>
           <Button onClick={onClose}>{shell.common.cancel}</Button>
-          <Button type="submit" form="result-form" variant="primary" loading={form.formState.isSubmitting}>
+          <Button type="submit" form={formId} variant="primary" loading={form.formState.isSubmitting}>
             {shell.common.save}
           </Button>
         </>
       }
     >
-      <form id="result-form" noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form id={formId} noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
         <FormAlert message={formMessage} />
 
-        {/* Says plainly that this overwrites an existing draft, rather than
-            letting duplicate-prevention look like magic. */}
-        <p className="flex items-start gap-2 rounded-control border border-line border-s-2 border-s-accent bg-sunken px-3 py-2 text-small text-muted">
-          <Icon name="info" className="size-4 text-accent" />
-          <span>{text.upsertNotice}</span>
-        </p>
+        {editContext ? (
+          // Already known from the report-card cell that was clicked —
+          // shown as facts, not editable pickers, so there's no way to
+          // accidentally save the fix onto the wrong student/subject/term.
+          <div className="flex flex-col gap-1 rounded-control border border-line bg-sunken px-3 py-2 text-small">
+            <p className="text-ink">
+              <span className="text-muted">{text.columns.student}: </span>
+              {editContext.studentName}
+            </p>
+            <p className="text-ink">
+              <span className="text-muted">{text.columns.subject}: </span>
+              {editContext.subjectName}
+            </p>
+            <p className="text-ink">
+              <span className="text-muted">{text.filters.term}: </span>
+              {editContext.termName}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Says plainly that this overwrites an existing draft, rather
+                than letting duplicate-prevention look like magic. */}
+            <p className="flex items-start gap-2 rounded-control border border-line border-s-2 border-s-accent bg-sunken px-3 py-2 text-small text-muted">
+              <Icon name="info" className="size-4 text-accent" />
+              <span>{text.upsertNotice}</span>
+            </p>
 
-        <Field
-          label={text.fields.enrollment}
-          hint={text.fields.enrollmentHint}
-          error={errors.student_enrollment_id?.message}
-          required
-        >
-          {(props) => <NumeralInput {...props} {...form.register('student_enrollment_id')} />}
-        </Field>
+            <Field
+              label={text.fields.enrollment}
+              hint={text.fields.enrollmentHint}
+              error={errors.student_enrollment_id?.message}
+              required
+            >
+              {(props) => <NumeralInput {...props} {...form.register('student_enrollment_id')} />}
+            </Field>
 
-        <GradeField
-          value={gradeId}
-          onChange={(value) => {
-            setGradeId(value)
-            form.setValue('subject_id', '', { shouldValidate: true })
-          }}
-          placeholder={shell.pickers.pickGrade}
-        />
+            <GradeField
+              value={gradeId}
+              onChange={(value) => {
+                setGradeId(value)
+                form.setValue('subject_id', '', { shouldValidate: true })
+              }}
+              placeholder={shell.pickers.pickGrade}
+            />
 
-        <Field label={text.fields.subject} error={errors.subject_id?.message} required>
-          {(props) => (
-            <Select {...props} {...form.register('subject_id')} options={subjects} placeholder={shell.common.none} />
-          )}
-        </Field>
+            <Field label={text.fields.subject} error={errors.subject_id?.message} required>
+              {(props) => (
+                <Select
+                  {...props}
+                  {...form.register('subject_id')}
+                  options={subjects}
+                  placeholder={shell.common.none}
+                />
+              )}
+            </Field>
 
-        <TermField
-          value={termId}
-          onChange={(value) => form.setValue('exam_period_id', value, { shouldValidate: true })}
-          error={errors.exam_period_id?.message}
-          required
-        />
+            <TermField
+              value={termId}
+              onChange={(value) => form.setValue('exam_period_id', value, { shouldValidate: true })}
+              error={errors.exam_period_id?.message}
+              required
+            />
+          </>
+        )}
 
         <Checkbox label={text.fields.isAbsent} {...form.register('is_absent')} />
 

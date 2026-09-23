@@ -1,8 +1,8 @@
 /**
- * The temporary (mock) curriculum. Grades 4–6 only, and the subject list is
- * the one printed on `src/templates/grades(4-5-6).html` — the XLSX template,
- * the import parser, the report figures and the printed extract all read this
- * file, so the four stay in step by construction.
+ * The Grades 4–6 curriculum. The subject list is the one printed on
+ * `src/templates/grades(4-5-6).html` — the XLSX template, the import parser,
+ * the report figures and the printed extract all read this file, so the
+ * four stay in step by construction.
  */
 
 export type GradeLevel = 4 | 5 | 6

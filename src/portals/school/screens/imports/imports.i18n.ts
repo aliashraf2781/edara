@@ -7,6 +7,7 @@ export const importsText: Dict<{
   uploadTitle: string
   uploadHint: string
   detectionFailed: string
+  yearDetectionFailed: string
   file: string
   fileHint: string
   upload: string
@@ -43,6 +44,7 @@ export const importsText: Dict<{
     uploadTitle: 'رفع النتائج',
     uploadHint: 'اختر ملف النتائج (xlsx أو xls أو csv) وارفعه. لا حاجة لاختيار الترم أو الصف مسبقًا.',
     detectionFailed: 'لم نتمكن من التعرف على الصف أو الترم من هذا الملف — اخترهما يدويًا ثم أعد الرفع.',
+    yearDetectionFailed: 'لم نتمكن من التعرف على العام الدراسي من هذا الملف — اختره يدويًا ثم أعد الرفع.',
     file: 'ملف النتائج',
     fileHint: 'xlsx أو xls أو csv، بحد أقصى ١٠ ميجابايت.',
     upload: 'رفع النتائج',
@@ -100,6 +102,7 @@ export const importsText: Dict<{
     uploadTitle: 'Upload results',
     uploadHint: 'Choose the results file (xlsx, xls or csv) and upload it. No need to pick a term or grade first.',
     detectionFailed: "Couldn't detect the grade or term from this file — pick them manually, then upload again.",
+    yearDetectionFailed: "Couldn't detect the academic year from this file — pick it manually, then upload again.",
     file: 'Results file',
     fileHint: 'xlsx, xls or csv, 10 MB maximum.',
     upload: 'Upload results',

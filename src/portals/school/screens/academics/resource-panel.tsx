@@ -43,7 +43,7 @@ type ResourcePanelProps<T, F extends FieldValues> = {
   /** Transforms form values into the write payload. Defaults to identity. */
   toPayload?: (values: F) => unknown
   fields: readonly Path<F>[]
-  renderFields: (form: UseFormReturn<F, unknown, F>) => ReactNode
+  renderFields: (form: UseFormReturn<F, unknown, F>, isEditing: boolean) => ReactNode
   /** Writes are hidden, not greyed, for teacher and data-entry roles. */
   editable: boolean
   empty: { title: string; body: string }
@@ -192,7 +192,7 @@ export function ResourcePanel<T, F extends FieldValues>({
       >
         <form id="academic-resource-form" noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
           <FormAlert message={formMessage} />
-          {renderFields(form)}
+          {renderFields(form, Boolean(editing?.id))}
         </form>
       </Drawer>
 
