@@ -65,11 +65,21 @@ export function useImportHistory(perPage = 5) {
   })
 }
 
+/**
+ * The backend now processes an import's rows on a queue worker instead of
+ * inline in the upload request (see ResultImportController::store()) — the
+ * upload response comes back with status "processing" and zeroed counts,
+ * not the final report. Polling here is what turns that into a report that
+ * actually updates once the worker finishes: every 1.5s while status is
+ * still "processing", stopping the moment it flips to "completed"/"failed"
+ * (refetchInterval returning false cancels further polling).
+ */
 export function useImportReport(id: string) {
   return useQuery({
     queryKey: schoolKeys.import(id),
     queryFn: ({ signal }) =>
       schoolApi.get<ImportReport>(`/school/result-imports/${id}`, undefined, { signal }),
     enabled: id !== '',
+    refetchInterval: (query) => (query.state.data?.status === 'processing' ? 1500 : false),
   })
 }

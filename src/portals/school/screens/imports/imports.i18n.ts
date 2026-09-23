@@ -13,6 +13,7 @@ export const importsText: Dict<{
   upload: string
   uploading: string
   noFile: string
+  processingBanner: string
   successBanner: (students: number, marks: number) => string
   partialBanner: (valid: number, total: number, invalid: number) => string
   summaryTitle: string
@@ -50,6 +51,7 @@ export const importsText: Dict<{
     upload: 'رفع النتائج',
     uploading: 'جارٍ رفع النتائج',
     noFile: 'اختر ملفًا أولًا.',
+    processingBanner: 'جارٍ معالجة الملف في الخلفية — قد يستغرق ذلك بضع لحظات لملفات النتائج الكبيرة.',
     successBanner: (students, marks) =>
       `تم رفع نتائج ${students} طالبًا، وتسجيل ${marks} درجة. لا توجد أخطاء.`,
     partialBanner: (valid, total, invalid) =>
@@ -108,6 +110,7 @@ export const importsText: Dict<{
     upload: 'Upload results',
     uploading: 'Uploading results',
     noFile: 'Choose a file first.',
+    processingBanner: 'Processing the file in the background — this can take a few moments for larger result sheets.',
     successBanner: (students, marks) =>
       `${students} students uploaded and ${marks} marks recorded, with no errors.`,
     partialBanner: (valid, total, invalid) =>

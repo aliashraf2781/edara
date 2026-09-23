@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { isValidationError } from '~/lib/api/error'
 import { validationText } from '~/lib/forms/validation.i18n'
 import { formatDateTime } from '~/lib/format'
@@ -14,8 +15,14 @@ import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
 import { ProgressBar } from '~/ui/spinner'
 import { useToast } from '~/ui/toast'
-import { IMPORT_EXTENSIONS, IMPORT_MAX_BYTES, useImportHistory, useUploadResults } from '../../api/imports'
-import type { ImportReport } from '../../api/types'
+import {
+  IMPORT_EXTENSIONS,
+  IMPORT_MAX_BYTES,
+  useImportHistory,
+  useImportReport,
+  useUploadResults,
+} from '../../api/imports'
+import { schoolKeys } from '../../api/keys'
 import { useCurriculumNames } from '../../api/use-options'
 import { AcademicYearField, GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
@@ -34,7 +41,12 @@ export function ImportsScreen() {
   const { termName, gradeName } = useCurriculumNames()
 
   const [file, setFile] = useState<File | null>(null)
-  const [report, setReport] = useState<ImportReport | null>(null)
+  // Just the id — the report itself is read live via useImportReport below,
+  // which polls while the backend's queue worker is still processing this
+  // import's sheets (see that hook's docblock). Keeping only the id here
+  // means the panel always reflects the latest fetched state instead of the
+  // upload response's initial, still-zeroed snapshot.
+  const [reportId, setReportId] = useState<string | null>(null)
   // Set only after a 422 asks for one explicitly — most sheets never need
   // these, so they stay hidden until the backend says it can't detect one.
   const [needsGrade, setNeedsGrade] = useState(false)
@@ -44,11 +56,26 @@ export function ImportsScreen() {
   const [termId, setTermId] = useState('')
   const [academicYearId, setAcademicYearId] = useState('')
 
+  const queryClient = useQueryClient()
   const history = useImportHistory()
   const upload = useUploadResults()
+  const liveReport = useImportReport(reportId ?? '')
+  const report = liveReport.data ?? null
+
+  useEffect(() => {
+    // The upload response's grade/subject/classroom auto-creates only
+    // exist once the queue worker actually finishes writing them — picker
+    // caches invalidated right after upload (see useUploadResults) are
+    // stale until then. Re-invalidating the moment this import leaves
+    // "processing" is what makes a freshly-created grade show up in the
+    // grade filter without a manual refresh.
+    if (report && report.status !== 'processing') {
+      void queryClient.invalidateQueries({ queryKey: schoolKeys.all })
+    }
+  }, [report?.status, queryClient])
 
   const resetUpload = () => {
-    setReport(null)
+    setReportId(null)
     setFile(null)
     setNeedsGrade(false)
     setNeedsTerm(false)
@@ -65,14 +92,13 @@ export function ImportsScreen() {
     if (file.size > IMPORT_MAX_BYTES) return notify('danger', v.fileTooLarge(MAX_MB))
 
     try {
-      setReport(
-        await upload.mutateAsync({
-          file,
-          gradeId: gradeId || undefined,
-          termId: termId || undefined,
-          academicYearId: academicYearId || undefined,
-        }),
-      )
+      const response = await upload.mutateAsync({
+        file,
+        gradeId: gradeId || undefined,
+        termId: termId || undefined,
+        academicYearId: academicYearId || undefined,
+      })
+      setReportId(String(response.id))
       setNeedsGrade(false)
       setNeedsTerm(false)
       setNeedsAcademicYear(false)

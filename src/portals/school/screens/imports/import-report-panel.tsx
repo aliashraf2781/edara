@@ -37,7 +37,13 @@ export function ImportReportPanel({
   const text = useDict(importsText)
   const [expanded, setExpanded] = useState<number | null>(null)
 
-  const clean = report.invalid_rows === 0
+  // The backend now processes an import's sheets on a queue worker (see
+  // useImportReport's docblock) — this panel can render while the counts
+  // are still zeroed because nothing has been written yet, not because the
+  // sheet was actually empty. Treating that as "clean" would show a
+  // misleading green "no errors" banner before the import has even run.
+  const processing = report.status === 'processing'
+  const clean = !processing && report.invalid_rows === 0
 
   const columns: readonly Column<ImportRowError>[] = [
     { key: 'row', header: text.errorColumns.row, numeric: true, cell: (row) => row.row_number },
@@ -83,20 +89,24 @@ export function ImportReportPanel({
           <p
             className={cn(
               'flex items-start gap-2 rounded-control border border-s-2 px-4 py-3 text-body',
-              clean
-                ? 'border-success/30 border-s-success bg-success/8 text-success'
-                : 'border-attention/30 border-s-attention bg-attention/8 text-attention',
+              processing
+                ? 'border-accent/30 border-s-accent bg-accent/8 text-accent'
+                : clean
+                  ? 'border-success/30 border-s-success bg-success/8 text-success'
+                  : 'border-attention/30 border-s-attention bg-attention/8 text-attention',
             )}
           >
-            <Icon name={clean ? 'check' : 'alert'} className="size-4 shrink-0" />
+            <Icon name={processing ? 'clock' : clean ? 'check' : 'alert'} className="size-4 shrink-0" />
             <span>
-              {clean
-                ? text.successBanner(report.valid_rows, report.imported_rows)
-                : text.partialBanner(report.valid_rows, report.total_rows, report.invalid_rows)}
+              {processing
+                ? text.processingBanner
+                : clean
+                  ? text.successBanner(report.valid_rows, report.imported_rows)
+                  : text.partialBanner(report.valid_rows, report.total_rows, report.invalid_rows)}
             </span>
           </p>
 
-          <p className="text-small text-muted">{text.importedResultsHint(report.imported_rows)}</p>
+          {processing ? null : <p className="text-small text-muted">{text.importedResultsHint(report.imported_rows)}</p>}
 
           {report.studentsCreated > 0 ? (
             <p className="flex items-center gap-2 text-small text-muted">
@@ -121,7 +131,7 @@ export function ImportReportPanel({
         </CardBody>
       </Card>
 
-      {clean ? null : (
+      {processing || clean ? null : (
         <div className="flex flex-col gap-3">
           <h2 className="text-h1 font-semibold text-ink">{text.errorsTitle}</h2>
           <DataTable
