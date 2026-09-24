@@ -10,18 +10,28 @@ import { Select } from '~/ui/select'
 import { Spinner } from '~/ui/spinner'
 import { adminText } from '../../admin.i18n'
 import { useAdminReference, useSchoolStudent } from '../../api/insights'
-import type { StudentDetail, StudentTermStats, StudentTermSubject, SubjectGroup } from '../../api/types'
+import type {
+  ReferenceTerm,
+  StudentDetail,
+  StudentTermStats,
+  StudentTermSubject,
+  SubjectGroup,
+} from '../../api/types'
 import { RequireAdmin } from '../../layout/require-admin'
 import { toArabicDigits } from './arabic-digits'
 import { EXTRACT_CSS } from './extract-styles'
 import { EMPTY_ISSUE_DETAILS, type IssueDetails } from './issue-details'
 import { IssueDetailsDialog } from './issue-details-dialog'
+import { PrintedDate } from './printed-date'
 import { resultsText } from './results.i18n'
 
 const TERM_PARAM = { term: '' } as const
 
 /** The post holder whose name is printed under the last signature slot. */
 const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
+/** Ministerial decree cited on the extract: number + Gregorian year. */
+const DECREE_NUMBER = '151'
+const DECREE_YEAR = '2026'
 
 /**
  * Grade level -> the ordinal word used inside "الصف [ordinal] الابتدائي"
@@ -34,6 +44,26 @@ const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
 const ORDINAL_WORDS: Record<number, string> = {
   1: 'أول', 2: 'ثاني', 3: 'ثالث', 4: 'رابع', 5: 'خامس', 6: 'سادس',
   7: 'سابع', 8: 'ثامن', 9: 'تاسع', 10: 'عاشر', 11: 'حادي عشر', 12: 'ثاني عشر',
+}
+
+const ROUND_WORDS: Record<number, string> = {
+  1: 'الأول',
+  2: 'الثاني',
+}
+
+function gradeLevelFromName(gradeName: string): number | undefined {
+  for (const [level, word] of Object.entries(ORDINAL_WORDS)) {
+    if (word !== '' && gradeName.includes(word)) return Number(level)
+  }
+  return undefined
+}
+
+function termNumberOf(term: StudentTermStats, referenceTerms: readonly ReferenceTerm[]): number | undefined {
+  const listed = referenceTerms.find((row) => row.id === term.term_id)?.term
+  if (listed === 1 || listed === 2) return listed
+  if (/ثان|second/i.test(term.term_name)) return 2
+  if (/أول|اول|first/i.test(term.term_name)) return 1
+  return undefined
 }
 
 /**
@@ -84,9 +114,6 @@ const academicYears = (academicYearId: string | undefined) => {
   return { from: toArabicDigits(start), to: toArabicDigits(start + 1) }
 }
 
-/** Two-digit year fragment → full `٢٠٢٦`, kept as one string so bidi cannot flip it to ٢٦٢٠. */
-const fullArabicYear = (yy: string) => (yy === '' ? '' : toArabicDigits(`20${yy}`))
-
 export function StudentPrintScreen() {
   return (
     <RequireAdmin>
@@ -110,7 +137,7 @@ function StudentExtract() {
   const [askingDetails, setAskingDetails] = useState(false)
   const [issue, setIssue] = useState<IssueDetails>(EMPTY_ISSUE_DETAILS)
 
-  if (detail.isPending) {
+  if (detail.isPending || reference.isPending) {
     return (
       <div className="flex items-center gap-3 p-8 text-muted">
         <Spinner className="text-accent" label={text.print.loading} />
@@ -131,6 +158,17 @@ function StudentExtract() {
   const term = data.terms.find((row) => row.term_id === values.term) ?? data.terms[0]
   const classroom = reference.data?.classrooms.find((room) => room.id === data.student.classroom_id)
   const grade = reference.data?.grades.find((row) => row.id === data.student.grade_id)
+  const gradeLevel = grade?.level ?? gradeLevelFromName(data.grade_name)
+  const termNumber = term ? termNumberOf(term, reference.data?.terms ?? []) : undefined
+  const yearStart = Number(classroom?.academic_year_id?.match(/(\d{4})/)?.[1] ?? NaN)
+  const autoFilled = {
+    gradeOrdinal: gradeLevel !== undefined ? (ORDINAL_WORDS[gradeLevel] ?? '') : '',
+    nextOrdinal: gradeLevel !== undefined ? (ORDINAL_WORDS[gradeLevel + 1] ?? '') : '',
+    yearFrom: Number.isFinite(yearStart) ? String(yearStart) : '',
+    yearTo: Number.isFinite(yearStart) ? String(yearStart + 1) : '',
+    seatNo: data.student.seat_no,
+    round: termNumber !== undefined ? (ROUND_WORDS[termNumber] ?? '') : '',
+  }
 
   return (
     <div className="extract-screen">
@@ -171,6 +209,8 @@ function StudentExtract() {
       {askingDetails ? (
         <IssueDetailsDialog
           initial={issue}
+          autoFilled={autoFilled}
+          showPromotion={termNumber === 2}
           onClose={() => setAskingDetails(false)}
           onApply={(details) => {
             setIssue(details)
@@ -192,7 +232,8 @@ function StudentExtract() {
         <ExtractPage
           data={data}
           term={term}
-          gradeLevel={grade?.level}
+          gradeLevel={gradeLevel}
+          termNumber={termNumber}
           academicYearId={classroom?.academic_year_id}
           issue={issue}
         />
@@ -205,15 +246,22 @@ type ExtractPageProps = {
   data: StudentDetail
   term: StudentTermStats
   gradeLevel: number | undefined
+  /** 1 = first term, 2 = second. Promotion wording only prints on 2. */
+  termNumber: number | undefined
   academicYearId: string | undefined
   issue: IssueDetails
 }
 
-function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractPageProps) {
+function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue }: ExtractPageProps) {
   const text = useDict(resultsText)
   const { student, school } = data
-  const ordinal = gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel] : undefined
-  const nextOrdinal = gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel + 1] : undefined
+  const ordinal =
+    (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel] : undefined) || issue.gradeOrdinal || undefined
+  const nextOrdinal =
+    (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel + 1] : undefined) || issue.nextOrdinal || undefined
+  const isSecondTerm = termNumber === 2
+  const roundLabel = (termNumber !== undefined ? (ROUND_WORDS[termNumber] ?? '') : '') || issue.round
+  const seatNo = student.seat_no !== '' ? student.seat_no : issue.seatNo
   const fullName = [student.first_name, student.father_name, student.family_name]
     .filter((part) => part !== '')
     .join(' ')
@@ -221,6 +269,8 @@ function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractP
   const subjects = term.subjects
   const numeric = subjects.filter((subject) => subject.grading_type === 'numeric')
   const years = academicYears(academicYearId)
+  const yearFrom = issue.yearFrom !== '' ? toArabicDigits(issue.yearFrom) : (years?.from ?? '')
+  const yearTo = issue.yearTo !== '' ? toArabicDigits(issue.yearTo) : (years?.to ?? '')
   // Grades 1-2 never carry a numeric mark at all — the printed form for
   // them is a single "تقديرات الطالب" row of ratings, not the four-row
   // numeric table the other grades use.
@@ -238,12 +288,7 @@ function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractP
           <img className="crest crest-start" src="/topleft.png" alt="شعار إدارة شئون الطلبة والامتحانات" />
           <div className="date-field">
             التاريخ :{' '}
-            {/* Digits + slashes must stay LTR or bidi flips day/month/year. */}
-            <span className="date-run" dir="ltr">
-              <Blank style={{ minWidth: 34 }} value={toArabicDigits(issue.issueDay)} /> /{' '}
-              <Blank style={{ minWidth: 34 }} value={toArabicDigits(issue.issueMonth)} /> /{' '}
-              <Blank style={{ minWidth: 48 }} value={toArabicDigits(issue.issueYear)} /> م
-            </span>
+            <PrintedDate year={issue.issueYear} month={issue.issueMonth} day={issue.issueDay} />
           </div>
           <img className="crest crest-end" src="/topright.png" alt="محافظة الدقهلية — مديرية التربية والتعليم" />
         </div>
@@ -252,41 +297,39 @@ function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractP
         <div className="title-wrap">
           <div className="title-box">
             <span>مستخرج رسمي بنتيجة الصف</span>
-            <span className="blank filled">{ordinal ?? ''}</span>
+            <Blank value={ordinal} />
             <span>الابتدائي</span>
           </div>
         </div>
 
         {/* ===== Info lines ===== */}
         <div className="info-lines">
-          <div className="row">
-            <span className="txt">بالكشف في سجلات القيد بمدرسة&nbsp;:</span>
-            <span className="blank filled b-xl">{school.name}</span>
-            <span className="txt">في العام الدراسي </span>
+          <p>
+            بالكشف في سجلات القيد بمدرسة&nbsp;:
+            <span className="blank filled b-xl">{school.name}</span> في العام الدراسي{' '}
             <span className="date-run" dir="ltr">
-              <span className="blank filled b-md">{years?.from ?? ''}</span>
-              /
-              <span className="blank filled b-md">{years?.to ?? ''}</span>م
+              <span className="blank filled b-md">{yearFrom}</span>/
+              <span className="blank filled b-md">{yearTo}</span>م
+            </span>{' '}
+            <span className="student-name">
+              وجد اسم الطالب&nbsp;:
+              <span className="blank filled b-fit">{fullName}</span>
             </span>
-          </div>
-          <div className="row">
-            <span className="txt">وجد اسم الطالب&nbsp;:</span>
-            <span className="blank filled b-xl">{fullName}</span>
-            <span className="txt">منقول من الصف</span>
-            <span className="blank filled b-md">{ordinal ?? ''}</span>
-            <span className="txt">الابتدائي إلى الصف</span>
-            <span className="blank filled b-md">{nextOrdinal ?? ''}</span>
-          </div>
-          <div className="row">
-            <span className="txt">تحت اشراف المديرية برقم جلوس</span>
-            <span className="blank filled b-lg">{toArabicDigits(student.seat_no)}</span>
-            <span className="txt">طبقا للقرار الوزاري</span>
-            <Blank className="b-sm" />
-            <span className="txt">لسنة</span>
-            <Blank className="b-md" />
-            <span className="txt">الدور</span>
-            <Blank className="b-md" />
-          </div>
+            <br />
+            {isSecondTerm ? (
+              <>
+                {' '}
+                منقول من الصف
+                <Blank className="b-md" value={ordinal} /> الابتدائي إلى الصف
+                <Blank className="b-md" value={nextOrdinal} />
+              </>
+            ) : null}{' '}
+            تحت اشراف المديرية برقم جلوس
+            <Blank className="b-lg" value={toArabicDigits(seatNo)} /> طبقا للقرار الوزاري
+            <span className="blank filled b-sm">{toArabicDigits(DECREE_NUMBER)}</span> لسنة
+            <span className="blank filled b-md">{toArabicDigits(DECREE_YEAR)}</span> الدور
+            <Blank className="b-md" value={roundLabel} />
+          </p>
         </div>
 
         {allQualitative ? (
@@ -374,33 +417,26 @@ function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractP
 
         {/* ===== After-table text ===== */}
         <div className="after-table">
-          <p className="submit-line">
-            <span>وقد استخرج هذا البيان لتقديمه إلى&nbsp;:</span>
-            <Blank value={issue.submittedTo} />
-          </p>
-          <p className="pay-line">
-            <span>بناء على طلب الطالب بعد سداد الرسم المقرر بالحوالة رقم&nbsp;:</span>
-            <Blank className="b-md" value={toArabicDigits(issue.transferNumber)} />
-            <span>بتاريخ&nbsp;:</span>
-            <span className="date-run" dir="ltr">
-              <Blank style={{ minWidth: 20 }} value={toArabicDigits(issue.transferDay)} />/
-              <Blank style={{ minWidth: 20 }} value={toArabicDigits(issue.transferMonth)} />/
-              <Blank style={{ minWidth: 40 }} value={fullArabicYear(issue.transferYear)} />م
-            </span>
-            <span>&nbsp;&nbsp;مبلغ&nbsp;:</span>
-            <Blank className="b-md" value={toArabicDigits(issue.amount)} />
-          </p>
           <p>
-            وعلى الجهة المقدم لها البيان التحقق من أن صاحب البيان هو نفس الشخص المدون أعلاه ولا يجوز
-            تقديم البيان إلى جهة أخرى أو استخراج
+            وقد استخرج هذا البيان لتقديمه إلى&nbsp;:
+            <Blank className="b-to" value={issue.submittedTo} /> بناء على طلب الطالب بعد سداد الرسم المقرر
+            بالحوالة رقم&nbsp;:
+            <Blank className="b-ref" value={toArabicDigits(issue.transferNumber)} /> بتاريخ&nbsp;:
+            <PrintedDate
+              year={issue.transferYear === '' ? '' : `20${issue.transferYear}`}
+              month={issue.transferMonth}
+              day={issue.transferDay}
+            />{' '}
+            مبلغ&nbsp;:
+            <Blank className="b-md" value={toArabicDigits(issue.amount)} /> وعلى الجهة المقدم لها البيان التحقق
+            من أن صاحب البيان هو نفس الشخص المدون أعلاه ولا يجوز تقديم البيان إلى جهة أخرى أو استخراج صورة منه
+            لجهة المقدم لها .
           </p>
-          <p>صورة منه لجهة المقدم لها .</p>
         </div>
 
         {/* ===== Signatures ===== */}
         <div className="signatures">
           <div>المحرر</div>
-          <div>مراجع</div>
           <div>مراجع</div>
           <div>
             <span>مدير إدارة شئون الطلبة والامتحانات</span>
@@ -409,14 +445,9 @@ function ExtractPage({ data, term, gradeLevel, academicYearId, issue }: ExtractP
         </div>
 
         <div className="office-stamp">
-          <div className="seal" />
           <div className="date-field">
             التاريخ :{' '}
-            <span className="date-run" dir="ltr">
-              <span className="blank" style={{ minWidth: 18 }} />/
-              <span className="blank" style={{ minWidth: 18 }} />/
-              <span className="blank" style={{ minWidth: 36 }} />م
-            </span>
+            <PrintedDate year="" month="" day="" />
           </div>
         </div>
 

@@ -14,10 +14,6 @@ export const adminRoutes: RouteObject = {
       path: 'login',
       lazy: async () => ({ Component: (await import('./screens/auth/login-screen')).AdminLoginScreen }),
     },
-    {
-      path: 'verify',
-      lazy: async () => ({ Component: (await import('./screens/auth/verify-screen')).AdminVerifyScreen }),
-    },
     // The printed extract is an official form, so it renders without the app
     // chrome around it — it guards itself instead of sitting under the shell.
     {

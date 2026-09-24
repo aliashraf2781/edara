@@ -149,6 +149,14 @@ export const resultsText: Dict<{
     month: string
     year: string
     amount: string
+    grade: string
+    nextGrade: string
+    yearFrom: string
+    yearTo: string
+    seatNo: string
+    round: string
+    roundFirst: string
+    roundSecond: string
     fill: string
     apply: string
     clear: string
@@ -303,7 +311,7 @@ export const resultsText: Dict<{
     issue: {
       title: 'بيانات استخراج المستخرج',
       description:
-        'املأ تاريخ المستخرج والجهة ورقم الحوالة وتاريخها والمبلغ. الحقول اختيارية — اتركها فارغة لتبقى الأسطر منقّطة وتُملأ بخط اليد.',
+        'املأ ما لا يُعبَّأ تلقائياً: التاريخ والجهة والحوالة، وأي خانة ناقصة على المستخرج. التوقيعات وتاريخ الختم تُترك بخط اليد.',
       issueDate: 'تاريخ المستخرج',
       issueDateHint: 'يوم / شهر / سنة كاملة — يظهر أعلى الصفحة.',
       submittedTo: 'وقد استخرج هذا البيان لتقديمه إلى',
@@ -315,6 +323,14 @@ export const resultsText: Dict<{
       month: 'شهر',
       year: 'سنة',
       amount: 'المبلغ',
+      grade: 'الصف',
+      nextGrade: 'منقول إلى الصف',
+      yearFrom: 'العام الدراسي من',
+      yearTo: 'إلى',
+      seatNo: 'رقم الجلوس',
+      round: 'الدور',
+      roundFirst: 'الأول',
+      roundSecond: 'الثاني',
       fill: 'تعبئة البيانات',
       apply: 'حفظ على المستخرج',
       clear: 'مسح الحقول',
@@ -469,7 +485,7 @@ export const resultsText: Dict<{
     issue: {
       title: 'Extract issue details',
       description:
-        'Fill the extract date, destination, transfer number, date, and amount. Every field is optional — leave them blank to keep the dotted rules for handwriting.',
+        'Fill what is not auto-filled: the date, destination, transfer, and any missing extract slot. Signatures and the stamp date stay for handwriting.',
       issueDate: 'Extract date',
       issueDateHint: 'Day / month / full year — printed at the top of the page.',
       submittedTo: 'Issued for submission to',
@@ -481,6 +497,14 @@ export const resultsText: Dict<{
       month: 'Month',
       year: 'Year',
       amount: 'Amount',
+      grade: 'Grade',
+      nextGrade: 'Promoted to grade',
+      yearFrom: 'Academic year from',
+      yearTo: 'to',
+      seatNo: 'Seat number',
+      round: 'Round',
+      roundFirst: 'First',
+      roundSecond: 'Second',
       fill: 'Fill details',
       apply: 'Apply to extract',
       clear: 'Clear fields',

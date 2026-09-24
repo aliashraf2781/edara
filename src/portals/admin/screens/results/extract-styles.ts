@@ -12,7 +12,7 @@ export const EXTRACT_CSS = `
 .extract{
   --ink:#1a1a1a;
   --line:#000;
-  --paper:#fdfcf9;
+  --paper:#fff;
   padding:24px;
   display:flex;
   justify-content:center;
@@ -21,12 +21,15 @@ export const EXTRACT_CSS = `
 }
 .extract *{ box-sizing:border-box; }
 .extract .page{
-  background:var(--paper);
-  width:1300px;
-  max-width:100%;
-  padding:22px 34px 26px;
+  background:#fff;
+  width:297mm;
+  height:210mm;
+  padding:12px 16px 14px;
   border:2.5px solid var(--line);
   position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
 }
 
 /* ---------- top row: seal / date / letterhead ---------- */
@@ -37,15 +40,6 @@ export const EXTRACT_CSS = `
   align-items:flex-start;
   direction:ltr;
   margin-bottom:6px;
-}
-.extract .seal{
-  width:70px;height:70px;
-  border:2px solid #333;
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:8px;text-align:center;color:#555;
-  background:repeating-conic-gradient(from 0deg, #cfcfc9 0deg 8deg, transparent 8deg 16deg);
-  flex:0 0 auto;
 }
 /* The two supplied crests replace the drawn placeholders at the top.
    Their flat JPEG gray is already knocked out, so the paper shows through. */
@@ -67,13 +61,23 @@ export const EXTRACT_CSS = `
   border-bottom:1px dotted #000;
   margin:0 3px;
 }
-/* Isolates day/month/year (and academic-year pairs) so RTL flex/bidi
-   cannot reverse ٢٠٢٥/٢٠٢٦ into ٢٠٢٦/٢٠٢٥. */
+/* Year / month / day as separate flex items: year stays on the left.
+   A single string of Arabic-Indic digits still flips under RTL bidi. */
 .extract .date-run{
-  display:inline-block;
+  display:inline-flex;
+  flex-direction:row;
+  align-items:baseline;
   direction:ltr;
   unicode-bidi:isolate;
 }
+.extract .date-run.date-value{
+  border-bottom:1px dotted #000;
+  min-width:96px;
+  padding:0 6px;
+  gap:0.15em;
+}
+.extract .date-run.date-value.filled{ font-weight:600; border-bottom:none; }
+.extract .date-value-slot{ display:inline-block; min-width:72px; }
 .extract .letterhead{
   direction:rtl;
   text-align:right;
@@ -103,19 +107,15 @@ export const EXTRACT_CSS = `
   min-width:170px;
   border-bottom:1px dotted #000;
 }
+.extract .title-box .blank.filled{ border-bottom:none; }
 
 /* ---------- info lines ---------- */
 .extract .info-lines p{
   margin:5px 0;
   font-size:14.5px;
   text-align:right;
-  display:flex;
-  flex-wrap:nowrap;
-  align-items:baseline;
-  white-space:nowrap;
-  justify-content:flex-start;
+  line-height:2.2;
 }
-.extract .info-lines p .txt{ white-space:nowrap; }
 .extract .blank{
   display:inline-block;
   border-bottom:1px dotted #000;
@@ -127,9 +127,20 @@ export const EXTRACT_CSS = `
   font-weight:600;
   text-align:center;
   white-space:nowrap;
+  border-bottom:none;
 }
 .extract .b-xl{ min-width:260px; }
+.extract .student-name{ display:inline; }
+.extract .blank.filled.b-fit{
+  display:inline;
+  white-space:normal;
+  min-width:0;
+  padding:0;
+  text-align:start;
+}
 .extract .b-lg{ min-width:140px; }
+.extract .b-to{ min-width:180px; }
+.extract .b-ref{ min-width:120px; }
 .extract .b-md{ min-width:80px; }
 .extract .b-sm{ min-width:34px; }
 /* Under dir=rtl, flex-start packs to the right — where Arabic lines begin. */
@@ -194,6 +205,7 @@ export const EXTRACT_CSS = `
   margin:6px 0;
   font-size:13.5px;
   text-align:right;
+  line-height:2;
 }
 .extract .submit-line{ display:flex;align-items:baseline;justify-content:flex-start; }
 .extract .submit-line .blank{ flex:1 1 auto;max-width:520px;margin-inline-start:6px; }
@@ -219,14 +231,13 @@ export const EXTRACT_CSS = `
 .extract .signatures .holder-name{ font-weight:400;font-size:13px; }
 .extract .office-stamp{
   position:absolute;
-  left:34px;
-  bottom:64px;
+  left:16px;
+  bottom:56px;
   display:flex;
   flex-direction:column;
   align-items:center;
   gap:4px;
 }
-.extract .office-stamp .seal{ width:56px;height:56px; }
 .extract .office-stamp .date-field{ font-size:11px;padding-top:0; }
 
 /* ---------- rating-band legend ---------- */
@@ -234,7 +245,7 @@ export const EXTRACT_CSS = `
   display:flex;
   flex-wrap:wrap;
   gap:6px;
-  margin-top:40px;
+  margin-top:auto;
   border-top:1px solid var(--line);
   padding-top:6px;
 }
@@ -258,7 +269,7 @@ export const EXTRACT_CSS = `
   .extract-chrome{ display:none !important; }
   .extract-screen{ background:#fff; }
   .extract{ background:#fff; padding:0; }
-  .extract .page{ border-width:2px; box-shadow:none; width:100%; }
+  .extract .page{ border-width:2px; box-shadow:none; width:100%; height:100%; overflow:hidden; }
   @page{ size:A4 landscape; margin:10mm; }
 }
 `

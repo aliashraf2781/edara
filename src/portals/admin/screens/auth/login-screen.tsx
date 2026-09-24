@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Navigate, useNavigate } from 'react-router'
 import { z } from 'zod'
-import { isValidationError } from '~/lib/api/error'
 import { applyFieldErrors } from '~/lib/forms/apply-field-errors'
 import { validationText, type ValidationText } from '~/lib/forms/validation.i18n'
 import { useDict } from '~/lib/i18n/use-dict'
@@ -49,12 +48,6 @@ export function AdminLoginScreen() {
       await login.mutateAsync(values)
       navigate('/admin/schools', { replace: true })
     } catch (error) {
-      // A 422 on `email` at this point means the account is not verified —
-      // the format was already checked client-side (guide 2.2).
-      if (isValidationError(error) && 'email' in error.fieldErrors) {
-        navigate('/admin/verify', { state: { email: values.email }, replace: true })
-        return
-      }
       const failure = applyFieldErrors(error, form.setError, ['email', 'password'], text.failed)
       setFormMessage(failure.formMessage)
     }

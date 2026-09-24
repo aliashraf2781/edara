@@ -13,6 +13,7 @@ import { toArabicDigits } from './arabic-digits'
 import { EXTRACT_CSS } from './extract-styles'
 import { EMPTY_ISSUE_DETAILS, type IssueDetails } from './issue-details'
 import { IssueDetailsDialog } from './issue-details-dialog'
+import { PrintedDate } from './printed-date'
 import { resultsText } from './results.i18n'
 
 /** Grade level -> ordinal word, same mapping student-print-screen.tsx uses. */
@@ -127,11 +128,7 @@ function Statement() {
             <span />
             <div className="date-field">
               التاريخ :{' '}
-              <span className="date-run" dir="ltr">
-                <Blank className="statement-date-slot" value={toArabicDigits(issue.issueDay)} /> /{' '}
-                <Blank className="statement-date-slot" value={toArabicDigits(issue.issueMonth)} /> /{' '}
-                <Blank className="statement-date-slot-lg" value={toArabicDigits(issue.issueYear)} /> م
-              </span>
+              <PrintedDate year={issue.issueYear} month={issue.issueMonth} day={issue.issueDay} />
             </div>
             <img className="crest crest-end" src="/topright.png" alt="محافظة الدقهلية — مديرية التربية والتعليم" />
           </div>
@@ -183,11 +180,11 @@ function Statement() {
             </p>
             <p className="pay-line">
               <span>بتاريخ&nbsp;:</span>
-              <span className="date-run" dir="ltr">
-                <Blank className="statement-date-slot" value={toArabicDigits(issue.transferDay)} />/
-                <Blank className="statement-date-slot" value={toArabicDigits(issue.transferMonth)} />/
-                <Blank className="statement-date-slot-lg" value={toArabicDigits(issue.transferYear)} />م
-              </span>
+              <PrintedDate
+                year={issue.transferYear === '' ? '' : `20${issue.transferYear}`}
+                month={issue.transferMonth}
+                day={issue.transferDay}
+              />
             </p>
             <p className="submit-line">
               <span>وذلك لتقديمه إلى&nbsp;:</span>
@@ -233,13 +230,15 @@ function Statement() {
 const STATEMENT_CSS = `
 .statement-page{
   width:780px;
+  height:auto;
   min-height:1040px;
   padding:34px 46px 40px;
   display:flex;
   flex-direction:column;
+  overflow:visible;
 }
 .statement-date-slot{ display:inline-block; min-width:26px; border-bottom:1px dotted #000; margin:0 3px; text-align:center; }
-.statement-date-slot-lg{ display:inline-block; min-width:48px; border-bottom:1px dotted #000; margin:0 3px; text-align:center; }
+.statement-date-slot-lg{ display:inline-block; min-width:96px; border-bottom:1px dotted #000; margin:0 3px; text-align:center; }
 .statement-subtitle{ text-align:center; font-size:14px; margin:4px 0 18px; }
 .statement-lines .row{ margin:10px 0; }
 .statement-note{
