@@ -16,8 +16,6 @@ type AuthLayoutProps = {
   /** Distinguishes the two portals at a glance, before anyone types anything. */
   accent: ReactNode
   preferenceLabels: { language: string; theme: string }
-  /** Only the login screens pass this — mid-flow screens like OTP verification don't. */
-  switcher?: ReactNode
 }
 
 export function AuthLayout({
@@ -27,7 +25,6 @@ export function AuthLayout({
   children,
   accent,
   preferenceLabels,
-  switcher,
 }: AuthLayoutProps) {
   const brand = useDict(brandText)
 
@@ -66,8 +63,6 @@ export function AuthLayout({
 
         <main className="flex flex-1 items-center justify-center px-6 pb-16">
           <div className="flex w-full max-w-md flex-col gap-6">
-            {switcher}
-
             <div className="flex flex-col items-center gap-3 text-center">
               <span className="flex size-12 items-center justify-center rounded-control bg-accent/10 text-accent lg:hidden">
                 {accent}

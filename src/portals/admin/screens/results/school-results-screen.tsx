@@ -271,6 +271,14 @@ export function SchoolResultsScreen() {
               {text.school.view}
             </Button>
             <Button
+              onClick={() =>
+                navigate(`/admin/schools/${code}/students/${selected.id}/enrollment-statement`)
+              }
+            >
+              <Icon name="ledger" />
+              {text.student.enrollmentStatement}
+            </Button>
+            <Button
               variant="primary"
               onClick={() => navigate(`/admin/schools/${code}/students/${selected.id}/print`)}
             >

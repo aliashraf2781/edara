@@ -11,7 +11,6 @@ import { Button } from '~/ui/button'
 import { Field } from '~/ui/field'
 import { FormAlert } from '~/ui/form-alert'
 import { Icon } from '~/ui/icon'
-import { PortalSwitcher } from '~/ui/portal-switcher'
 import { TextInput } from '~/ui/text-input'
 import { adminText } from '../../admin.i18n'
 import { useAdminLogin, useAdminToken } from '../../auth/use-admin-session'
@@ -60,7 +59,6 @@ export function AdminLoginScreen() {
       subtitle={text.subtitle}
       accent={<Icon name="shield" />}
       preferenceLabels={{ language: shell.header.language, theme: shell.header.theme }}
-      switcher={<PortalSwitcher />}
     >
       <form noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
         <FormAlert message={formMessage} />

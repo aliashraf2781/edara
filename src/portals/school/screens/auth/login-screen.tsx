@@ -12,7 +12,6 @@ import { Button } from '~/ui/button'
 import { Field } from '~/ui/field'
 import { FormAlert } from '~/ui/form-alert'
 import { Icon } from '~/ui/icon'
-import { PortalSwitcher } from '~/ui/portal-switcher'
 import { TextInput } from '~/ui/text-input'
 import { useSchoolLogin, useSchoolToken } from '../../auth/use-school-session'
 import { schoolText } from '../../school.i18n'
@@ -68,7 +67,6 @@ export function SchoolLoginScreen() {
       subtitle={text.subtitle}
       accent={<Icon name="school" />}
       preferenceLabels={{ language: shell.header.language, theme: shell.header.theme }}
-      switcher={<PortalSwitcher />}
     >
       <form noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
         <FormAlert message={formMessage} />

@@ -99,6 +99,7 @@ export const resultsText: Dict<{
     school: string
     genders: { male: string; female: string }
     print: string
+    enrollmentStatement: string
     subjectColumns: {
       subject: string
       mark: string
@@ -262,6 +263,7 @@ export const resultsText: Dict<{
       school: 'المدرسة',
       genders: { male: 'ذكر', female: 'أنثى' },
       print: 'طباعة النتيجة',
+      enrollmentStatement: 'استخراج بيان قيد',
       subjectColumns: {
         subject: 'المادة',
         mark: 'درجة الطالب',
@@ -436,6 +438,7 @@ export const resultsText: Dict<{
       school: 'School',
       genders: { male: 'Male', female: 'Female' },
       print: 'Print the result',
+      enrollmentStatement: 'Issue an enrollment statement',
       subjectColumns: {
         subject: 'Subject',
         mark: 'Student mark',

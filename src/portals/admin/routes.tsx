@@ -25,7 +25,7 @@ export const adminRoutes: RouteObject = {
     {
       path: 'schools/:code/students/:id/enrollment-statement',
       lazy: async () => ({
-        Component: (await import('./screens/results/enrollment-statement-screen')).EnrollmentStatementScreen,
+        Component: (await import('./screens/enrollment-statement/enrollment-statement-screen')).EnrollmentStatementScreen,
       }),
     },
     {
