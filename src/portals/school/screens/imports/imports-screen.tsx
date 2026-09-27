@@ -23,6 +23,7 @@ import {
   useUploadResults,
 } from '../../api/imports'
 import { schoolKeys } from '../../api/keys'
+import type { ImportReport } from '../../api/types'
 import { useCurriculumNames } from '../../api/use-options'
 import { AcademicYearField, GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
