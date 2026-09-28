@@ -17,6 +17,7 @@ export const EXTRACT_CSS = `
   display:flex;
   justify-content:center;
   font-family:'Noto Naskh Arabic', serif;
+  font-weight:700;
   color:var(--ink);
 }
 .extract *{ box-sizing:border-box; }
@@ -24,12 +25,43 @@ export const EXTRACT_CSS = `
   background:#fff;
   width:297mm;
   height:210mm;
-  padding:12px 16px 14px;
-  border:2.5px solid var(--line);
+  padding:0;
   position:relative;
+  z-index:0;
   overflow:hidden;
   display:flex;
   flex-direction:column;
+}
+.extract .print-watermark{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  pointer-events:none;
+  direction:ltr;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+.extract .page > :not(.print-watermark):not(.seat-watermark){ position:relative; z-index:1; }
+.extract .seat-watermark{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-evenly;
+  pointer-events:none;
+  font-family:'Noto Naskh Arabic', serif;
+  font-size:96px;
+  font-weight:800;
+  line-height:1;
+  color:#000;
+  opacity:0.22;
+  mix-blend-mode:multiply;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
 }
 
 /* ---------- top row: seal / date / letterhead ---------- */
@@ -47,11 +79,11 @@ export const EXTRACT_CSS = `
   flex:0 0 auto;
   width:auto;
 }
-.extract .crest-start{ height:92px; }
-.extract .crest-end{ height:76px; padding-top:4px; }
+.extract .crest-start{ height:132px; }
+.extract .crest-end{ height:148px; }
 .extract .date-field{
   direction:rtl;
-  font-size:15px;
+  font-size:19px;
   padding-top:14px;
   white-space:nowrap;
 }
@@ -76,7 +108,7 @@ export const EXTRACT_CSS = `
   padding:0 6px;
   gap:0.15em;
 }
-.extract .date-run.date-value.filled{ font-weight:600; border-bottom:none; }
+.extract .date-run.date-value.filled{ font-weight:800; border-bottom:none; }
 .extract .date-value-slot{ display:inline-block; min-width:72px; }
 .extract .letterhead{
   direction:rtl;
@@ -94,10 +126,9 @@ export const EXTRACT_CSS = `
   margin:6px 0 14px;
 }
 .extract .title-box{
-  border:1.5px solid var(--line);
   padding:6px 26px;
-  font-weight:700;
-  font-size:20px;
+  font-weight:800;
+  font-size:26px;
   display:flex;
   align-items:baseline;
   gap:8px;
@@ -112,7 +143,7 @@ export const EXTRACT_CSS = `
 /* ---------- info lines ---------- */
 .extract .info-lines p{
   margin:5px 0;
-  font-size:14.5px;
+  font-size:18.5px;
   text-align:right;
   line-height:2.2;
 }
@@ -124,7 +155,7 @@ export const EXTRACT_CSS = `
 /* A blank the API could fill keeps the dotted rule and sets the value on it. */
 .extract .blank.filled{
   padding:0 6px;
-  font-weight:600;
+  font-weight:800;
   text-align:center;
   white-space:nowrap;
   border-bottom:none;
@@ -160,7 +191,8 @@ export const EXTRACT_CSS = `
   border:1px solid var(--line);
   text-align:center;
   vertical-align:middle;
-  font-size:11px;
+  font-size:14px;
+  font-weight:800;
   padding:3px 2px;
   line-height:1.3;
   overflow-wrap:break-word;
@@ -169,7 +201,7 @@ export const EXTRACT_CSS = `
 .extract table.grades th{
   font-weight:700;
   height:56px;
-  font-size:10.5px;
+  font-size:13.5px;
 }
 .extract table.grades td.label-col, .extract table.grades th.label-col{
   font-weight:700;
@@ -177,7 +209,7 @@ export const EXTRACT_CSS = `
 }
 .extract .summary-row td{
   font-weight:700;
-  font-size:12px;
+  font-size:15px;
   height:30px;
 }
 .extract .summary-row td.blank-cell{
@@ -203,7 +235,7 @@ export const EXTRACT_CSS = `
 .extract .after-table{ margin-top:14px; }
 .extract .after-table p{
   margin:6px 0;
-  font-size:13.5px;
+  font-size:17.5px;
   text-align:right;
   line-height:2;
 }
@@ -217,7 +249,7 @@ export const EXTRACT_CSS = `
   align-items:flex-start;
   justify-content:space-between;
   margin-top:56px;
-  font-size:14px;
+  font-size:18px;
   font-weight:700;
   padding:0 6px;
 }
@@ -228,48 +260,26 @@ export const EXTRACT_CSS = `
   gap:6px;
 }
 /* The post holder's name, printed under the title of the post. */
-.extract .signatures .holder-name{ font-weight:400;font-size:13px; }
-.extract .office-stamp{
-  position:absolute;
-  left:16px;
-  bottom:56px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
-}
-.extract .office-stamp .date-field{ font-size:11px;padding-top:0; }
-
-/* ---------- rating-band legend ---------- */
-.extract .legend{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:auto;
-  border-top:1px solid var(--line);
-  padding-top:6px;
-}
-.extract .legend-item{
-  flex:1 1 0;
-  border:1px solid var(--line);
-  text-align:center;
-  font-size:10.5px;
-  font-weight:700;
-  padding:4px 6px;
-}
-.extract .legend-blue{ background:#dbeafe; }
-.extract .legend-green{ background:#dcfce7; }
-.extract .legend-yellow{ background:#fef9c3; }
-.extract .legend-red{ background:#fee2e2; }
+.extract .signatures .holder-name{ font-weight:800;font-size:15px; }
 
 @media print{
+  html, body, #root{ height:auto; margin:0 !important; padding:0 !important; }
   body{ background:#fff; }
   /* Keep the crests when the browser's "background graphics" box is off. */
   .extract .crest{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .extract-chrome{ display:none !important; }
   .extract-screen{ background:#fff; }
   .extract{ background:#fff; padding:0; }
-  .extract .page{ border-width:2px; box-shadow:none; width:100%; height:100%; overflow:hidden; }
-  @page{ size:A4 landscape; margin:10mm; }
+  .extract .page{ box-shadow:none; width:100%; height:210mm; overflow:hidden; }
+  @page{
+    size:A4 landscape;
+    margin:0;
+    @top-left{ content:none; }
+    @top-center{ content:none; }
+    @top-right{ content:none; }
+    @bottom-left{ content:none; }
+    @bottom-center{ content:none; }
+    @bottom-right{ content:none; }
+  }
 }
 `

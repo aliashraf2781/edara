@@ -127,7 +127,6 @@ export const resultsText: Dict<{
     back: string
     loading: string
     absentMark: string
-    legend: { blue: string; green: string; yellow: string; red: string }
   }
   reportCard: {
     title: string
@@ -291,12 +290,6 @@ export const resultsText: Dict<{
       back: 'عودة إلى صفحة الطالب',
       loading: 'جارٍ تجهيز المستخرج',
       absentMark: 'غ',
-      legend: {
-        blue: 'اللون الأزرق : يفوق التوقعات (من ٨٥ إلى ١٠٠)',
-        green: 'اللون الأخضر يلبي التوقعات (٦٥ إلى ٨٥)',
-        yellow: 'اللون الأصفر يلبي التوقعات أحيانا (من ٥٠ إلى ٦٥)',
-        red: 'اللون الأحمر أقل من التوقعات (من ٠ إلى ٥٠)',
-      },
     },
     reportCard: {
       title: 'كشف الدرجات',
@@ -466,12 +459,6 @@ export const resultsText: Dict<{
       back: 'Back to the student',
       loading: 'Preparing the extract',
       absentMark: 'Abs',
-      legend: {
-        blue: 'Blue: exceeds expectations (85 to 100)',
-        green: 'Green: meets expectations (65 to 85)',
-        yellow: 'Yellow: sometimes meets expectations (50 to 65)',
-        red: 'Red: below expectations (0 to 50)',
-      },
     },
     reportCard: {
       title: 'Report card',

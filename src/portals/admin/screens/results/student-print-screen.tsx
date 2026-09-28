@@ -18,6 +18,8 @@ import type {
   SubjectGroup,
 } from '../../api/types'
 import { RequireAdmin } from '../../layout/require-admin'
+import { PrintWatermark, SeatWatermark } from '../print-watermark'
+import { printPage } from '../print-page'
 import { toArabicDigits } from './arabic-digits'
 import { EXTRACT_CSS } from './extract-styles'
 import { EMPTY_ISSUE_DETAILS, type IssueDetails } from './issue-details'
@@ -196,9 +198,7 @@ function StudentExtract() {
           </Button>
           <Button
             variant="primary"
-            onClick={() => {
-              window.print()
-            }}
+            onClick={printPage}
           >
             <Icon name="download" />
             {text.print.action}
@@ -223,7 +223,7 @@ function StudentExtract() {
               setIssue(details)
               setAskingDetails(false)
             })
-            window.print()
+            printPage()
           }}
         />
       ) : null}
@@ -261,7 +261,7 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
     (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel + 1] : undefined) || issue.nextOrdinal || undefined
   const isSecondTerm = termNumber === 2
   const roundLabel = (termNumber !== undefined ? (ROUND_WORDS[termNumber] ?? '') : '') || issue.round
-  const seatNo = student.seat_no !== '' ? student.seat_no : issue.seatNo
+  const seatNo = issue.seatNo !== '' ? issue.seatNo : student.seat_no
   const fullName = [student.first_name, student.father_name, student.family_name]
     .filter((part) => part !== '')
     .join(' ')
@@ -282,6 +282,8 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
   return (
     <div className="extract" dir="rtl" lang="ar">
       <div className="page">
+        <PrintWatermark />
+        <SeatWatermark value={toArabicDigits(seatNo)} />
         {/* ===== Header ===== */}
         <div className="top-row">
           {/* `top-row` is forced LTR, so this crest sits on the left. */}
@@ -426,7 +428,8 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
               year={issue.transferYear === '' ? '' : `20${issue.transferYear}`}
               month={issue.transferMonth}
               day={issue.transferDay}
-            />{' '}
+            />
+            <br />
             مبلغ&nbsp;:
             <Blank className="b-md" value={toArabicDigits(issue.amount)} /> وعلى الجهة المقدم لها البيان التحقق
             من أن صاحب البيان هو نفس الشخص المدون أعلاه ولا يجوز تقديم البيان إلى جهة أخرى أو استخراج صورة منه
@@ -442,21 +445,6 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
             <span>مدير إدارة شئون الطلبة والامتحانات</span>
             <span className="holder-name">{EXAMS_DIRECTOR}</span>
           </div>
-        </div>
-
-        <div className="office-stamp">
-          <div className="date-field">
-            التاريخ :{' '}
-            <PrintedDate year="" month="" day="" />
-          </div>
-        </div>
-
-        {/* ===== Rating-band legend ===== */}
-        <div className="legend">
-          <span className="legend-item legend-blue">{text.print.legend.blue}</span>
-          <span className="legend-item legend-green">{text.print.legend.green}</span>
-          <span className="legend-item legend-yellow">{text.print.legend.yellow}</span>
-          <span className="legend-item legend-red">{text.print.legend.red}</span>
         </div>
       </div>
     </div>

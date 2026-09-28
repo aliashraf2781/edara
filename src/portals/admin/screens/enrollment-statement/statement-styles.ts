@@ -15,18 +15,34 @@ export const STATEMENT_CSS = `
   display:flex;
   justify-content:center;
   font-family:'Noto Naskh Arabic', serif;
+  font-weight:600;
   color:var(--ink);
 }
 .statement *{ box-sizing:border-box; }
 .statement .sheet{
   background:#fff;
   width:210mm;
+  height:297mm;
   min-height:297mm;
-  padding:12mm 16mm 16mm;
+  padding:0 16mm;
   display:flex;
   flex-direction:column;
-  box-shadow:0 1px 4px rgba(0,0,0,.18);
+  position:relative;
+  z-index:0;
+  overflow:hidden;
 }
+.statement .print-watermark{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  pointer-events:none;
+  direction:ltr;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+.statement .sheet > :not(.print-watermark){ position:relative; z-index:1; }
 
 /* ---------- header: seal / letterhead ---------- */
 .statement .head{
@@ -34,19 +50,20 @@ export const STATEMENT_CSS = `
   justify-content:space-between;
   align-items:flex-start;
   direction:ltr;
+  margin-inline:-16mm;
 }
 .statement .crest{ width:auto; flex:0 0 auto; }
-.statement .crest-start{ height:64px; }
-.statement .crest-end{ height:62px; }
+.statement .crest-start{ height:124px; }
+.statement .crest-end{ height:130px; }
 
 /* ---------- title ---------- */
 .statement .title{
   align-self:center;
   margin-top:2px;
-  padding:4px 56px;
+  padding:8px 64px;
   border:3px double var(--line);
   border-radius:12px;
-  font-size:24px;
+  font-size:28px;
   font-weight:700;
   letter-spacing:2px;
 }
@@ -56,11 +73,11 @@ export const STATEMENT_CSS = `
   display:flex;
   align-items:baseline;
   gap:8px;
-  font-size:16px;
+  font-size:18px;
   line-height:2.3;
   white-space:nowrap;
 }
-.statement .subtitle{ margin-top:14px; font-size:15px; }
+.statement .subtitle{ margin-top:14px; font-size:17px; }
 .statement .body-lines{ margin-top:18px; display:flex; flex-direction:column; }
 
 /* A dotted rule that carries a value when there is one, and stays empty to be
@@ -107,8 +124,7 @@ export const STATEMENT_CSS = `
   padding:2px 26px;
   border:1.5px solid var(--line);
   border-radius:999px;
-  font-size:16px;
-  font-weight:700;
+  font-size:18px;
 }
 .statement .date-pill .fill{ border-bottom-style:none; }
 
@@ -118,8 +134,7 @@ export const STATEMENT_CSS = `
   border:1.5px solid var(--line);
   border-radius:14px;
   padding:6px 18px 12px;
-  font-size:15.5px;
-  font-weight:700;
+  font-size:17px;
   line-height:2;
   text-align:center;
 }
@@ -127,27 +142,20 @@ export const STATEMENT_CSS = `
   display:block;
   text-align:start;
   text-decoration:underline;
-  font-size:14px;
+  font-size:15.5px;
 }
 
 /* ---------- signatures ---------- */
 .statement .signatures{
   display:flex;
   justify-content:space-between;
-  margin-top:48px;
-  padding:0 6px;
-  font-size:16px;
-  font-weight:700;
-}
-.statement .approval{
-  display:flex;
   align-items:flex-start;
-  gap:48px;
+  align-self:stretch;
+  width:100%;
   margin-top:auto;
-  padding-top:56px;
-  padding-inline-start:40px;
-  font-size:16px;
-  font-weight:700;
+  margin-bottom:24mm;
+  padding:0;
+  font-size:18px;
 }
 .statement .approval-officer{
   display:flex;
@@ -155,15 +163,31 @@ export const STATEMENT_CSS = `
   align-items:center;
   gap:6px;
 }
-.statement .approval-officer .holder-name{ font-weight:400; }
+.statement .approval-officer .holder-name{ font-weight:700; }
 
 @media print{
+  html, body, #root{ height:auto; margin:0; }
   body{ background:#fff; }
   .statement .crest{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .statement-chrome{ display:none !important; }
-  .statement-screen{ background:#fff; }
+  .statement-screen{ background:#fff; min-height:0; }
   .statement{ padding:0; }
-  .statement .sheet{ width:100%; min-height:auto; padding:0; box-shadow:none; }
-  @page{ size:A4 portrait; margin:12mm 14mm; }
+  .statement .sheet{
+    width:100%;
+    height:297mm;
+    min-height:297mm;
+    padding:0 16mm;
+    box-shadow:none;
+  }
+  @page{
+    size:A4 portrait;
+    margin:0;
+    @top-left{ content:none; }
+    @top-center{ content:none; }
+    @top-right{ content:none; }
+    @bottom-left{ content:none; }
+    @bottom-center{ content:none; }
+    @bottom-right{ content:none; }
+  }
 }
 `

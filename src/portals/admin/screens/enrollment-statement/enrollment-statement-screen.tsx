@@ -10,6 +10,8 @@ import { adminText } from '../../admin.i18n'
 import { useAdminReference, useSchoolStudent } from '../../api/insights'
 import type { AdminReference, StudentDetail } from '../../api/types'
 import { RequireAdmin } from '../../layout/require-admin'
+import { PrintWatermark } from '../print-watermark'
+import { printPage } from '../print-page'
 import { toArabicDigits } from '../results/arabic-digits'
 import { statementText } from './enrollment-statement.i18n'
 import { EMPTY_ISSUE_SLOTS, type StatementDetails } from './statement-details'
@@ -107,7 +109,7 @@ function Statement() {
             <Icon name="pencil" />
             {text.fill}
           </Button>
-          <Button variant="primary" onClick={() => window.print()}>
+          <Button variant="primary" onClick={printPage}>
             <Icon name="download" />
             {text.print}
           </Button>
@@ -133,7 +135,7 @@ function Statement() {
               setEdits(values)
               setAskingDetails(false)
             })
-            window.print()
+            printPage()
           }}
         />
       ) : null}
@@ -165,6 +167,7 @@ function StatementSheet({ details }: { details: StatementDetails }) {
   return (
     <div className="statement" dir="rtl" lang="ar">
       <div className="sheet">
+        <PrintWatermark />
         {/* `head` is forced LTR, so the seal sits on the left. */}
         <div className="head">
           <img className="crest crest-start" src="/topleft.png" alt="شعار إدارة شئون الطلبة والامتحانات" />
@@ -244,13 +247,7 @@ function StatementSheet({ details }: { details: StatementDetails }) {
         </div>
 
         <div className="signatures">
-          <span>المحرر</span>
           <span>مراجع</span>
-          <span>المدير المساعد</span>
-        </div>
-
-        <div className="approval">
-          <span>يعتمد ،،</span>
           <div className="approval-officer">
             <span>مدير إدارة شئون الطلبة والامتحانات</span>
             <span className="holder-name">ابراهيم طلعت محمد</span>
