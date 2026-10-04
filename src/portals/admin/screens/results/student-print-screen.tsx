@@ -31,10 +31,6 @@ const TERM_PARAM = { term: '' } as const
 
 /** The post holder whose name is printed under the last signature slot. */
 const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
-/** Ministerial decree cited on the extract: number + Gregorian year. */
-const DECREE_NUMBER = '151'
-const DECREE_YEAR = '2026'
-
 /**
  * Grade level -> the ordinal word used inside "الصف [ordinal] الابتدائي"
  * and "منقول من/إلى الصف [ordinal]". A school's own Grade.name is free
@@ -44,8 +40,8 @@ const DECREE_YEAR = '2026'
  * backend to go the other direction.
  */
 const ORDINAL_WORDS: Record<number, string> = {
-  1: 'أول', 2: 'ثاني', 3: 'ثالث', 4: 'رابع', 5: 'خامس', 6: 'سادس',
-  7: 'سابع', 8: 'ثامن', 9: 'تاسع', 10: 'عاشر', 11: 'حادي عشر', 12: 'ثاني عشر',
+  1: 'الأول', 2: 'الثاني', 3: 'الثالث', 4: 'الرابع', 5: 'الخامس', 6: 'السادس',
+  7: 'السابع', 8: 'الثامن', 9: 'التاسع', 10: 'العاشر', 11: 'الحادي عشر', 12: 'الثاني عشر',
 }
 
 const ROUND_WORDS: Record<number, string> = {
@@ -55,7 +51,10 @@ const ROUND_WORDS: Record<number, string> = {
 
 function gradeLevelFromName(gradeName: string): number | undefined {
   for (const [level, word] of Object.entries(ORDINAL_WORDS)) {
-    if (word !== '' && gradeName.includes(word)) return Number(level)
+    const bare = word.replace(/^ال/, '')
+    if (word !== '' && (gradeName.includes(word) || (bare !== '' && gradeName.includes(bare)))) {
+      return Number(level)
+    }
   }
   return undefined
 }
@@ -259,7 +258,6 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
     (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel] : undefined) || issue.gradeOrdinal || undefined
   const nextOrdinal =
     (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel + 1] : undefined) || issue.nextOrdinal || undefined
-  const isSecondTerm = termNumber === 2
   const roundLabel = (termNumber !== undefined ? (ROUND_WORDS[termNumber] ?? '') : '') || issue.round
   const seatNo = issue.seatNo !== '' ? issue.seatNo : student.seat_no
   const fullName = [student.first_name, student.father_name, student.family_name]
@@ -277,7 +275,7 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
   const allQualitative = subjects.length > 0 && numeric.length === 0
 
   const verdict = (subject: StudentTermSubject) =>
-    subject.is_absent ? text.print.absentMark : subject.passed ? text.student.passed : text.student.failed
+    subject.is_absent ? text.print.absentMark : subject.passed ? text.print.passed : text.print.failed
 
   return (
     <div className="extract" dir="rtl" lang="ar">
@@ -310,26 +308,22 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
             بالكشف في سجلات القيد بمدرسة&nbsp;:
             <span className="blank filled b-xl">{school.name}</span> في العام الدراسي{' '}
             <span className="date-run" dir="ltr">
-              <span className="blank filled b-md">{yearFrom}</span>/
-              <span className="blank filled b-md">{yearTo}</span>م
-            </span>{' '}
+              <span className="blank filled b-md">{yearTo}</span>
+              <span>/</span>
+              <span className="blank filled b-md">{yearFrom}</span>
+              <span>م</span>
+            </span>
+            <br />
             <span className="student-name">
               وجد اسم الطالب&nbsp;:
               <span className="blank filled b-fit">{fullName}</span>
-            </span>
+            </span>{' '}
+            منقول من الصف
+            <Blank className="b-md" value={ordinal} /> الى الصف
+            <Blank className="b-md" value={nextOrdinal} />
             <br />
-            {isSecondTerm ? (
-              <>
-                {' '}
-                منقول من الصف
-                <Blank className="b-md" value={ordinal} /> الابتدائي إلى الصف
-                <Blank className="b-md" value={nextOrdinal} />
-              </>
-            ) : null}{' '}
             تحت اشراف المديرية برقم جلوس
-            <Blank className="b-lg" value={toArabicDigits(seatNo)} /> طبقا للقرار الوزاري
-            <span className="blank filled b-sm">{toArabicDigits(DECREE_NUMBER)}</span> لسنة
-            <span className="blank filled b-md">{toArabicDigits(DECREE_YEAR)}</span> الدور
+            <Blank className="b-lg" value={toArabicDigits(seatNo)} /> الدور
             <Blank className="b-md" value={roundLabel} />
           </p>
         </div>
@@ -410,7 +404,7 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
               <tr className="fill-row">
                 <td className="label-col">التقييم</td>
                 {numeric.map((subject) => (
-                  <td key={subject.subject_id}>{subject.passed ? text.student.passed : text.student.failed}</td>
+                  <td key={subject.subject_id}>{subject.passed ? text.print.passed : text.print.failed}</td>
                 ))}
               </tr>
             </tbody>
@@ -423,15 +417,19 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
             وقد استخرج هذا البيان لتقديمه إلى&nbsp;:
             <Blank className="b-to" value={issue.submittedTo} /> بناء على طلب الطالب بعد سداد الرسم المقرر
             بالحوالة رقم&nbsp;:
-            <Blank className="b-ref" value={toArabicDigits(issue.transferNumber)} /> بتاريخ&nbsp;:
+            <Blank className="b-ref" value={toArabicDigits(issue.transferNumber)} />
+            <br />
+            بتاريخ&nbsp;:
             <PrintedDate
               year={issue.transferYear === '' ? '' : `20${issue.transferYear}`}
               month={issue.transferMonth}
               day={issue.transferDay}
-            />
+              era={false}
+            />{' '}
+            بمبلغ&nbsp;:
+            <Blank className="b-md" value={toArabicDigits(issue.amount)} />
             <br />
-            مبلغ&nbsp;:
-            <Blank className="b-md" value={toArabicDigits(issue.amount)} /> وعلى الجهة المقدم لها البيان التحقق
+            وعلى الجهة المقدم لها البيان التحقق
             من أن صاحب البيان هو نفس الشخص المدون أعلاه ولا يجوز تقديم البيان إلى جهة أخرى أو استخراج صورة منه
             لجهة المقدم لها .
           </p>

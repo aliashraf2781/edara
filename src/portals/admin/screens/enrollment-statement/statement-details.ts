@@ -17,8 +17,6 @@ export type StatementDetails = {
   schoolName: string
   yearFrom: string
   yearTo: string
-  /** The «عام (   )» slot after the academic year. */
-  yearNote: string
   studentName: string
   registrationNo: string
   transferNumber: string
@@ -34,7 +32,6 @@ export const EMPTY_ISSUE_SLOTS = {
   issueDay: '',
   issueMonth: '',
   issueYear: '',
-  yearNote: '',
   transferNumber: '',
   amount: '',
   transferDay: '',

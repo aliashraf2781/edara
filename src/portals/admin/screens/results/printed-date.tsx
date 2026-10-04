@@ -4,13 +4,15 @@ type PrintedDateProps = {
   year: string
   month: string
   day: string
+  /** Gregorian «م» marker after the date. Default on. */
+  era?: boolean
 }
 
 /**
  * One underlined date as year / month / day. Each part is its own flex
- * item so RTL bidi cannot put the day on the left.
+ * item so RTL bidi cannot reorder the segments.
  */
-export function PrintedDate({ year, month, day }: PrintedDateProps) {
+export function PrintedDate({ year, month, day, era = true }: PrintedDateProps) {
   const y = toArabicDigits(year)
   const m = toArabicDigits(month)
   const d = toArabicDigits(day)
@@ -29,7 +31,7 @@ export function PrintedDate({ year, month, day }: PrintedDateProps) {
       ) : (
         <span className="date-value-slot" />
       )}
-      <span>م</span>
+      {era ? <span>م</span> : null}
     </span>
   )
 }

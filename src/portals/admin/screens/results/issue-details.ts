@@ -7,7 +7,7 @@
  * and the empty set without breaking fast refresh.
  */
 export type IssueDetails = {
-  /** Top-of-page «التاريخ» — day / month / full year. */
+  /** Top-of-page «التاريخ» — year / month / day. */
   issueDay: string
   issueMonth: string
   issueYear: string

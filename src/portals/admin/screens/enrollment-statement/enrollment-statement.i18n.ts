@@ -17,8 +17,6 @@ export const statementText: Dict<{
     registrationNo: string
     yearFrom: string
     yearTo: string
-    yearNote: string
-    yearNoteHint: string
     issueDate: string
     issueDateHint: string
     transferNumber: string
@@ -52,8 +50,6 @@ export const statementText: Dict<{
       registrationNo: 'رقم القيد',
       yearFrom: 'العام الدراسي من',
       yearTo: 'إلى',
-      yearNote: 'عام (   )',
-      yearNoteHint: 'الخانة بين القوسين بعد العام الدراسي.',
       issueDate: 'تاريخ البيان',
       issueDateHint: 'يوم / شهر / سنة — يظهر أعلى الصفحة.',
       transferNumber: 'رقم الحوالة',
@@ -87,8 +83,6 @@ export const statementText: Dict<{
       registrationNo: 'Registration number',
       yearFrom: 'Academic year from',
       yearTo: 'To',
-      yearNote: 'عام (   )',
-      yearNoteHint: 'The bracketed slot after the academic year.',
       issueDate: 'Statement date',
       issueDateHint: 'Day / month / year — printed at the top of the page.',
       transferNumber: 'Transfer number',

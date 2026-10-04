@@ -109,9 +109,6 @@ export function StatementDetailsDialog({ initial, onClose, onReset, onApply, onP
               />
             )}
           </Field>
-          <Field label={text.yearNote} hint={text.yearNoteHint}>
-            {input('yearNote')}
-          </Field>
         </div>
 
         <h3 className="mt-2 text-body font-semibold text-ink">{text.issueSection}</h3>

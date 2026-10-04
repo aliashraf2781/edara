@@ -127,6 +127,8 @@ export const resultsText: Dict<{
     back: string
     loading: string
     absentMark: string
+    passed: string
+    failed: string
   }
   reportCard: {
     title: string
@@ -290,6 +292,8 @@ export const resultsText: Dict<{
       back: 'عودة إلى صفحة الطالب',
       loading: 'جارٍ تجهيز المستخرج',
       absentMark: 'غ',
+      passed: 'اجتاز',
+      failed: 'لم يجتز',
     },
     reportCard: {
       title: 'كشف الدرجات',
@@ -459,6 +463,8 @@ export const resultsText: Dict<{
       back: 'Back to the student',
       loading: 'Preparing the extract',
       absentMark: 'Abs',
+      passed: 'اجتاز',
+      failed: 'لم يجتز',
     },
     reportCard: {
       title: 'Report card',

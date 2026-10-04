@@ -199,9 +199,6 @@ function StatementSheet({ details }: { details: StatementDetails }) {
               <Fill className="year" value={toArabicDigits(details.yearFrom)} />
             </span>
             <span>م</span>
-            <span>عام (</span>
-            <Fill className="year-note" value={toArabicDigits(details.yearNote)} />
-            <span>)</span>
           </p>
 
           <p className="line">

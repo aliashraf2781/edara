@@ -238,7 +238,7 @@ export function IssueDetailsDialog({
   )
 }
 
-const GRADE_WORDS = ['أول', 'ثاني', 'ثالث', 'رابع', 'خامس', 'سادس'] as const
+const GRADE_WORDS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'] as const
 
 function gradeOptions(current: string): SelectOption[] {
   const options = GRADE_WORDS.map((value) => ({ value, label: value }))

@@ -22,15 +22,17 @@ export const EXTRACT_CSS = `
 }
 .extract *{ box-sizing:border-box; }
 .extract .page{
+  /* Screen preview — A4 landscape. Print fills the sheet via @media print. */
   background:#fff;
   width:297mm;
   height:210mm;
-  padding:0;
+  padding:8mm 10mm;
   position:relative;
   z-index:0;
   overflow:hidden;
   display:flex;
   flex-direction:column;
+  box-sizing:border-box;
 }
 .extract .print-watermark{
   position:absolute;
@@ -71,7 +73,7 @@ export const EXTRACT_CSS = `
   justify-content:space-between;
   align-items:flex-start;
   direction:ltr;
-  margin-bottom:6px;
+  margin-bottom:0;
 }
 /* The two supplied crests replace the drawn placeholders at the top.
    Their flat JPEG gray is already knocked out, so the paper shows through. */
@@ -123,7 +125,7 @@ export const EXTRACT_CSS = `
 .extract .title-wrap{
   display:flex;
   justify-content:center;
-  margin:6px 0 14px;
+  margin:0 0 14px;
 }
 .extract .title-box{
   padding:6px 26px;
@@ -171,7 +173,7 @@ export const EXTRACT_CSS = `
 }
 .extract .b-lg{ min-width:140px; }
 .extract .b-to{ min-width:180px; }
-.extract .b-ref{ min-width:120px; }
+.extract .b-ref{ min-width:220px; }
 .extract .b-md{ min-width:80px; }
 .extract .b-sm{ min-width:34px; }
 /* Under dir=rtl, flex-start packs to the right — where Arabic lines begin. */
@@ -232,9 +234,10 @@ export const EXTRACT_CSS = `
 .extract .fill-row td{ height:34px; }
 
 /* ---------- after-table text ---------- */
-.extract .after-table{ margin-top:14px; }
+.extract .after-table{ margin-top:0; padding-block:0; }
 .extract .after-table p{
-  margin:6px 0;
+  margin:0;
+  padding-block:0;
   font-size:17.5px;
   text-align:right;
   line-height:2;
@@ -248,38 +251,47 @@ export const EXTRACT_CSS = `
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  margin-top:56px;
+  margin-top:auto;
+  padding-top:0;
   font-size:18px;
   font-weight:700;
-  padding:0 6px;
+  padding-inline:6px;
+  padding-bottom:6px;
 }
 .extract .signatures > div{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:6px;
+  gap:28px;
 }
 /* The post holder's name, printed under the title of the post. */
 .extract .signatures .holder-name{ font-weight:800;font-size:15px; }
 
 @media print{
-  html, body, #root{ height:auto; margin:0 !important; padding:0 !important; }
-  body{ background:#fff; }
-  /* Keep the crests when the browser's "background graphics" box is off. */
+  @page{ size:A4 landscape; margin:0mm; }
+  html, body, #root{
+    margin:0 !important;
+    padding:0 !important;
+    width:100%;
+    height:100%;
+    background:#fff;
+  }
   .extract .crest{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .extract-chrome{ display:none !important; }
-  .extract-screen{ background:#fff; }
-  .extract{ background:#fff; padding:0; }
-  .extract .page{ box-shadow:none; width:100%; height:210mm; overflow:hidden; }
-  @page{
-    size:A4 landscape;
+  .extract-screen, .extract{
     margin:0;
-    @top-left{ content:none; }
-    @top-center{ content:none; }
-    @top-right{ content:none; }
-    @bottom-left{ content:none; }
-    @bottom-center{ content:none; }
-    @bottom-right{ content:none; }
+    padding:0;
+    width:100%;
+    height:100%;
+    background:#fff;
+  }
+  .extract .page{
+    box-shadow:none;
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:8mm 10mm;
+    overflow:hidden;
   }
 }
 `

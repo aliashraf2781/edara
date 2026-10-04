@@ -99,12 +99,6 @@ export const STATEMENT_CSS = `
 .statement .w-md{ min-width:110px; }
 .statement .w-lg{ min-width:200px; }
 .statement .w-xl{ min-width:300px; }
-.statement .fill.year-note{
-  flex:0 0 auto;
-  min-width:360px;
-  margin-inline:10px;
-}
-
 /* Year / month / day as separate items in one LTR run, so RTL bidi can never
    put the day on the left of the year. */
 .statement .run{
