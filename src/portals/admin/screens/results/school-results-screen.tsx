@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { formatPercent, formatScore } from '~/lib/format'
 import { useDebouncedValue } from '~/lib/hooks/use-debounced-value'
@@ -45,6 +45,13 @@ export function SchoolResultsScreen() {
   const allowed = can(PERMISSION.viewTenant) || can(PERMISSION.viewTenants)
   const reference = useAdminReference(code)
   const filters = narrowFilters(reference.data, values)
+
+  // Stats are term-scoped — without a term the API returns empty aggregates.
+  useEffect(() => {
+    if (values.term !== '' || !reference.data?.terms.length) return
+    setValue('term', reference.data.terms[0]!.id)
+  }, [values.term, reference.data?.terms, setValue])
+
   const stats = useSchoolStats(code, filters.term, allowed)
   const students = useSchoolStudents(
     code,

@@ -32,16 +32,38 @@ const TERM_PARAM = { term: '' } as const
 /** The post holder whose name is printed under the last signature slot. */
 const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
 /**
- * Grade level -> the ordinal word used inside "الصف [ordinal] الابتدائي"
- * and "منقول من/إلى الصف [ordinal]". A school's own Grade.name is free
- * text (it might read "الرابع الابتدائي", "Grade 4", anything), so the
- * one field guaranteed to mean the same thing everywhere is the numeric
- * level — same mapping ResultSheetParser::detectGradeLevel() uses on the
- * backend to go the other direction.
+ * Egyptian school grades restart the ordinal at each stage:
+ *   1–6 ابتدائي · 7–9 اعدادي (الأول–الثالث) · 10–12 ثانوي (الأول–الثالث).
+ * A school's own Grade.name is free text, so the numeric `level` is the
+ * one field that means the same thing everywhere.
  */
-const ORDINAL_WORDS: Record<number, string> = {
-  1: 'الأول', 2: 'الثاني', 3: 'الثالث', 4: 'الرابع', 5: 'الخامس', 6: 'السادس',
-  7: 'السابع', 8: 'الثامن', 9: 'التاسع', 10: 'العاشر', 11: 'الحادي عشر', 12: 'الثاني عشر',
+const WITHIN_STAGE_ORDINAL: Record<number, string> = {
+  1: 'الأول',
+  2: 'الثاني',
+  3: 'الثالث',
+  4: 'الرابع',
+  5: 'الخامس',
+  6: 'السادس',
+}
+
+type GradeStage = {
+  /** Word inside «الصف [ordinal] …», e.g. الثاني */
+  ordinal: string
+  /** Stage noun printed after the ordinal, e.g. الابتدائي */
+  stage: string
+}
+
+function gradeAtLevel(level: number): GradeStage | undefined {
+  if (level >= 1 && level <= 6) {
+    return { ordinal: WITHIN_STAGE_ORDINAL[level]!, stage: 'الابتدائي' }
+  }
+  if (level >= 7 && level <= 9) {
+    return { ordinal: WITHIN_STAGE_ORDINAL[level - 6]!, stage: 'الاعدادي' }
+  }
+  if (level >= 10 && level <= 12) {
+    return { ordinal: WITHIN_STAGE_ORDINAL[level - 9]!, stage: 'الثانوي' }
+  }
+  return undefined
 }
 
 const ROUND_WORDS: Record<number, string> = {
@@ -50,10 +72,22 @@ const ROUND_WORDS: Record<number, string> = {
 }
 
 function gradeLevelFromName(gradeName: string): number | undefined {
-  for (const [level, word] of Object.entries(ORDINAL_WORDS)) {
+  const name = gradeName.replaceAll('الإعدادي', 'الاعدادي')
+  let offset = 0
+  let maxWithin = 6
+  if (/اعدادي|prep/i.test(name)) {
+    offset = 6
+    maxWithin = 3
+  } else if (/ثانوي|secondary/i.test(name)) {
+    offset = 9
+    maxWithin = 3
+  }
+
+  for (let within = maxWithin; within >= 1; within -= 1) {
+    const word = WITHIN_STAGE_ORDINAL[within]!
     const bare = word.replace(/^ال/, '')
-    if (word !== '' && (gradeName.includes(word) || (bare !== '' && gradeName.includes(bare)))) {
-      return Number(level)
+    if (name.includes(word) || (bare !== '' && name.includes(bare))) {
+      return offset + within
     }
   }
   return undefined
@@ -162,9 +196,11 @@ function StudentExtract() {
   const gradeLevel = grade?.level ?? gradeLevelFromName(data.grade_name)
   const termNumber = term ? termNumberOf(term, reference.data?.terms ?? []) : undefined
   const yearStart = Number(classroom?.academic_year_id?.match(/(\d{4})/)?.[1] ?? NaN)
+  const currentGrade = gradeLevel !== undefined ? gradeAtLevel(gradeLevel) : undefined
+  const nextGrade = gradeLevel !== undefined ? gradeAtLevel(gradeLevel + 1) : undefined
   const autoFilled = {
-    gradeOrdinal: gradeLevel !== undefined ? (ORDINAL_WORDS[gradeLevel] ?? '') : '',
-    nextOrdinal: gradeLevel !== undefined ? (ORDINAL_WORDS[gradeLevel + 1] ?? '') : '',
+    gradeOrdinal: currentGrade?.ordinal ?? '',
+    nextOrdinal: nextGrade?.ordinal ?? '',
     yearFrom: Number.isFinite(yearStart) ? String(yearStart) : '',
     yearTo: Number.isFinite(yearStart) ? String(yearStart + 1) : '',
     seatNo: data.student.seat_no,
@@ -254,10 +290,12 @@ type ExtractPageProps = {
 function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue }: ExtractPageProps) {
   const text = useDict(resultsText)
   const { student, school } = data
-  const ordinal =
-    (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel] : undefined) || issue.gradeOrdinal || undefined
-  const nextOrdinal =
-    (gradeLevel !== undefined ? ORDINAL_WORDS[gradeLevel + 1] : undefined) || issue.nextOrdinal || undefined
+  const current = gradeLevel !== undefined ? gradeAtLevel(gradeLevel) : undefined
+  const next = gradeLevel !== undefined ? gradeAtLevel(gradeLevel + 1) : undefined
+  const ordinal = current?.ordinal || issue.gradeOrdinal || undefined
+  const nextOrdinal = next?.ordinal || issue.nextOrdinal || undefined
+  const stageName = current?.stage
+  const nextStageName = next?.stage
   const roundLabel = (termNumber !== undefined ? (ROUND_WORDS[termNumber] ?? '') : '') || issue.round
   const seatNo = issue.seatNo !== '' ? issue.seatNo : student.seat_no
   const fullName = [student.first_name, student.father_name, student.family_name]
@@ -298,7 +336,7 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
           <div className="title-box">
             <span>مستخرج رسمي بنتيجة الصف</span>
             <Blank value={ordinal} />
-            <span>الابتدائي</span>
+            {stageName ? <span>{stageName}</span> : null}
           </div>
         </div>
 
@@ -308,10 +346,10 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
             بالكشف في سجلات القيد بمدرسة&nbsp;:
             <span className="blank filled b-xl">{school.name}</span> في العام الدراسي{' '}
             <span className="date-run" dir="ltr">
+              <span>م</span>
               <span className="blank filled b-md">{yearTo}</span>
               <span>/</span>
               <span className="blank filled b-md">{yearFrom}</span>
-              <span>م</span>
             </span>
             <br />
             <span className="student-name">
@@ -319,8 +357,11 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
               <span className="blank filled b-fit">{fullName}</span>
             </span>{' '}
             منقول من الصف
-            <Blank className="b-md" value={ordinal} /> الى الصف
+            <Blank className="b-md" value={ordinal} />
+            {stageName ? <> {stageName}</> : null}
+            {' '}الى الصف
             <Blank className="b-md" value={nextOrdinal} />
+            {nextStageName ? <> {nextStageName}</> : null}
             <br />
             تحت اشراف المديرية برقم جلوس
             <Blank className="b-lg" value={toArabicDigits(seatNo)} /> الدور

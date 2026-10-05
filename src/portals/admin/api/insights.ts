@@ -5,10 +5,12 @@ import { adminApi } from './client'
 import { adminKeys } from './keys'
 import type {
   AdminReference,
+  GradeStat,
   SchoolResultRow,
   SchoolStats,
   SchoolStudentRow,
   StudentDetail,
+  SubjectStat,
 } from './types'
 
 /**
@@ -16,6 +18,30 @@ import type {
  * endpoint here answers without a school login, so the operator never has to
  * switch portals to read a figure.
  */
+
+/** Laravel may send either camelCase or snake_case for the aggregate fields. */
+function normalizeSchoolStats(raw: unknown): SchoolStats {
+  const row = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  return {
+    code: String(row.code ?? ''),
+    name: String(row.name ?? ''),
+    students: Number(row.students ?? 0),
+    results: Number(row.results ?? 0),
+    passed: Number(row.passed ?? 0),
+    passRate: Number(row.passRate ?? row.pass_rate ?? 0),
+    average: Number(row.average ?? 0),
+    byGrade: (Array.isArray(row.byGrade)
+      ? row.byGrade
+      : Array.isArray(row.by_grade)
+        ? row.by_grade
+        : []) as GradeStat[],
+    bySubject: (Array.isArray(row.bySubject)
+      ? row.bySubject
+      : Array.isArray(row.by_subject)
+        ? row.by_subject
+        : []) as SubjectStat[],
+  }
+}
 
 /**
  * Grades, terms, classrooms and subjects — but one school's own, never a
@@ -39,8 +65,11 @@ export function useAdminReference(code: string) {
 export function useSchoolInsights(termId: string) {
   return useQuery({
     queryKey: adminKeys.schoolInsights(termId),
-    queryFn: ({ signal }) =>
-      adminApi.get<SchoolStats[]>('/admin/insights/schools', { term_id: termId }, { signal }),
+    queryFn: async ({ signal }) => {
+      const rows = await adminApi.get<unknown[]>('/admin/insights/schools', { term_id: termId }, { signal })
+      return (Array.isArray(rows) ? rows : []).map(normalizeSchoolStats)
+    },
+    enabled: termId !== '',
     placeholderData: (previous) => previous,
   })
 }
@@ -48,9 +77,11 @@ export function useSchoolInsights(termId: string) {
 export function useSchoolStats(code: string, termId: string, enabled = true) {
   return useQuery({
     queryKey: adminKeys.schoolStats(code, termId),
-    queryFn: ({ signal }) =>
-      adminApi.get<SchoolStats>(`/admin/tenants/${code}/stats`, { term_id: termId }, { signal }),
-    enabled: enabled && code !== '',
+    queryFn: async ({ signal }) =>
+      normalizeSchoolStats(
+        await adminApi.get<unknown>(`/admin/tenants/${code}/stats`, { term_id: termId }, { signal }),
+      ),
+    enabled: enabled && code !== '' && termId !== '',
     placeholderData: (previous) => previous,
   })
 }
