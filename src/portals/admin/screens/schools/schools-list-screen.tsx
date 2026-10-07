@@ -101,6 +101,15 @@ export function SchoolsListScreen() {
       ),
     },
     {
+      key: 'loginEmail',
+      header: text.columns.loginEmail,
+      cell: (row) => (
+        <span className="font-mono" dir="ltr">
+          {row.loginEmail ?? '—'}
+        </span>
+      ),
+    },
+    {
       key: 'created',
       header: text.columns.created,
       numeric: true,

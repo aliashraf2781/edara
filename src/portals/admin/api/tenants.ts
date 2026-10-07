@@ -105,6 +105,14 @@ export function useTenantStatusChange(code: string) {
   })
 }
 
+/** The password is never returned — the caller already holds what the admin typed. */
+export function useChangeTenantPassword(code: string) {
+  return useMutation({
+    mutationFn: (password: string) =>
+      adminApi.post<{ loginEmail: string }>(`/admin/tenants/${code}/password`, { password }),
+  })
+}
+
 export function useDeleteTenant() {
   const client = useQueryClient()
   return useMutation({

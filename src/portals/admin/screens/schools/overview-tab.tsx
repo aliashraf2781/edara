@@ -16,6 +16,7 @@ import { PERMISSION } from '../../api/permissions'
 import { useUpdateTenant } from '../../api/tenants'
 import type { Tenant } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
+import { ChangePasswordDialog } from './change-password-dialog'
 import { schoolFormText } from './school-detail.i18n'
 import { schoolsText } from './schools.i18n'
 import { SchoolFields } from './school-fields'
@@ -37,6 +38,7 @@ export function OverviewTab({ tenant }: { tenant: Tenant }) {
   const { notify } = useToast()
   const updateTenant = useUpdateTenant(tenant.code)
   const [formMessage, setFormMessage] = useState<string | null>(null)
+  const [passwordOpen, setPasswordOpen] = useState(false)
 
   const editable = can(PERMISSION.updateTenant)
   const schema = useMemo(() => makeEditSchema(v), [v])
@@ -58,6 +60,7 @@ export function OverviewTab({ tenant }: { tenant: Tenant }) {
 
   const systemFields = [
     { term: labels.columns.code, value: tenant.code, mono: true },
+    { term: text.password.loginEmail, value: tenant.loginEmail ?? '—', mono: true },
     { term: labels.columns.created, value: formatDateTime(tenant.createdAt, locale) },
     { term: labels.columns.provisioning, value: labels.provisioning[tenant.provisioningStatus] },
   ]
@@ -70,7 +73,10 @@ export function OverviewTab({ tenant }: { tenant: Tenant }) {
           {editable ? (
             <form noValidate onSubmit={onSubmit} className="flex flex-col gap-6">
               <FormAlert message={formMessage} />
-              <SchoolFields form={form} />
+              <SchoolFields
+                form={form}
+                warnContactEmail={tenant.provisioningStatus === 'provisioned'}
+              />
               <div className="flex justify-end">
                 <Button
                   type="submit"
@@ -100,8 +106,18 @@ export function OverviewTab({ tenant }: { tenant: Tenant }) {
         <CardHeader title={text.readOnly} />
         <CardBody>
           <DefinitionList items={systemFields} columns={3} />
+          {editable ? (
+            <div className="mt-4 flex justify-end">
+              <Button onClick={() => setPasswordOpen(true)}>{text.password.action}</Button>
+            </div>
+          ) : null}
         </CardBody>
       </Card>
+      <ChangePasswordDialog
+        code={tenant.code}
+        open={passwordOpen}
+        onClose={() => setPasswordOpen(false)}
+      />
     </div>
   )
 }

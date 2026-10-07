@@ -35,6 +35,26 @@ export const schoolFormText: Dict<{
     acknowledge: string
   }
   tabs: { overview: string; officers: string; danger: string }
+  password: {
+    loginEmail: string
+    action: string
+    title: string
+    warning: string
+    label: string
+    confirm: string
+    show: string
+    hide: string
+    save: string
+    cancel: string
+    changed: string
+    doneBody: string
+    copy: string
+    copied: string
+    copyFailed: string
+    close: string
+    emailMismatch: string
+    contactEmailWarning: string
+  }
   readOnly: string
   provision: {
     bannerTitle: string
@@ -125,6 +145,27 @@ export const schoolFormText: Dict<{
       acknowledge: 'نسختُه — إغلاق',
     },
     tabs: { overview: 'البيانات', officers: 'المسؤولون', danger: 'منطقة الخطر' },
+    password: {
+      loginEmail: 'بريد تسجيل الدخول',
+      action: 'تغيير كلمة المرور',
+      title: 'تغيير كلمة مرور المدرسة',
+      warning: 'ستُسجَّل المدرسة خروجها من كل الأجهزة، ولن تعمل كلمة المرور القديمة.',
+      label: 'كلمة المرور الجديدة',
+      confirm: 'تأكيد كلمة المرور',
+      show: 'إظهار',
+      hide: 'إخفاء',
+      save: 'حفظ',
+      cancel: 'إلغاء',
+      changed: 'تم تغيير كلمة مرور حساب المدرسة.',
+      doneBody: 'سلّم هذه البيانات للمدرسة. لا تُعرض كلمة المرور مرة أخرى.',
+      copy: 'نسخ',
+      copied: 'تم النسخ',
+      copyFailed: 'تعذّر النسخ. حدّد النص وانسخه يدويًا.',
+      close: 'إغلاق',
+      emailMismatch: 'كلمتا المرور غير متطابقتين',
+      contactEmailWarning:
+        'تغيير بريد جهة الاتصال لا يغيّر بريد تسجيل الدخول الفعلي للمدرسة.',
+    },
     readOnly: 'للعرض فقط — حقول النظام.',
     provision: {
       bannerTitle: 'هذه المدرسة لم تُجهَّز بعد',
@@ -216,6 +257,27 @@ export const schoolFormText: Dict<{
       acknowledge: 'I have copied it — close',
     },
     tabs: { overview: 'Overview', officers: 'Responsible officers', danger: 'Danger zone' },
+    password: {
+      loginEmail: 'Login email',
+      action: 'Change password',
+      title: 'Change the school’s password',
+      warning: 'The school will be logged out of every device, and the old password stops working.',
+      label: 'New password',
+      confirm: 'Confirm password',
+      show: 'Show',
+      hide: 'Hide',
+      save: 'Save',
+      cancel: 'Cancel',
+      changed: 'School account password updated.',
+      doneBody: 'Send these credentials to the school. The password is not shown again.',
+      copy: 'Copy',
+      copied: 'Copied',
+      copyFailed: 'Copying failed. Select the text and copy it manually.',
+      close: 'Close',
+      emailMismatch: 'The passwords do not match',
+      contactEmailWarning:
+        'Changing the contact email does not change the email the school actually logs in with.',
+    },
     readOnly: 'Read-only — system fields.',
     provision: {
       bannerTitle: 'This school is not provisioned yet',

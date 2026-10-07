@@ -10,7 +10,14 @@ import type { EditFormValues } from './school-form'
  * The Overview tab's edit form. The code is server-generated and immutable,
  * and there is no bilingual name_ar field anymore, so neither appears here.
  */
-export function SchoolFields({ form }: { form: UseFormReturn<EditFormValues> }) {
+export function SchoolFields({
+  form,
+  warnContactEmail = false,
+}: {
+  form: UseFormReturn<EditFormValues>
+  /** Provisioned schools keep logging in with the original email, whatever this says. */
+  warnContactEmail?: boolean
+}) {
   const text = useDict(schoolFormText)
   const { errors } = form.formState
 
@@ -23,7 +30,7 @@ export function SchoolFields({ form }: { form: UseFormReturn<EditFormValues> }) 
       <Field
         label={text.fields.contactEmail}
         error={errors.contact_email?.message}
-        hint={text.fields.contactEmailHint}
+        hint={warnContactEmail ? text.password.contactEmailWarning : text.fields.contactEmailHint}
       >
         {(props) => (
           <TextInput {...props} {...form.register('contact_email')} type="email" dir="ltr" />

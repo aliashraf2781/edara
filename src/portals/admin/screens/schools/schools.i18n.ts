@@ -22,6 +22,7 @@ export const schoolsText: Dict<
       name: string
       status: string
       provisioning: string
+      loginEmail: string
       created: string
       actions: string
     }
@@ -56,6 +57,7 @@ export const schoolsText: Dict<
       name: 'المدرسة',
       status: 'الحالة',
       provisioning: 'التجهيز',
+      loginEmail: 'بريد الدخول',
       created: 'تاريخ الإنشاء',
       actions: 'إجراءات',
     },
@@ -97,6 +99,7 @@ export const schoolsText: Dict<
       name: 'School',
       status: 'Status',
       provisioning: 'Provisioning',
+      loginEmail: 'Login email',
       created: 'Created',
       actions: 'Actions',
     },

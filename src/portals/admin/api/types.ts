@@ -36,6 +36,8 @@ export type TenantSummary = {
   name: string
   status: TenantStatus
   provisioningStatus: ProvisioningStatus
+  /** The composed email the school logs in with (code embedded); null without a contact email. */
+  loginEmail: string | null
   governorate: string | null
   createdAt: string
 }
