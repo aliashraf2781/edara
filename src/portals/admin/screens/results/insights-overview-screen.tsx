@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { formatPercent, formatScore } from '~/lib/format'
 import { useTableParams } from '~/lib/hooks/use-table-params'
@@ -11,7 +11,7 @@ import { NoAccess } from '~/ui/no-access'
 import { PageHeader } from '~/ui/page-header'
 import { Select } from '~/ui/select'
 import { adminText } from '../../admin.i18n'
-import { useAdminReference, useSchoolInsights } from '../../api/insights'
+import { useSchoolInsights } from '../../api/insights'
 import { PERMISSION } from '../../api/permissions'
 import type { SchoolStats } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
@@ -19,6 +19,15 @@ import { resultsText } from './results.i18n'
 import { StatCards } from './stat-cards'
 
 const DEFAULTS = { term: '' } as const
+
+/**
+ * Cross-school overview has no single school's reference to pull terms from.
+ * The insights endpoint matches terms by label, so these fixed names are enough.
+ */
+const PLATFORM_TERMS = [
+  { value: 'الترم الأول', label: 'الترم الأول' },
+  { value: 'الترم الثاني', label: 'الترم الثاني' },
+] as const
 
 export function InsightsOverviewScreen() {
   const text = useDict(resultsText)
@@ -28,11 +37,12 @@ export function InsightsOverviewScreen() {
   const { values, setValue } = useTableParams(DEFAULTS)
 
   const allowed = can(PERMISSION.viewTenants)
-  // No single school in view here — there is no cross-school reference
-  // to ask for (see useAdminReference), so this stays empty until the
-  // term picker gets its own cross-school design (matching by label,
-  // like the bulk archive and school-insights endpoints already do).
-  const reference = useAdminReference('')
+
+  useEffect(() => {
+    if (values.term !== '') return
+    setValue('term', PLATFORM_TERMS[0].value)
+  }, [values.term, setValue])
+
   const insights = useSchoolInsights(values.term)
 
   const rows = useMemo(
@@ -58,11 +68,6 @@ export function InsightsOverviewScreen() {
   if (!allowed) {
     return <NoAccess title={text.overview.title} description={shell.guard.noAccess} />
   }
-
-  const termOptions = (reference.data?.terms ?? []).map((term) => ({
-    value: term.id,
-    label: term.name,
-  }))
 
   const columns: readonly Column<SchoolStats>[] = [
     { key: 'school', header: text.overview.columns.school, cell: (row) => row.name },
@@ -121,7 +126,7 @@ export function InsightsOverviewScreen() {
           <Select
             aria-label={text.filters.term}
             className="min-w-48"
-            options={termOptions}
+            options={[...PLATFORM_TERMS]}
             placeholder={text.filters.allTerms}
             value={values.term}
             onChange={(event) => setValue('term', event.target.value)}
@@ -155,7 +160,7 @@ export function InsightsOverviewScreen() {
           rows={rows}
           rowKey={(row) => row.code}
           onRowActivate={(row) => navigate(`/admin/schools/${row.code}/results`)}
-          isLoading={insights.isLoading}
+          isLoading={insights.isLoading || values.term === ''}
           empty={
             <EmptyState title={text.overview.emptyTitle} description={text.overview.emptyBody} />
           }

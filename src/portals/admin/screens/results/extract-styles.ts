@@ -6,7 +6,7 @@
  * a design-system screen, which is why it does not use the semantic tokens.
  */
 export const EXTRACT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..700&family=Noto+Kufi+Arabic:wght@400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..900&family=Noto+Kufi+Arabic:wght@400..700&display=swap');
 
 .extract-screen{ background:#e9e9e4; min-height:100vh; }
 .extract{
@@ -252,20 +252,22 @@ export const EXTRACT_CSS = `
   align-items:flex-start;
   justify-content:space-between;
   margin-top:auto;
+  margin-bottom:6mm;
   padding-top:0;
   font-size:18px;
   font-weight:700;
   padding-inline:6px;
-  padding-bottom:6px;
+  padding-bottom:0;
+  transform:translateY(-10px);
 }
 .extract .signatures > div{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:28px;
+  gap:48px;
 }
 /* The post holder's name, printed under the title of the post. */
-.extract .signatures .holder-name{ font-weight:800;font-size:15px; }
+.extract .signatures .holder-name{ font-weight:900;font-size:20px; }
 
 @media print{
   @page{ size:A4 landscape; margin:0mm; }

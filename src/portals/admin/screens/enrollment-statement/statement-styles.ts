@@ -5,7 +5,7 @@
  * picks up the app's theme, which is why it does not use the semantic tokens.
  */
 export const STATEMENT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..900&display=swap');
 
 .statement-screen{ background:#e9e9e4; min-height:100vh; }
 .statement{
@@ -90,7 +90,8 @@ export const STATEMENT_CSS = `
   line-height:1.6;
   border-bottom:1px dotted var(--line);
   padding:0 8px;
-  font-weight:700;
+  font-size:1.2em;
+  font-weight:800;
   text-align:center;
   white-space:normal;
 }
@@ -155,7 +156,7 @@ export const STATEMENT_CSS = `
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:6px;
+  gap:48px;
 }
 .statement .approval-officer .holder-name{ font-weight:700; }
 

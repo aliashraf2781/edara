@@ -244,6 +244,7 @@ function StatementSheet({ details }: { details: StatementDetails }) {
         </div>
 
         <div className="signatures">
+          <span>محرر</span>
           <span>مراجع</span>
           <div className="approval-officer">
             <span>مدير إدارة شئون الطلبة والامتحانات</span>
