@@ -108,7 +108,7 @@ export function useSchoolStudents(code: string, params: SchoolStudentParams, ena
     queryKey: adminKeys.schoolStudents(code, query),
     queryFn: async ({ signal }) =>
       normalizePage<SchoolStudentRow>(
-        await adminApi.get(`/admin/tenants/${code}/students`, query, { signal }),
+        await adminApi.getList(`/admin/tenants/${code}/students`, query, { signal }),
         params.perPage,
       ),
     enabled: enabled && code !== '',
@@ -142,7 +142,7 @@ export function useSchoolResults(code: string, params: SchoolResultParams, enabl
     queryKey: adminKeys.schoolResults(code, query),
     queryFn: async ({ signal }) =>
       normalizePage<SchoolResultRow>(
-        await adminApi.get(`/admin/tenants/${code}/results`, query, { signal }),
+        await adminApi.getList(`/admin/tenants/${code}/results`, query, { signal }),
         params.perPage,
       ),
     enabled: enabled && code !== '',

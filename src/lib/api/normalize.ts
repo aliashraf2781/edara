@@ -1,13 +1,18 @@
 import { emptyPage, type PageMeta, type Paginated } from './envelope'
 
+const toCount = (value: unknown, fallback: number): number => {
+  const n = Number(value)
+  return Number.isFinite(n) && n >= 0 ? n : fallback
+}
+
 /**
- * Backend list endpoints have shipped three shapes: the documented
- * `{ data, meta, links }`, Laravel's flat LengthAwarePaginator, and a bare
- * array. Screens always want the documented shape.
+ * Paginated shape (since 11 Oct 2026): `{ data: T[], meta, links }`, with
+ * `meta` and `links` as top-level siblings of `data`. `api.getList` returns
+ * exactly that. A bare array (unpaginated endpoints such as the academic
+ * reference lists) is wrapped as a single page. Anything else is an empty
+ * page rather than a crash.
  */
 export function normalizePage<T>(payload: unknown, fallbackPerPage = 15): Paginated<T> {
-  if (payload == null) return emptyPage(fallbackPerPage)
-
   if (Array.isArray(payload)) {
     return {
       data: payload as T[],
@@ -21,33 +26,28 @@ export function normalizePage<T>(payload: unknown, fallbackPerPage = 15): Pagina
     }
   }
 
-  if (typeof payload !== 'object') return emptyPage(fallbackPerPage)
+  if (payload === null || typeof payload !== 'object') return emptyPage(fallbackPerPage)
 
-  const raw = payload as Record<string, unknown>
-  const rows = Array.isArray(raw.data) ? (raw.data as T[]) : null
-  if (rows === null) return emptyPage(fallbackPerPage)
+  const raw = payload as { data?: unknown; meta?: unknown; links?: unknown }
+  if (!Array.isArray(raw.data)) return emptyPage(fallbackPerPage)
 
+  const rows = raw.data as T[]
   const metaSource =
-    raw.meta && typeof raw.meta === 'object'
-      ? (raw.meta as Record<string, unknown>)
-      : raw
+    raw.meta && typeof raw.meta === 'object' ? (raw.meta as Record<string, unknown>) : {}
 
   const meta: PageMeta = {
-    total: Number(metaSource.total ?? rows.length),
-    per_page: Number(metaSource.per_page ?? fallbackPerPage),
-    current_page: Number(metaSource.current_page ?? 1),
-    last_page: Number(metaSource.last_page ?? 1),
+    total: toCount(metaSource.total, rows.length),
+    per_page: toCount(metaSource.per_page, fallbackPerPage) || fallbackPerPage,
+    current_page: Math.max(1, toCount(metaSource.current_page, 1)),
+    last_page: Math.max(1, toCount(metaSource.last_page, 1)),
   }
 
-  const links = raw.links
   const next =
-    links && typeof links === 'object' && !Array.isArray(links)
-      ? ((links as { next?: string | null }).next ?? null)
-      : typeof raw.next_page_url === 'string'
-        ? raw.next_page_url
-        : null
+    raw.links && typeof raw.links === 'object'
+      ? ((raw.links as { next?: unknown }).next ?? null)
+      : null
 
-  return { data: rows, meta, links: { next } }
+  return { data: rows, meta, links: { next: typeof next === 'string' ? next : null } }
 }
 
 /** Spatie sometimes serialises roles as models; the UI always wants names. */

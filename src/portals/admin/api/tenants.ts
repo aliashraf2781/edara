@@ -27,7 +27,7 @@ export function useTenantList(params: TenantListParams, enabled: boolean) {
     queryKey: adminKeys.tenantList(query),
     queryFn: async ({ signal }) =>
       normalizePage<TenantSummary>(
-        await adminApi.get('/admin/tenants', query, { signal }),
+        await adminApi.getList('/admin/tenants', query, { signal }),
         params.perPage,
       ),
     enabled,

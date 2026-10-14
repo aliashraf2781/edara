@@ -28,7 +28,7 @@ export function useGlobalUserList(params: UserListParams, enabled: boolean) {
     queryKey: adminKeys.userList(query),
     queryFn: async ({ signal }) => {
       const page = normalizePage<GlobalUser>(
-        await adminApi.get('/users', query, { signal }),
+        await adminApi.getList('/users', query, { signal }),
         params.perPage,
       )
       return { ...page, data: page.data.map(normalizeUser) }

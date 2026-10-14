@@ -28,7 +28,7 @@ export function useStudentList(params: StudentListParams) {
     queryKey: schoolKeys.studentList(query),
     queryFn: async ({ signal }) =>
       normalizePage<Student>(
-        await schoolApi.get('/school/students', query, { signal }),
+        await schoolApi.getList('/school/students', query, { signal }),
         params.perPage,
       ),
     placeholderData: (previous) => previous,

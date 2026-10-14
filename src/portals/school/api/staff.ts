@@ -25,7 +25,7 @@ export function useStaffList(params: StaffListParams, enabled: boolean) {
     queryKey: schoolKeys.staffList(query),
     queryFn: async ({ signal }) => {
       const page = normalizePage<SchoolUser>(
-        await schoolApi.get('/school/users', query, { signal }),
+        await schoolApi.getList('/school/users', query, { signal }),
         params.perPage,
       )
       return { ...page, data: page.data.map(normalizeUser) }

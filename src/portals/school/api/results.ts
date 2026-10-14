@@ -31,7 +31,7 @@ export function useResultList(params: ResultListParams) {
     queryKey: schoolKeys.resultList(query),
     queryFn: async ({ signal }) =>
       normalizePage<Result>(
-        await schoolApi.get('/school/results', query, { signal }),
+        await schoolApi.getList('/school/results', query, { signal }),
         params.perPage,
       ),
     placeholderData: (previous) => previous,
@@ -53,7 +53,7 @@ export function useGradeTermResults(termId: string, gradeId: string) {
     queryKey: schoolKeys.resultList(query),
     queryFn: async ({ signal }) =>
       normalizePage<Result>(
-        await schoolApi.get('/school/results', query, { signal }),
+        await schoolApi.getList('/school/results', query, { signal }),
         BREAKDOWN_PER_PAGE,
       ).data,
     enabled: termId !== '' && gradeId !== '',

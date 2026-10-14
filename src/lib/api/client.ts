@@ -35,7 +35,10 @@ const readRetryAfter = (response: Response): number | null => {
   return Number.isFinite(header) && header > 0 ? header : null
 }
 
-async function unwrap<T>(response: Response): Promise<T> {
+/** Page-level siblings of `data` on a paginated list response. */
+export type ListEnvelope = { data: unknown; meta?: unknown; links?: unknown }
+
+async function unwrap<T>(response: Response, whole = false): Promise<T> {
   if (response.status === 204) return null as T
 
   let envelope: ApiEnvelope<unknown> | null
@@ -52,6 +55,16 @@ async function unwrap<T>(response: Response): Promise<T> {
       readFieldErrors(envelope?.data),
       readRetryAfter(response),
     )
+  }
+
+  if (whole) {
+    // Paginated lists keep `meta`/`links` next to `data`; dropping them here
+    // would silently turn every list into a one-page list.
+    return {
+      data: envelope?.data ?? null,
+      meta: (envelope as ListEnvelope | null)?.meta,
+      links: (envelope as ListEnvelope | null)?.links,
+    } as T
   }
 
   return (envelope?.data ?? null) as T
@@ -79,7 +92,7 @@ export function createApiClient({ baseUrl, tokens, getLocale }: ApiClientOptions
     return fetch(`${baseUrl}${path}`, { ...init, headers })
   }
 
-  const call = async <T,>(path: string, init: RequestInit): Promise<T> => {
+  const call = async <T,>(path: string, init: RequestInit, whole = false): Promise<T> => {
     let response = await send(path, init, tokens.getAccessToken())
 
     if (response.status === 401 && tokens.refresh) {
@@ -88,7 +101,7 @@ export function createApiClient({ baseUrl, tokens, getLocale }: ApiClientOptions
     }
 
     if (response.status === 401) tokens.onSessionExpired()
-    return unwrap<T>(response)
+    return unwrap<T>(response, whole)
   }
 
   const withJson = (body: unknown, init: RequestInitLite): RequestInit =>
@@ -99,6 +112,13 @@ export function createApiClient({ baseUrl, tokens, getLocale }: ApiClientOptions
   return {
     get: <T,>(path: string, query?: QueryParams, init: RequestInitLite = {}) =>
       call<T>(`${path}${buildSearchParams(query)}`, { ...init, method: 'GET' }),
+
+    /**
+     * Paginated list endpoints. Returns `{ data, meta, links }` untouched so
+     * `normalizePage` can read the top-level paging fields.
+     */
+    getList: (path: string, query?: QueryParams, init: RequestInitLite = {}) =>
+      call<ListEnvelope>(`${path}${buildSearchParams(query)}`, { ...init, method: 'GET' }, true),
 
     post: <T,>(path: string, body?: unknown, init: RequestInitLite = {}) =>
       call<T>(path, { ...withJson(body, init), method: 'POST' }),
