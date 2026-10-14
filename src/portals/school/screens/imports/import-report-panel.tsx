@@ -7,6 +7,7 @@ import { Icon } from '~/ui/icon'
 import { Stamp } from '~/ui/stamp'
 import { cn } from '~/ui/cn'
 import type { ImportReport, ImportRowError } from '../../api/types'
+import { ImportStatusBadge, ImportSubjectNotes, RollbackAction } from './import-report-extras'
 import { importsText } from './imports.i18n'
 
 function StatTile({ label, value }: { label: string; value: number }) {
@@ -42,7 +43,7 @@ export function ImportReportPanel({
   // are still zeroed because nothing has been written yet, not because the
   // sheet was actually empty. Treating that as "clean" would show a
   // misleading green "no errors" banner before the import has even run.
-  const processing = report.status === 'processing'
+  const processing = report.status === 'processing' || report.status === 'previewing'
   const clean = !processing && report.invalid_rows === 0
 
   const columns: readonly Column<ImportRowError>[] = [
@@ -83,7 +84,13 @@ export function ImportReportPanel({
       <Card>
         <CardHeader
           title={text.summaryTitle}
-          action={onStartOver ? <Button onClick={onStartOver}>{text.startOver}</Button> : undefined}
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <ImportStatusBadge status={report.status} />
+              <RollbackAction report={report} />
+              {onStartOver ? <Button onClick={onStartOver}>{text.startOver}</Button> : null}
+            </div>
+          }
         />
         <CardBody className="flex flex-col gap-4">
           <p
@@ -105,6 +112,15 @@ export function ImportReportPanel({
                   : text.partialBanner(report.valid_rows, report.total_rows, report.invalid_rows)}
             </span>
           </p>
+
+          {report.status === 'rolled_back' ? (
+            <p className="flex items-center gap-2 text-small text-attention">
+              <Icon name="info" className="size-4" />
+              {text.rolledBack(report.rolledBackResults ?? 0)}
+            </p>
+          ) : null}
+
+          <ImportSubjectNotes report={report} />
 
           {processing ? null : <p className="text-small text-muted">{text.importedResultsHint(report.imported_rows)}</p>}
 

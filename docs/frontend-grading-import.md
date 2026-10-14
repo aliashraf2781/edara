@@ -42,7 +42,7 @@ shape can change between uploads from the same school.
 ## 2. The grading model: numeric vs. qualitative subjects
 
 Egyptian primary schools don't grade every subject with a number.
-"Skill" subjects — Tokatsu (توكاتسو), multidisciplinary studies,
+"Skill" subjects — Tokatsu (التوكاتسو), multidisciplinary studies,
 "advanced level," PE, art, music — are assessed on a four-band
 **descriptive** scale instead. 1st and 2nd grade use this descriptive
 scale for *every* subject (no numeric exams exist for those two grades at
@@ -179,7 +179,7 @@ Multipart form: `file` (.xlsx/.xls/.csv, max 10MB), `academic_year_id`,
         "gradingType": "numeric",
         "columns": { "E": "اعمال", "F": "نصف العام", "G": "اجمالي" },
         "suggestedSubjectId": 1,
-        "suggestedSubjectName": "لغة عربية"
+        "suggestedSubjectName": "اللغة العربية"
       },
       {
         "sheetIndex": 5,

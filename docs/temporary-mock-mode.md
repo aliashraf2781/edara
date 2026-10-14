@@ -34,7 +34,7 @@ and **الصف** directly.
 - **Terms**: `term-1` الترم الأول, `term-2` الترم الثاني.
 - **Subjects**: the 13 columns printed on `src/templates/grades(4-5-6).html` —
   nine graded out of 100 (pass 50, except **التربية الدولية** which passes at
-  70) and four pass/fail ones (توكاتسو، التربية البدنية والصحية، التربية
+  70) and four pass/fail ones (التوكاتسو، التربية البدنية والصحية، التربية
   الفنية، التربية العقلية و الموسيقية), which are recorded as **اجتياز / لم
   يجتز**, never as a number.
 - **Schools**: three seeded, plus every school created from the admin portal.
