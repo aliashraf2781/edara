@@ -1,4 +1,5 @@
 import { useDict } from '~/lib/i18n/use-dict'
+import { dedupeSubjectRows } from '~/lib/subject-rows'
 import { EmptyState } from '~/ui/empty-state'
 import { Stamp } from '~/ui/stamp'
 import type { StudentTermSubject } from '../../api/types'
@@ -18,7 +19,8 @@ const QUALITATIVE_LABEL: Record<string, string> = {
  * separate copy here rather than a shared import because the two
  * StudentTermSubject types and i18n dicts live in separate portal trees.
  */
-export function ReportCardTable({ subjects }: { subjects: StudentTermSubject[] }) {
+export function ReportCardTable({ subjects: rawSubjects }: { subjects: StudentTermSubject[] }) {
+  const subjects = dedupeSubjectRows(rawSubjects)
   const text = useDict(resultsText)
   const card = text.reportCard
   const verdicts = { passed: text.student.passed, failed: text.student.failed }

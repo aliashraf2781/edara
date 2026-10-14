@@ -1,4 +1,5 @@
 import { useDict } from '~/lib/i18n/use-dict'
+import { dedupeSubjectRows } from '~/lib/subject-rows'
 import { EmptyState } from '~/ui/empty-state'
 import { Stamp } from '~/ui/stamp'
 import type { StudentTermSubject } from '../../api/types'
@@ -19,7 +20,7 @@ const QUALITATIVE_LABEL: Record<string, string> = {
  * not a fixed set of labels).
  */
 export function ReportCardTable({
-  subjects,
+  subjects: rawSubjects,
   onEditSubject,
 }: {
   subjects: StudentTermSubject[]
@@ -27,6 +28,7 @@ export function ReportCardTable({
   onEditSubject?: (subject: StudentTermSubject) => void
 }) {
   const text = useDict(studentsText).reportCard
+  const subjects = dedupeSubjectRows(rawSubjects)
 
   if (subjects.length === 0) {
     return <EmptyState title={text.title} description={text.empty} />

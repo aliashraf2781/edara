@@ -37,12 +37,32 @@ export const formatDateTime = (value: string | null | undefined, locale: Locale)
   ).format(date)
 }
 
-export const formatNumber = (value: number | null | undefined): string =>
-  value === null || value === undefined || Number.isNaN(value) ? '—' : String(value)
+/**
+ * The API serialises decimals as strings ("68.40") and may send null, so every
+ * numeric formatter goes through this. Returns null for anything unusable.
+ */
+const toFiniteNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+export const formatNumber = (value: number | string | null | undefined): string => {
+  const n = toFiniteNumber(value)
+  return n === null ? '—' : String(n)
+}
 
 /** One decimal, because averages come back like 68.4 and 68.40 reads as false precision. */
-export const formatScore = (value: number | null | undefined): string =>
-  value === null || value === undefined || Number.isNaN(value) ? '—' : value.toFixed(1)
+export const formatScore = (value: number | string | null | undefined): string => {
+  const n = toFiniteNumber(value)
+  return n === null ? '—' : n.toFixed(1)
+}
 
-export const formatPercent = (part: number, whole: number): string =>
-  whole <= 0 ? '—' : `${((part / whole) * 100).toFixed(1)}%`
+export const formatPercent = (
+  part: number | string | null | undefined,
+  whole: number | string | null | undefined,
+): string => {
+  const p = toFiniteNumber(part)
+  const w = toFiniteNumber(whole)
+  return p === null || w === null || w <= 0 ? '—' : `${((p / w) * 100).toFixed(1)}%`
+}

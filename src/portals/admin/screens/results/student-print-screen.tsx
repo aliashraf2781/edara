@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useNavigate, useParams } from 'react-router'
 import { useTableParams } from '~/lib/hooks/use-table-params'
+import { dedupeSubjectRows } from '~/lib/subject-rows'
 import { useDict } from '~/lib/i18n/use-dict'
 import { Button } from '~/ui/button'
 import { ErrorState } from '~/ui/error-state'
@@ -302,7 +303,8 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
     .filter((part) => part !== '')
     .join(' ')
 
-  const subjects = term.subjects
+  // One column per subject: repeated rows must never print a second block.
+  const subjects = dedupeSubjectRows(term.subjects)
   const numeric = subjects.filter((subject) => subject.grading_type === 'numeric')
   const years = academicYears(academicYearId)
   const yearFrom = issue.yearFrom !== '' ? toArabicDigits(issue.yearFrom) : (years?.from ?? '')
