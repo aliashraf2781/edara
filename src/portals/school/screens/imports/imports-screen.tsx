@@ -19,17 +19,14 @@ import {
   IMPORT_EXTENSIONS,
   IMPORT_MAX_BYTES,
   useImportHistory,
-  useConfirmImport,
   useImportReport,
-  usePreviewImport,
+  useUploadResults,
 } from '../../api/imports'
 import { schoolKeys } from '../../api/keys'
-import type { ImportMappingEntry, ImportPreview, ImportReport } from '../../api/types'
+import type { ImportReport } from '../../api/types'
 import { useCurriculumNames } from '../../api/use-options'
 import { AcademicYearField, GradeField, TermField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
-import { ImportMappingStep } from './import-mapping-step'
-import { ImportStatusBadge } from './import-report-extras'
 import { ImportReportPanel } from './import-report-panel'
 import { importsText } from './imports.i18n'
 
@@ -62,9 +59,7 @@ export function ImportsScreen() {
 
   const queryClient = useQueryClient()
   const history = useImportHistory()
-  const upload = usePreviewImport()
-  const confirm = useConfirmImport()
-  const [preview, setPreview] = useState<ImportPreview | null>(null)
+  const upload = useUploadResults()
   const liveReport = useImportReport(reportId ?? '')
   const report = liveReport.data ?? null
 
@@ -75,15 +70,13 @@ export function ImportsScreen() {
     // stale until then. Re-invalidating the moment this import leaves
     // "processing" is what makes a freshly-created grade show up in the
     // grade filter without a manual refresh.
-    if (report && report.status !== 'processing' && report.status !== 'previewing') {
+    if (report && report.status !== 'processing') {
       void queryClient.invalidateQueries({ queryKey: schoolKeys.all })
     }
   }, [report?.status, queryClient])
 
   const resetUpload = () => {
     setReportId(null)
-    setPreview(null)
-    confirm.reset()
     setFile(null)
     setNeedsGrade(false)
     setNeedsTerm(false)
@@ -98,9 +91,6 @@ export function ImportsScreen() {
   const submit = async () => {
     if (!file) return notify('danger', text.noFile)
     if (file.size > IMPORT_MAX_BYTES) return notify('danger', v.fileTooLarge(MAX_MB))
-    const name = file.name.toLowerCase()
-    if (!IMPORT_EXTENSIONS.some((ext) => name.endsWith(ext))) return notify('danger', text.fileHint)
-    if (upload.isPending) return
 
     try {
       const response = await upload.mutateAsync({
@@ -109,8 +99,7 @@ export function ImportsScreen() {
         termId: termId || undefined,
         academicYearId: academicYearId || undefined,
       })
-      setPreview(response)
-      setReportId(null)
+      setReportId(String(response.id))
       setNeedsGrade(false)
       setNeedsTerm(false)
       setNeedsAcademicYear(false)
@@ -128,24 +117,12 @@ export function ImportsScreen() {
     }
   }
 
-  const submitMapping = async (mapping: ImportMappingEntry[]) => {
-    if (!preview || confirm.isPending) return
-    try {
-      const response = await confirm.mutateAsync({ id: preview.id, mapping })
-      setReportId(String(response.id))
-      setPreview(null)
-    } catch (error) {
-      notifyError(error, shell.error.title)
-    }
-  }
-
   const historyColumns: readonly Column<ImportReport>[] = [
     { key: 'file', header: text.historyColumns.file, cell: (row) => row.file_name },
     { key: 'grade', header: text.historyColumns.grade, cell: (row) => gradeName(row.grade_id) },
     { key: 'term', header: text.historyColumns.term, cell: (row) => termName(row.term_id) },
     { key: 'students', header: text.historyColumns.students, numeric: true, cell: (row) => row.total_rows },
     { key: 'imported', header: text.historyColumns.imported, numeric: true, cell: (row) => row.imported_rows },
-    { key: 'status', header: text.historyColumns.status, cell: (row) => <ImportStatusBadge status={row.status} /> },
     { key: 'errors', header: text.historyColumns.errors, numeric: true, cell: (row) => row.invalid_rows },
     {
       key: 'date',
@@ -159,16 +136,6 @@ export function ImportsScreen() {
     <div className="flex flex-col gap-6">
       <PageHeader title={text.title} description={text.description} />
 
-      {preview ? (
-        <ImportMappingStep
-          key={preview.id}
-          preview={preview}
-          gradeId={preview.gradeId ?? (gradeId || undefined)}
-          pending={confirm.isPending}
-          onConfirm={(mapping) => void submitMapping(mapping)}
-          onCancel={resetUpload}
-        />
-      ) : (
       <Card>
         <CardHeader title={text.uploadTitle} />
         <CardBody className="flex flex-col gap-4">
@@ -227,12 +194,11 @@ export function ImportsScreen() {
               onClick={submit}
             >
               <Icon name="upload" />
-              {text.reviewUpload}
+              {text.upload}
             </Button>
           </div>
         </CardBody>
       </Card>
-      )}
 
       {report ? (
         <ImportReportPanel

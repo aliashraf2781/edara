@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizePage, roleNames } from '~/lib/api/normalize'
+import { roleNames } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { adminApi } from './client'
 import { adminKeys } from './keys'
@@ -27,10 +27,7 @@ export function useGlobalUserList(params: UserListParams, enabled: boolean) {
   return useQuery({
     queryKey: adminKeys.userList(query),
     queryFn: async ({ signal }) => {
-      const page = normalizePage<GlobalUser>(
-        await adminApi.getList('/users', query, { signal }),
-        params.perPage,
-      )
+      const page = await adminApi.getPage<GlobalUser>('/users', query, { signal }, params.perPage)
       return { ...page, data: page.data.map(normalizeUser) }
     },
     enabled,

@@ -18,7 +18,8 @@ type PaginationProps = {
  * a `next` link, so a link-driven control could never go back.
  */
 export function Pagination({ meta, onPageChange, labels }: PaginationProps) {
-  if (!meta || meta.last_page <= 1) return null
+  // A stale ?page= beyond the end still needs controls, or the user is stranded on an empty table.
+  if (!meta || (meta.last_page <= 1 && meta.current_page <= 1)) return null
 
   const atStart = meta.current_page <= 1
   const atEnd = meta.current_page >= meta.last_page
@@ -29,7 +30,7 @@ export function Pagination({ meta, onPageChange, labels }: PaginationProps) {
 
       <div className="flex items-center gap-2">
         <Button
-          onClick={() => onPageChange(meta.current_page - 1)}
+          onClick={() => onPageChange(Math.min(meta.current_page, meta.last_page + 1) - 1)}
           disabled={atStart}
           aria-label={labels.previous}
         >

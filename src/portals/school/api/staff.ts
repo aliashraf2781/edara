@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizePage, roleNames } from '~/lib/api/normalize'
+import { roleNames } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { schoolApi } from './client'
 import { schoolKeys } from './keys'
@@ -24,10 +24,7 @@ export function useStaffList(params: StaffListParams, enabled: boolean) {
   return useQuery({
     queryKey: schoolKeys.staffList(query),
     queryFn: async ({ signal }) => {
-      const page = normalizePage<SchoolUser>(
-        await schoolApi.getList('/school/users', query, { signal }),
-        params.perPage,
-      )
+      const page = await schoolApi.getPage<SchoolUser>('/school/users', query, { signal }, params.perPage)
       return { ...page, data: page.data.map(normalizeUser) }
     },
     enabled,

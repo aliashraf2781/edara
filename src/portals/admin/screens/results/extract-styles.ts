@@ -140,11 +140,7 @@ export const EXTRACT_CSS = `
   min-width:170px;
   border-bottom:1px dotted #000;
 }
-.extract .title-box .blank.filled{
-  border-bottom:none;
-  min-width:0;
-  padding:0 8px;
-}
+.extract .title-box .blank.filled{ border-bottom:none; }
 
 /* ---------- info lines ---------- */
 .extract .info-lines p{
@@ -158,7 +154,7 @@ export const EXTRACT_CSS = `
   border-bottom:1px dotted #000;
   margin:0 4px;
 }
-/* A filled blank fits its value: no reserved width, just a little padding. */
+/* A blank the API could fill keeps the dotted rule and sets the value on it. */
 .extract .blank.filled{
   padding:0 6px;
   font-weight:800;
@@ -180,12 +176,6 @@ export const EXTRACT_CSS = `
 .extract .b-ref{ min-width:220px; }
 .extract .b-md{ min-width:80px; }
 .extract .b-sm{ min-width:34px; }
-.extract .blank.filled.b-xl,
-.extract .blank.filled.b-lg,
-.extract .blank.filled.b-md,
-.extract .blank.filled.b-sm,
-.extract .blank.filled.b-to,
-.extract .blank.filled.b-ref{ min-width:0; padding:0 8px; }
 /* Under dir=rtl, flex-start packs to the right — where Arabic lines begin. */
 .extract .info-lines .row{
   display:flex;justify-content:flex-start;flex-wrap:wrap;

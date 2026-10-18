@@ -219,19 +219,9 @@ export type ImportRowError = {
   row_payload: Record<string, unknown>
 }
 
-/** Known server statuses; any other string is tolerated and rendered with a fallback badge. */
-export type ImportStatus = 'previewing' | 'processing' | 'completed' | 'failed' | 'rolled_back'
-
-export type ImportSubjectNote = {
-  sheetName: string
-  action: 'created' | 'matched_similar'
-  subject: string
-  score?: number
-}
-
 export type ImportReport = {
   id: string
-  status: ImportStatus | (string & {})
+  status: string
   file_name: string
   grade_id: string
   gradeDetectedFromSheet: boolean
@@ -249,38 +239,6 @@ export type ImportReport = {
   /** New Student records created from sheet rows with an unrecognized code. */
   studentsCreated: number
   errors: ImportRowError[]
-  /** Subjects the import created or fuzzy-matched; [] when the server sends none. */
-  subjectNotes: ImportSubjectNote[]
-  /** Set once an import has been rolled back, else null. */
-  rolledBackResults: number | null
-}
-
-export type ImportCandidate = {
-  subjectId: string
-  subjectName: string
-  /** 0..1 similarity as sent by the server (normalised from a 0..100 value if needed). */
-  score: number
-}
-
-export type ImportPreviewSubject = {
-  sheetIndex: number
-  sheetName: string
-  suggestedSubjectId: string | null
-  suggestedSubjectName: string | null
-  status: 'matched' | 'needs_review'
-  candidates: ImportCandidate[]
-}
-
-export type ImportPreview = {
-  id: string
-  gradeId: string | null
-  subjects: ImportPreviewSubject[]
-}
-
-export type ImportMappingEntry = {
-  sheet_index: number
-  subject_id: string
-  save_alias: boolean
 }
 
 /** Everything the upload screen needs to build one grade's template. */

@@ -289,7 +289,7 @@ Per guide §5.8:
   each form field by matching key names (they're snake_case even though
   success responses are camelCase — guide's casing note, §6). Don't assume
   a field name casing convention holds across both directions.
-- **Pagination**: standard `data.data`/`data.meta`/`data.links.next` shape
+- **Pagination**: flat `data` (array) / top-level `meta` / top-level `links.next` shape (changed 2026-10-11; read through `api.getPage`)
   (guide §1) — build one paginated-table component, not one per screen.
 - **Rate limiting** (429): surface the `Retry-After` header as "try again
   in N seconds," not a generic error toast — this will realistically hit

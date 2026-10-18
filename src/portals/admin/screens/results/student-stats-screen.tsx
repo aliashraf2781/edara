@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router'
-import { dedupeSubjectRows } from '~/lib/subject-rows'
 import { formatDate, formatScore } from '~/lib/format'
 import { useLocale } from '~/lib/i18n/locale-context'
 import { useDict } from '~/lib/i18n/use-dict'
@@ -87,11 +86,11 @@ export function StudentStatsScreen() {
   const termFigures = (term: StudentTermStats) => [
     { label: text.student.totals.total, value: String(term.total) },
     { label: text.student.totals.outOf, value: String(term.out_of) },
-    { label: text.student.totals.percent, value: term.percent == null ? "—" : `${formatScore(term.percent)}%` },
+    { label: text.student.totals.percent, value: term.percent == null ? '—' : `${formatScore(term.percent)}%` },
     { label: text.student.totals.average, value: formatScore(term.average) },
     {
       label: text.student.totals.subjectsPassed,
-      value: `${term.passed} / ${dedupeSubjectRows(term.subjects).length}`,
+      value: `${term.passed} / ${term.subjects.length}`,
     },
   ]
 
@@ -161,7 +160,7 @@ export function StudentStatsScreen() {
             <DataTable
               caption={`${name} — ${term.term_name}`}
               columns={columns}
-              rows={dedupeSubjectRows(term.subjects)}
+              rows={term.subjects}
               rowKey={(row) => row.subject_id}
             />
           </section>

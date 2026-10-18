@@ -13,9 +13,11 @@ export type PageMeta = {
 }
 
 /**
- * Paginated responses carry the list at `data` and `meta`/`links` as
- * top-level siblings. There is deliberately no `prev` link and no
- * `from`/`to` — the API does not send them.
+ * What screens consume. On the wire (since 2026-10-11) a paginated response is
+ * flat: `{ success, message, data: [...], meta, links }`, with `meta` and
+ * `links` beside `data` rather than inside it. `ApiClient.getPage` is the one
+ * place that reads that shape and returns this one. There is deliberately no
+ * `prev` link and no `from`/`to` — the API does not send them.
  */
 export type Paginated<T> = {
   data: T[]
@@ -30,10 +32,4 @@ export const emptyPage = <T,>(perPage: number): Paginated<T> => ({
   data: [],
   meta: { total: 0, per_page: perPage, current_page: 1, last_page: 1 },
   links: { next: null },
-})
-
-/** `from`/`to` are not sent by the API; derive them from `meta`. */
-export const pageRange = (meta: PageMeta): { from: number; to: number } => ({
-  from: meta.total ? (meta.current_page - 1) * meta.per_page + 1 : 0,
-  to: Math.min(meta.current_page * meta.per_page, meta.total),
 })

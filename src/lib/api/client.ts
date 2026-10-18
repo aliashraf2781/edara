@@ -1,6 +1,7 @@
 import type { Locale } from '~/lib/i18n/locales'
-import type { ApiEnvelope } from './envelope'
+import type { ApiEnvelope, Paginated } from './envelope'
 import { ApiError, readFieldErrors } from './error'
+import { normalizePage, pagePayload } from './normalize'
 import { buildSearchParams, type QueryParams } from './query'
 
 export type TokenProvider = {
@@ -35,15 +36,15 @@ const readRetryAfter = (response: Response): number | null => {
   return Number.isFinite(header) && header > 0 ? header : null
 }
 
-/** Page-level siblings of `data` on a paginated list response. */
-export type ListEnvelope = { data: unknown; meta?: unknown; links?: unknown }
+/** The envelope as received, including the top-level `meta`/`links` of paginated lists. */
+type RawEnvelope = ApiEnvelope<unknown> & { meta?: unknown; links?: unknown }
 
-async function unwrap<T>(response: Response, whole = false): Promise<T> {
-  if (response.status === 204) return null as T
+async function readEnvelope(response: Response): Promise<RawEnvelope | null> {
+  if (response.status === 204) return null
 
-  let envelope: ApiEnvelope<unknown> | null
+  let envelope: RawEnvelope | null
   try {
-    envelope = (await response.json()) as ApiEnvelope<unknown>
+    envelope = (await response.json()) as RawEnvelope
   } catch {
     envelope = null
   }
@@ -57,18 +58,11 @@ async function unwrap<T>(response: Response, whole = false): Promise<T> {
     )
   }
 
-  if (whole) {
-    // Paginated lists keep `meta`/`links` next to `data`; dropping them here
-    // would silently turn every list into a one-page list.
-    return {
-      data: envelope?.data ?? null,
-      meta: (envelope as ListEnvelope | null)?.meta,
-      links: (envelope as ListEnvelope | null)?.links,
-    } as T
-  }
-
-  return (envelope?.data ?? null) as T
+  return envelope
 }
+
+const unwrap = async <T,>(response: Response): Promise<T> =>
+  ((await readEnvelope(response))?.data ?? null) as T
 
 export type ApiClient = ReturnType<typeof createApiClient>
 
@@ -92,7 +86,8 @@ export function createApiClient({ baseUrl, tokens, getLocale }: ApiClientOptions
     return fetch(`${baseUrl}${path}`, { ...init, headers })
   }
 
-  const call = async <T,>(path: string, init: RequestInit, whole = false): Promise<T> => {
+  /** Sends, refreshes once on 401, and hands back the raw response. */
+  const dispatch = async (path: string, init: RequestInit): Promise<Response> => {
     let response = await send(path, init, tokens.getAccessToken())
 
     if (response.status === 401 && tokens.refresh) {
@@ -101,8 +96,11 @@ export function createApiClient({ baseUrl, tokens, getLocale }: ApiClientOptions
     }
 
     if (response.status === 401) tokens.onSessionExpired()
-    return unwrap<T>(response, whole)
+    return response
   }
+
+  const call = async <T,>(path: string, init: RequestInit): Promise<T> =>
+    unwrap<T>(await dispatch(path, init))
 
   const withJson = (body: unknown, init: RequestInitLite): RequestInit =>
     body === undefined
@@ -114,14 +112,43 @@ export function createApiClient({ baseUrl, tokens, getLocale }: ApiClientOptions
       call<T>(`${path}${buildSearchParams(query)}`, { ...init, method: 'GET' }),
 
     /**
-     * Paginated list endpoints. Returns `{ data, meta, links }` untouched so
-     * `normalizePage` can read the top-level paging fields.
+     * For paginated lists, whose `meta` and `links` sit beside `data` in the
+     * envelope — `get` would drop them. Always resolves to a full page; an
+     * empty or null payload becomes an empty page rather than an error.
      */
-    getList: (path: string, query?: QueryParams, init: RequestInitLite = {}) =>
-      call<ListEnvelope>(`${path}${buildSearchParams(query)}`, { ...init, method: 'GET' }, true),
+    getPage: async <T,>(
+      path: string,
+      query?: QueryParams,
+      init: RequestInitLite = {},
+      fallbackPerPage?: number,
+    ): Promise<Paginated<T>> => {
+      const response = await dispatch(`${path}${buildSearchParams(query)}`, { ...init, method: 'GET' })
+      const envelope = await readEnvelope(response)
+      return normalizePage<T>(pagePayload(envelope), fallbackPerPage)
+    },
 
     post: <T,>(path: string, body?: unknown, init: RequestInitLite = {}) =>
       call<T>(path, { ...withJson(body, init), method: 'POST' }),
+
+    /**
+     * For actions whose own success sentence is the feedback: `post` would
+     * return `data` alone, and for a `data: null` envelope that drops the
+     * only thing worth showing. `message` is null when the server sent none.
+     */
+    postWithMessage: async <T,>(
+      path: string,
+      body?: unknown,
+      init: RequestInitLite = {},
+    ): Promise<{ data: T; message: string | null }> => {
+      const response = await dispatch(path, { ...withJson(body, init), method: 'POST' })
+      const envelope = await readEnvelope(response)
+      // A 200 that is not our JSON envelope (captive portal, proxy page) is not
+      // a success; only an explicit 204 may arrive without a body.
+      if (envelope === null && response.status !== 204) {
+        throw new ApiError(response.status, fallbackMessage(response.status))
+      }
+      return { data: (envelope?.data ?? null) as T, message: envelope?.message || null }
+    },
 
     put: <T,>(path: string, body?: unknown, init: RequestInitLite = {}) =>
       call<T>(path, { ...withJson(body, init), method: 'PUT' }),

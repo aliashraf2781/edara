@@ -38,31 +38,35 @@ export const formatDateTime = (value: string | null | undefined, locale: Locale)
 }
 
 /**
- * The API serialises decimals as strings ("68.40") and may send null, so every
- * numeric formatter goes through this. Returns null for anything unusable.
+ * Decimals can arrive as JSON strings ("68.40"), so every numeric formatter
+ * coerces first. Null, blanks and non-numeric text become null, never NaN.
  */
-const toFiniteNumber = (value: unknown): number | null => {
-  if (value === null || value === undefined || value === '') return null
-  const n = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(n) ? n : null
+const toNumber = (value: unknown): number | null => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
 }
 
 export const formatNumber = (value: number | string | null | undefined): string => {
-  const n = toFiniteNumber(value)
-  return n === null ? '—' : String(n)
+  const number = toNumber(value)
+  return number === null ? '—' : String(number)
 }
 
 /** One decimal, because averages come back like 68.4 and 68.40 reads as false precision. */
 export const formatScore = (value: number | string | null | undefined): string => {
-  const n = toFiniteNumber(value)
-  return n === null ? '—' : n.toFixed(1)
+  const number = toNumber(value)
+  return number === null ? '—' : number.toFixed(1)
 }
 
 export const formatPercent = (
   part: number | string | null | undefined,
   whole: number | string | null | undefined,
 ): string => {
-  const p = toFiniteNumber(part)
-  const w = toFiniteNumber(whole)
-  return p === null || w === null || w <= 0 ? '—' : `${((p / w) * 100).toFixed(1)}%`
+  const numerator = toNumber(part)
+  const denominator = toNumber(whole)
+  if (numerator === null || denominator === null || denominator <= 0) return '—'
+  return `${((numerator / denominator) * 100).toFixed(1)}%`
 }

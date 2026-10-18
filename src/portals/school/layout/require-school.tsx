@@ -1,8 +1,10 @@
-import type { ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useDict } from '~/lib/i18n/use-dict'
 import { ErrorState } from '~/ui/error-state'
 import { FullPageLoader } from '~/ui/full-page-loader'
+import { schoolKeys } from '../api/keys'
 import { schoolText } from '../school.i18n'
 import { SchoolSessionProvider } from '../auth/session-context'
 import { useSchoolIdentity, useSchoolToken } from '../auth/use-school-session'
@@ -12,6 +14,14 @@ export function RequireSchool({ children }: { children: ReactNode }) {
   const location = useLocation()
   const token = useSchoolToken()
   const identity = useSchoolIdentity(token !== null)
+  const client = useQueryClient()
+
+  // The token goes null from three places: sign-out, an expired token, and a
+  // 401 after another device changed the password. Drop the cache in all of
+  // them so the next sign-in can never briefly render this user's data.
+  useEffect(() => {
+    if (token === null) client.removeQueries({ queryKey: schoolKeys.all })
+  }, [token, client])
 
   if (token === null) {
     return <Navigate to="/school/login" replace state={{ from: location.pathname }} />

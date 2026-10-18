@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizePage } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { adminApi } from './client'
 import { adminKeys } from './keys'
@@ -26,10 +25,7 @@ export function useTenantList(params: TenantListParams, enabled: boolean) {
   return useQuery({
     queryKey: adminKeys.tenantList(query),
     queryFn: async ({ signal }) =>
-      normalizePage<TenantSummary>(
-        await adminApi.getList('/admin/tenants', query, { signal }),
-        params.perPage,
-      ),
+      adminApi.getPage<TenantSummary>('/admin/tenants', query, { signal }, params.perPage),
     enabled,
     // The previous page stays on screen while the next one loads, so the
     // table never collapses to a skeleton mid-pagination.

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizePage } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { schoolApi } from './client'
 import { schoolKeys } from './keys'
@@ -27,10 +26,7 @@ export function useStudentList(params: StudentListParams) {
   return useQuery({
     queryKey: schoolKeys.studentList(query),
     queryFn: async ({ signal }) =>
-      normalizePage<Student>(
-        await schoolApi.getList('/school/students', query, { signal }),
-        params.perPage,
-      ),
+      schoolApi.getPage<Student>('/school/students', query, { signal }, params.perPage),
     placeholderData: (previous) => previous,
   })
 }

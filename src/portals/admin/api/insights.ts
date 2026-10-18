@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { normalizePage } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { adminApi } from './client'
 import { adminKeys } from './keys'
@@ -107,10 +106,7 @@ export function useSchoolStudents(code: string, params: SchoolStudentParams, ena
   return useQuery({
     queryKey: adminKeys.schoolStudents(code, query),
     queryFn: async ({ signal }) =>
-      normalizePage<SchoolStudentRow>(
-        await adminApi.getList(`/admin/tenants/${code}/students`, query, { signal }),
-        params.perPage,
-      ),
+      adminApi.getPage<SchoolStudentRow>(`/admin/tenants/${code}/students`, query, { signal }, params.perPage),
     enabled: enabled && code !== '',
     placeholderData: (previous) => previous,
   })
@@ -141,10 +137,7 @@ export function useSchoolResults(code: string, params: SchoolResultParams, enabl
   return useQuery({
     queryKey: adminKeys.schoolResults(code, query),
     queryFn: async ({ signal }) =>
-      normalizePage<SchoolResultRow>(
-        await adminApi.getList(`/admin/tenants/${code}/results`, query, { signal }),
-        params.perPage,
-      ),
+      adminApi.getPage<SchoolResultRow>(`/admin/tenants/${code}/results`, query, { signal }, params.perPage),
     enabled: enabled && code !== '',
     placeholderData: (previous) => previous,
   })

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizePage } from '~/lib/api/normalize'
 import type { QueryParams } from '~/lib/api/query'
 import { schoolApi } from './client'
 import { schoolKeys } from './keys'
@@ -30,18 +29,23 @@ export function useResultList(params: ResultListParams) {
   return useQuery({
     queryKey: schoolKeys.resultList(query),
     queryFn: async ({ signal }) =>
-      normalizePage<Result>(
-        await schoolApi.getList('/school/results', query, { signal }),
-        params.perPage,
-      ),
+      schoolApi.getPage<Result>('/school/results', query, { signal }, params.perPage),
     placeholderData: (previous) => previous,
   })
 }
 
-/** One grade's marks for a term, unpaginated — 13 subjects × one roster. */
+/** One grade's marks for a term — 13 subjects × one roster, asked for in a single page. */
 const BREAKDOWN_PER_PAGE = 2000
 
-/** Backs the reports by-subject table, which the summary endpoint does not cover. */
+/** Safety stop so a misbehaving `last_page` can never turn into an unbounded loop. */
+const BREAKDOWN_MAX_PAGES = 100
+
+/**
+ * Backs the reports by-subject table, which the summary endpoint does not
+ * cover. The table needs the whole grade, so if the server caps `per_page`
+ * below what was asked for, the remaining pages are fetched too — a silently
+ * truncated roster would make the per-subject figures wrong.
+ */
 export function useGradeTermResults(termId: string, gradeId: string) {
   const query: QueryParams = {
     term_id: termId,
@@ -51,11 +55,30 @@ export function useGradeTermResults(termId: string, gradeId: string) {
   }
   return useQuery({
     queryKey: schoolKeys.resultList(query),
-    queryFn: async ({ signal }) =>
-      normalizePage<Result>(
-        await schoolApi.getList('/school/results', query, { signal }),
+    queryFn: async ({ signal }) => {
+      const first = await schoolApi.getPage<Result>(
+        '/school/results',
+        query,
+        { signal },
         BREAKDOWN_PER_PAGE,
-      ).data,
+      )
+      const lastPage = Math.min(first.meta.last_page, BREAKDOWN_MAX_PAGES)
+      if (lastPage <= 1) return first.data
+
+      // Sequential, not parallel: a capped server means many pages, and a
+      // burst of them is exactly what trips the 429 rate limit.
+      const rows = [...first.data]
+      for (let page = 2; page <= lastPage; page += 1) {
+        const next = await schoolApi.getPage<Result>(
+          '/school/results',
+          { ...query, page },
+          { signal },
+          BREAKDOWN_PER_PAGE,
+        )
+        rows.push(...next.data)
+      }
+      return rows
+    },
     enabled: termId !== '' && gradeId !== '',
     staleTime: 0,
   })
