@@ -99,6 +99,7 @@ export const resultsText: Dict<{
     school: string
     genders: { male: string; female: string }
     print: string
+    printInternational: string
     enrollmentStatement: string
     subjectColumns: {
       subject: string
@@ -123,6 +124,9 @@ export const resultsText: Dict<{
   print: {
     title: string
     term: string
+    kind: string
+    kindStandard: string
+    kindInternational: string
     action: string
     back: string
     loading: string
@@ -264,6 +268,7 @@ export const resultsText: Dict<{
       school: 'المدرسة',
       genders: { male: 'ذكر', female: 'أنثى' },
       print: 'طباعة النتيجة',
+      printInternational: 'طباعة نتيجة دولي',
       enrollmentStatement: 'استخراج بيان قيد',
       subjectColumns: {
         subject: 'المادة',
@@ -288,6 +293,9 @@ export const resultsText: Dict<{
     print: {
       title: 'مستخرج رسمي بنتيجة الصف الابتدائي',
       term: 'الترم',
+      kind: 'نوع المستخرج',
+      kindStandard: 'مستخرج نتيجة',
+      kindInternational: 'مستخرج نتيجة دولي',
       action: 'طباعة',
       back: 'عودة إلى صفحة الطالب',
       loading: 'جارٍ تجهيز المستخرج',
@@ -435,6 +443,7 @@ export const resultsText: Dict<{
       school: 'School',
       genders: { male: 'Male', female: 'Female' },
       print: 'Print the result',
+      printInternational: 'Print international result',
       enrollmentStatement: 'Issue an enrollment statement',
       subjectColumns: {
         subject: 'Subject',
@@ -459,6 +468,9 @@ export const resultsText: Dict<{
     print: {
       title: 'Official primary-grade result extract',
       term: 'Term',
+      kind: 'Extract type',
+      kindStandard: 'Result extract',
+      kindInternational: 'International result extract',
       action: 'Print',
       back: 'Back to the student',
       loading: 'Preparing the extract',

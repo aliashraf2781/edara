@@ -20,6 +20,7 @@ import { useAdminSession } from '../../auth/session-context'
 import { MarkCell, VerdictStamp } from './result-cells'
 import { resultsText } from './results.i18n'
 import { StatCards } from './stat-cards'
+import { canIssueInternational, extractPath, gradeLevelFromName } from './extract-kind'
 
 export function StudentStatsScreen() {
   const text = useDict(resultsText)
@@ -112,10 +113,13 @@ export function StudentStatsScreen() {
             <Button onClick={() => navigate(`/admin/schools/${code}/students`)}>
               {text.school.backToSchool}
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => navigate(`/admin/schools/${code}/students/${id}/print`)}
-            >
+            {canIssueInternational(gradeLevelFromName(grade_name)) ? (
+              <Button onClick={() => navigate(extractPath(code, id, 'international'))}>
+                <Icon name="sheet" />
+                {text.student.printInternational}
+              </Button>
+            ) : null}
+            <Button variant="primary" onClick={() => navigate(extractPath(code, id))}>
               <Icon name="sheet" />
               {text.student.print}
             </Button>

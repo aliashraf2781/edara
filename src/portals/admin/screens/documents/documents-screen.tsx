@@ -13,6 +13,7 @@ import { adminText } from '../../admin.i18n'
 import { useSchoolStudents } from '../../api/insights'
 import { useTenantList } from '../../api/tenants'
 import type { SchoolStudentRow, TenantSummary } from '../../api/types'
+import { canIssueInternational, extractPath, gradeLevelFromName } from '../results/extract-kind'
 import { documentsText } from './documents.i18n'
 
 const PER_PAGE = 8
@@ -185,7 +186,7 @@ export function DocumentsScreen() {
               <button
                 type="button"
                 className="flex flex-col gap-1 rounded-card border border-line bg-surface p-5 text-start transition-colors duration-150 ease-out hover:bg-sunken"
-                onClick={() => navigate(`/admin/schools/${school.code}/students/${student.id}/print`)}
+                onClick={() => navigate(extractPath(school.code, student.id))}
               >
                 <span className="flex items-center gap-2 font-semibold text-ink">
                   <Icon name="sheet" className="text-accent" />
@@ -193,6 +194,20 @@ export function DocumentsScreen() {
                 </span>
                 <span className="text-small text-muted">{text.actions.resultExtractHint}</span>
               </button>
+
+              {canIssueInternational(gradeLevelFromName(student.grade_name)) ? (
+                <button
+                  type="button"
+                  className="flex flex-col gap-1 rounded-card border border-line bg-surface p-5 text-start transition-colors duration-150 ease-out hover:bg-sunken"
+                  onClick={() => navigate(extractPath(school.code, student.id, 'international'))}
+                >
+                  <span className="flex items-center gap-2 font-semibold text-ink">
+                    <Icon name="sheet" className="text-accent" />
+                    {text.actions.internationalExtract}
+                  </span>
+                  <span className="text-small text-muted">{text.actions.internationalExtractHint}</span>
+                </button>
+              ) : null}
 
               <button
                 type="button"

@@ -17,6 +17,8 @@ export const documentsText: Dict<{
     title: string
     resultExtract: string
     resultExtractHint: string
+    internationalExtract: string
+    internationalExtractHint: string
     enrollmentStatement: string
     enrollmentStatementHint: string
   }
@@ -38,6 +40,8 @@ export const documentsText: Dict<{
       title: 'الخطوة ٣ — اختر المستند',
       resultExtract: 'مستخرج رسمي بالنتيجة',
       resultExtractHint: 'جدول الدرجات الكامل لصف الطالب وترمه.',
+      internationalExtract: 'مستخرج رسمي بنتيجة دولي',
+      internationalExtractHint: 'للصفوف من الأول إلى السادس الابتدائي — العربية والتربية الدينية، ومعهما الدراسات من الصف الثالث.',
       enrollmentStatement: 'بيان قيد',
       enrollmentStatementHint: 'إفادة قيد الطالب بالمدرسة، جاهزة للطباعة.',
     },
@@ -59,6 +63,8 @@ export const documentsText: Dict<{
       title: 'Step 3 — choose the document',
       resultExtract: 'Official result extract',
       resultExtractHint: "The student's full grade table for one term.",
+      internationalExtract: 'Official international result extract',
+      internationalExtractHint: 'Primary grades 1–6 — Arabic and religious education, plus social studies from grade 3.',
       enrollmentStatement: 'Enrollment statement',
       enrollmentStatementHint: 'Confirms the student is enrolled at the school, ready to print.',
     },

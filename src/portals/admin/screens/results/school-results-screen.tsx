@@ -25,6 +25,7 @@ import { resultsText } from './results.i18n'
 import { ResultsToolbar } from './results-toolbar'
 import { SchoolNav } from './school-nav'
 import { StatCards } from './stat-cards'
+import { canIssueInternational, extractPath, gradeLevelFromName } from './extract-kind'
 
 const PER_PAGE = 25
 const DEFAULTS = { term: '', grade: '', classroom: '', subject: '', search: '' } as const
@@ -285,10 +286,15 @@ export function SchoolResultsScreen() {
               <Icon name="ledger" />
               {text.student.enrollmentStatement}
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => navigate(`/admin/schools/${code}/students/${selected.id}/print`)}
-            >
+            {canIssueInternational(
+              detail.data ? gradeLevelFromName(detail.data.grade_name) : undefined,
+            ) ? (
+              <Button onClick={() => navigate(extractPath(code, selected.id, 'international'))}>
+                <Icon name="sheet" />
+                {text.student.printInternational}
+              </Button>
+            ) : null}
+            <Button variant="primary" onClick={() => navigate(extractPath(code, selected.id))}>
               <Icon name="sheet" />
               {text.student.print}
             </Button>

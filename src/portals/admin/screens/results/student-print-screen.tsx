@@ -22,30 +22,24 @@ import { PrintWatermark, SeatWatermark } from '../print-watermark'
 import { printPage } from '../print-page'
 import { toArabicDigits } from './arabic-digits'
 import { EXTRACT_CSS } from './extract-styles'
+import {
+  canIssueInternational,
+  EXTRACT_KIND_PARAM,
+  gradeLevelFromName,
+  parseExtractKind,
+  pickInternationalSubjects,
+  WITHIN_STAGE_ORDINAL,
+} from './extract-kind'
 import { EMPTY_ISSUE_DETAILS, type IssueDetails } from './issue-details'
 import { IssueDetailsDialog } from './issue-details-dialog'
 import { PrintedDate } from './printed-date'
 import { resultsText } from './results.i18n'
 
-const TERM_PARAM = { term: '' } as const
+const PARAMS = { term: '', [EXTRACT_KIND_PARAM]: '' } as const
 
 /** The post holder whose name is printed under the last signature slot. */
 const EXAMS_DIRECTOR = 'ابراهيم طلعت محمد'
-/**
- * Egyptian school grades restart the ordinal at each stage:
- *   1–6 ابتدائي · 7–9 اعدادي (الأول–الثالث) · 10–12 ثانوي (الأول–الثالث).
- * A school's own Grade.name is free text, so the numeric `level` is the
- * one field that means the same thing everywhere.
- */
-const WITHIN_STAGE_ORDINAL: Record<number, string> = {
-  1: 'الأول',
-  2: 'الثاني',
-  3: 'الثالث',
-  4: 'الرابع',
-  5: 'الخامس',
-  6: 'السادس',
-}
-
+/** Egyptian grades restart the ordinal at each stage: 1–6 ابتدائي · 7–9 اعدادي · 10–12 ثانوي. */
 type GradeStage = {
   /** Word inside «الصف [ordinal] …», e.g. الثاني */
   ordinal: string
@@ -69,28 +63,6 @@ function gradeAtLevel(level: number): GradeStage | undefined {
 const ROUND_WORDS: Record<number, string> = {
   1: 'الأول',
   2: 'الثاني',
-}
-
-function gradeLevelFromName(gradeName: string): number | undefined {
-  const name = gradeName.replaceAll('الإعدادي', 'الاعدادي')
-  let offset = 0
-  let maxWithin = 6
-  if (/اعدادي|prep/i.test(name)) {
-    offset = 6
-    maxWithin = 3
-  } else if (/ثانوي|secondary/i.test(name)) {
-    offset = 9
-    maxWithin = 3
-  }
-
-  for (let within = maxWithin; within >= 1; within -= 1) {
-    const word = WITHIN_STAGE_ORDINAL[within]!
-    const bare = word.replace(/^ال/, '')
-    if (name.includes(word) || (bare !== '' && name.includes(bare))) {
-      return offset + within
-    }
-  }
-  return undefined
 }
 
 function termNumberOf(term: StudentTermStats, referenceTerms: readonly ReferenceTerm[]): number | undefined {
@@ -164,7 +136,7 @@ function StudentExtract() {
   const params = useParams()
   const code = params.code ?? ''
   const id = params.id ?? ''
-  const { values, setValue } = useTableParams(TERM_PARAM)
+  const { values, setValue } = useTableParams(PARAMS)
 
   const reference = useAdminReference(code)
   const detail = useSchoolStudent(code, id)
@@ -196,6 +168,10 @@ function StudentExtract() {
   const gradeLevel = grade?.level ?? gradeLevelFromName(data.grade_name)
   const termNumber = term ? termNumberOf(term, reference.data?.terms ?? []) : undefined
   const yearStart = Number(classroom?.academic_year_id?.match(/(\d{4})/)?.[1] ?? NaN)
+  // A stale `?kind=international` on a grade the form does not exist for
+  // (7+) quietly falls back to the standard extract.
+  const internationalAllowed = canIssueInternational(gradeLevel)
+  const international = internationalAllowed && parseExtractKind(values.kind) === 'international'
   const currentGrade = gradeLevel !== undefined ? gradeAtLevel(gradeLevel) : undefined
   const nextGrade = gradeLevel !== undefined ? gradeAtLevel(gradeLevel + 1) : undefined
   const autoFilled = {
@@ -224,6 +200,18 @@ function StudentExtract() {
             onChange={(event) => setValue('term', event.target.value)}
             options={data.terms.map((row) => ({ value: row.term_id, label: row.term_name }))}
           />
+          {internationalAllowed ? (
+            <Select
+              aria-label={text.print.kind}
+              className="min-w-44"
+              value={international ? 'international' : 'standard'}
+              onChange={(event) => setValue(EXTRACT_KIND_PARAM, event.target.value)}
+              options={[
+                { value: 'standard', label: text.print.kindStandard },
+                { value: 'international', label: text.print.kindInternational },
+              ]}
+            />
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -268,6 +256,7 @@ function StudentExtract() {
           data={data}
           term={term}
           gradeLevel={gradeLevel}
+          international={international}
           termNumber={termNumber}
           academicYearId={classroom?.academic_year_id}
           issue={issue}
@@ -281,20 +270,24 @@ type ExtractPageProps = {
   data: StudentDetail
   term: StudentTermStats
   gradeLevel: number | undefined
+  /** The international-education form: primary only, three subjects. */
+  international: boolean
   /** 1 = first term, 2 = second. Promotion wording only prints on 2. */
   termNumber: number | undefined
   academicYearId: string | undefined
   issue: IssueDetails
 }
 
-function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue }: ExtractPageProps) {
+function ExtractPage({ data, term, gradeLevel, international, termNumber, academicYearId, issue }: ExtractPageProps) {
   const text = useDict(resultsText)
   const { student, school } = data
   const current = gradeLevel !== undefined ? gradeAtLevel(gradeLevel) : undefined
   const next = gradeLevel !== undefined ? gradeAtLevel(gradeLevel + 1) : undefined
   const ordinal = current?.ordinal || issue.gradeOrdinal || undefined
   const nextOrdinal = next?.ordinal || issue.nextOrdinal || undefined
-  const stageName = current?.stage
+  // The international form only exists for primary, so the stage is fixed
+  // even when the grade level could not be read off the record.
+  const stageName = international ? 'الابتدائي' : current?.stage
   const nextStageName = next?.stage
   const roundLabel = (termNumber !== undefined ? (ROUND_WORDS[termNumber] ?? '') : '') || issue.round
   const seatNo = issue.seatNo !== '' ? issue.seatNo : student.seat_no
@@ -314,6 +307,19 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
 
   const verdict = (subject: StudentTermSubject) =>
     subject.is_absent ? text.print.absentMark : subject.passed ? text.print.passed : text.print.failed
+
+  // International form: always exactly the three printed columns. A subject
+  // the student has no record for stays an empty column to be filled by hand,
+  // rather than shifting the others or dropping the column.
+  const internationalColumns = pickInternationalSubjects(subjects, gradeLevel)
+  // Ratings-only row when every recorded subject is qualitative; the numeric
+  // table otherwise (and when nothing is recorded, so it can be hand-filled).
+  // Grades 3–6 on the international form carry no minimum-mark row.
+  const showMinRow = gradeLevel === undefined || gradeLevel <= 2
+  const internationalRows = showMinRow ? 4 : 3
+  const internationalNumericTable =
+    !internationalColumns.some(({ subject }) => subject !== null) ||
+    internationalColumns.some(({ subject }) => subject?.grading_type === 'numeric')
 
   return (
     <div className="extract" dir="rtl" lang="ar">
@@ -337,6 +343,7 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
             <span>مستخرج رسمي بنتيجة الصف</span>
             <Blank value={ordinal} />
             {stageName ? <span>{stageName}</span> : null}
+            {international ? <span>تعليم دولي</span> : null}
           </div>
         </div>
 
@@ -369,7 +376,98 @@ function ExtractPage({ data, term, gradeLevel, termNumber, academicYearId, issue
           </p>
         </div>
 
-        {allQualitative ? (
+        {international ? (
+          /* ===== International education: Arabic, social studies, religion ===== */
+          internationalNumericTable ? (
+            <table className="grades international">
+              <thead>
+                <tr>
+                  <th className="label-col">المادة</th>
+                  {internationalColumns.map(({ slot }) => (
+                    <th key={slot.key}>{slot.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="num-row">
+                  <td className="label-col">الدرجة النهائية</td>
+                  {internationalColumns.map(({ slot, subject }) =>
+                    subject?.grading_type === 'qualitative' ? (
+                      <td key={slot.key} rowSpan={internationalRows} className="vertical-text">
+                        <span>{verdict(subject)}</span>
+                      </td>
+                    ) : (
+                      <td key={slot.key}>
+                        {subject?.max_score != null ? toArabicDigits(subject.max_score) : null}
+                      </td>
+                    ),
+                  )}
+                </tr>
+                {showMinRow ? (
+                <tr className="num-row">
+                  <td className="label-col">الدرجة الصغرى</td>
+                  {internationalColumns.map(({ slot, subject }) =>
+                    subject?.grading_type === 'qualitative' ? null : (
+                      <td key={slot.key}>
+                        {subject?.pass_score != null ? toArabicDigits(subject.pass_score) : null}
+                      </td>
+                    ),
+                  )}
+                </tr>
+                ) : null}
+                <tr className="fill-row">
+                  <td className="label-col">درجة الطالب</td>
+                  {internationalColumns.map(({ slot, subject }) =>
+                    subject?.grading_type === 'qualitative' ? null : (
+                      <td key={slot.key}>
+                        {subject === null
+                          ? null
+                          : subject.is_absent
+                            ? text.print.absentMark
+                            : subject.score != null
+                              ? toArabicDigits(subject.score)
+                              : null}
+                      </td>
+                    ),
+                  )}
+                </tr>
+                <tr className="fill-row">
+                  <td className="label-col">التقييم</td>
+                  {internationalColumns.map(({ slot, subject }) =>
+                    subject?.grading_type === 'qualitative' ? null : (
+                      <td key={slot.key}>
+                        {subject === null || (subject.score == null && !subject.is_absent)
+                          ? null
+                          : subject.passed
+                            ? text.print.passed
+                            : text.print.failed}
+                      </td>
+                    ),
+                  )}
+                </tr>
+              </tbody>
+            </table>
+          ) : (
+            <table className="grades international">
+              <thead>
+                <tr>
+                  <th className="label-col">المادة</th>
+                  {internationalColumns.map(({ slot }) => (
+                    <th key={slot.key}>{slot.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="fill-row">
+                  <td className="label-col">تقديرات الطالب</td>
+                  {internationalColumns.map(({ slot, subject }) => (
+                    <td key={slot.key}>{subject ? verdict(subject) : null}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          )
+        ) : allQualitative ? (
           /* ===== Grades 1-2: one row of ratings, no numeric section ===== */
           <table className="grades">
             <thead>
