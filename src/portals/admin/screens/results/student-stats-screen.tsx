@@ -12,6 +12,7 @@ import { Icon } from '~/ui/icon'
 import { NoAccess } from '~/ui/no-access'
 import { PageHeader } from '~/ui/page-header'
 import { Spinner } from '~/ui/spinner'
+import { Stamp } from '~/ui/stamp'
 import { adminText } from '../../admin.i18n'
 import { useSchoolStudent } from '../../api/insights'
 import { PERMISSION } from '../../api/permissions'
@@ -21,6 +22,10 @@ import { MarkCell, VerdictStamp } from './result-cells'
 import { resultsText } from './results.i18n'
 import { StatCards } from './stat-cards'
 import { canIssueInternational, extractPath, gradeLevelFromName } from './extract-kind'
+
+/** A term with no marks, ratings or absences recorded has not been uploaded. */
+const isUploaded = (term: StudentTermStats) =>
+  term.subjects.some((row) => row.score !== null || row.qualitative_rating !== null || row.is_absent)
 
 export function StudentStatsScreen() {
   const text = useDict(resultsText)
@@ -55,7 +60,6 @@ export function StudentStatsScreen() {
     .filter((part) => part !== '')
     .join(' ')
   const verdicts = { passed: text.student.passed, failed: text.student.failed }
-  const overallPassed = terms.length > 0 && terms.every((term) => term.verdict === 'passed')
 
   const columns: readonly Column<StudentTermSubject>[] = [
     { key: 'subject', header: text.student.subjectColumns.subject, cell: (row) => row.subject_name },
@@ -105,7 +109,6 @@ export function StudentStatsScreen() {
             <span className="font-mono text-small text-muted" dir="ltr">
               {student.student_code}
             </span>
-            <VerdictStamp passed={overallPassed} labels={verdicts} />
           </div>
         }
         actions={
@@ -155,7 +158,11 @@ export function StudentStatsScreen() {
               <h2 className="text-h1 font-semibold text-ink">{term.term_name}</h2>
               <div className="flex items-center gap-3">
                 <span className="label-micro">{text.student.verdict}</span>
-                <VerdictStamp passed={term.verdict === 'passed'} labels={verdicts} />
+                {isUploaded(term) ? (
+                  <VerdictStamp passed={term.verdict === 'passed'} labels={verdicts} />
+                ) : (
+                  <Stamp tone="neutral">{text.student.notUploaded}</Stamp>
+                )}
               </div>
             </div>
 

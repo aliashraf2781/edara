@@ -118,6 +118,7 @@ export const resultsText: Dict<{
     verdict: string
     passed: string
     failed: string
+    notUploaded: string
     noTerms: string
     noTermsBody: string
   }
@@ -287,6 +288,7 @@ export const resultsText: Dict<{
       verdict: 'النتيجة النهائية',
       passed: 'ناجح',
       failed: 'راسب',
+      notUploaded: 'لم تُرفع',
       noTerms: 'لا توجد نتائج مسجّلة',
       noTermsBody: 'لم تُرفع درجات هذا الطالب بعد.',
     },
@@ -462,6 +464,7 @@ export const resultsText: Dict<{
       verdict: 'Overall verdict',
       passed: 'Passed',
       failed: 'Failed',
+      notUploaded: 'Not uploaded',
       noTerms: 'No results recorded',
       noTermsBody: 'This student’s marks have not been uploaded yet.',
     },
