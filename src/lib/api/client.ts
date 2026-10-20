@@ -1,6 +1,6 @@
 import type { Locale } from '~/lib/i18n/locales'
 import type { ApiEnvelope, Paginated } from './envelope'
-import { ApiError, readFieldErrors } from './error'
+import { ApiError, readErrorExtras, readFieldErrors } from './error'
 import { normalizePage, pagePayload } from './normalize'
 import { buildSearchParams, type QueryParams } from './query'
 
@@ -55,6 +55,7 @@ async function readEnvelope(response: Response): Promise<RawEnvelope | null> {
       envelope?.message || fallbackMessage(response.status),
       readFieldErrors(envelope?.data),
       readRetryAfter(response),
+      readErrorExtras(envelope?.data),
     )
   }
 

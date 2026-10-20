@@ -7,6 +7,16 @@ export const importsText: Dict<{
   uploadTitle: string
   uploadHint: string
   detectionFailed: string
+  termHint: string
+  termChecking: string
+  termMatch: string
+  termUnverified: string
+  termMismatch: (detected: string) => string
+  termSwitch: (name: string) => string
+  termKeep: string
+  termUnclear: string
+  termNoOptions: string
+  termLoadFailed: string
   yearDetectionFailed: string
   file: string
   fileHint: string
@@ -41,10 +51,20 @@ export const importsText: Dict<{
 }> = {
   ar: {
     title: 'رفع النتائج',
-    description: 'ارفع ملف النتائج مباشرة — السنة والصف والترم تُقرأ من الملف نفسه.',
+    description: 'اختر الترم ثم ارفع ملف النتائج — السنة والصف تُقرآن من الملف نفسه.',
     uploadTitle: 'رفع النتائج',
-    uploadHint: 'اختر ملف النتائج (xlsx أو xls أو csv) وارفعه. لا حاجة لاختيار الترم أو الصف مسبقًا.',
-    detectionFailed: 'لم نتمكن من التعرف على الصف أو الترم من هذا الملف — اخترهما يدويًا ثم أعد الرفع.',
+    uploadHint: 'اختر الترم الذي تخصه النتائج، ثم اختر الملف (xlsx أو xls أو csv) وارفعه. لا حاجة لاختيار الصف مسبقًا.',
+    detectionFailed: 'لم نتمكن من التعرف على الصف من هذا الملف — اختره يدويًا ثم أعد الرفع.',
+    termChecking: 'جارٍ التحقق من الترم في الملف…',
+    termMatch: 'الملف يطابق الترم المختار.',
+    termUnverified: 'تعذر التحقق من الترم من الملف — سيُستخدم الترم الذي اخترته.',
+    termMismatch: (detected) => `الملف يبدو أنه يخص ${detected}، لكنك اخترت ترمًا آخر.`,
+    termSwitch: (name) => `التبديل إلى ${name}`,
+    termKeep: 'سيُستخدم الترم المختار إن تابعت الرفع.',
+    termHint: 'يُستخدم الترم الذي تختاره دائمًا، حتى لو بدا أن الملف يخص ترمًا آخر.',
+    termUnclear: 'الملف لا يوضح الترم. اختر الترم ثم أعد الرفع.',
+    termNoOptions: 'لا توجد أي ترمات في المدرسة بعد. أضف الترم من شاشة الفترات الامتحانية ثم أعد الرفع.',
+    termLoadFailed: 'تعذر تحميل الترمات. يمكنك الرفع، وسنطلب منك اختيار الترم إن لم يتضح من الملف.',
     yearDetectionFailed: 'لم نتمكن من التعرف على العام الدراسي من هذا الملف — اختره يدويًا ثم أعد الرفع.',
     file: 'ملف النتائج',
     fileHint: 'xlsx أو xls أو csv، بحد أقصى ١٠ ميجابايت.',
@@ -100,10 +120,20 @@ export const importsText: Dict<{
   },
   en: {
     title: 'Upload results',
-    description: 'Upload the results file directly — the year, grade and term are read from the file itself.',
+    description: 'Pick the term, then upload the results file — the year and grade are read from the file itself.',
     uploadTitle: 'Upload results',
-    uploadHint: 'Choose the results file (xlsx, xls or csv) and upload it. No need to pick a term or grade first.',
-    detectionFailed: "Couldn't detect the grade or term from this file — pick them manually, then upload again.",
+    uploadHint: 'Choose the term the results belong to, then pick the file (xlsx, xls or csv) and upload it. No need to pick a grade first.',
+    detectionFailed: "Couldn't detect the grade from this file — pick it manually, then upload again.",
+    termChecking: 'Checking the term in the file…',
+    termMatch: 'The file matches the selected term.',
+    termUnverified: "Couldn't verify the term from the file — the term you picked will be used.",
+    termMismatch: (detected) => `The file looks like it is for ${detected}, but you picked a different term.`,
+    termSwitch: (name) => `Switch to ${name}`,
+    termKeep: 'The term you picked will be used if you upload anyway.',
+    termHint: "The term you choose is always used, even if the file looks like it belongs to another term.",
+    termUnclear: "The file doesn't say which term it is for. Pick the term, then upload again.",
+    termNoOptions: 'This school has no terms yet. Add one on the exam periods screen, then upload again.',
+    termLoadFailed: "Couldn't load the terms. You can still upload, and you'll be asked for the term if the file doesn't make it clear.",
     yearDetectionFailed: "Couldn't detect the academic year from this file — pick it manually, then upload again.",
     file: 'Results file',
     fileHint: 'xlsx, xls or csv, 10 MB maximum.',

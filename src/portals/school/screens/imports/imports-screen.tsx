@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { isValidationError } from '~/lib/api/error'
 import { validationText } from '~/lib/forms/validation.i18n'
@@ -11,6 +11,7 @@ import { DataTable, type Column } from '~/ui/data-table'
 import { EmptyState } from '~/ui/empty-state'
 import { ErrorState } from '~/ui/error-state'
 import { Field } from '~/ui/field'
+import { Select } from '~/ui/select'
 import { Icon } from '~/ui/icon'
 import { PageHeader } from '~/ui/page-header'
 import { ProgressBar } from '~/ui/spinner'
@@ -18,14 +19,18 @@ import { useToast } from '~/ui/toast'
 import {
   IMPORT_EXTENSIONS,
   IMPORT_MAX_BYTES,
+  readTermRequest,
+  type TermRequest,
   useImportHistory,
   useImportReport,
+  useTermCheck,
   useUploadResults,
 } from '../../api/imports'
+import { useAllExamPeriods } from '../../api/exam-periods'
 import { schoolKeys } from '../../api/keys'
 import type { ImportReport } from '../../api/types'
-import { useCurriculumNames } from '../../api/use-options'
-import { AcademicYearField, GradeField, TermField } from '../../components/term-grade-fields'
+import { useAllExamPeriodOptions, useCurriculumNames } from '../../api/use-options'
+import { AcademicYearField, GradeField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { ImportReportPanel } from './import-report-panel'
 import { importsText } from './imports.i18n'
@@ -51,7 +56,9 @@ export function ImportsScreen() {
   // Set only after a 422 asks for one explicitly — most sheets never need
   // these, so they stay hidden until the backend says it can't detect one.
   const [needsGrade, setNeedsGrade] = useState(false)
-  const [needsTerm, setNeedsTerm] = useState(false)
+  // Set when the server could not read the term off the sheet and no term was
+  // sent: its sentence and the terms it offers replace the picker's defaults.
+  const [termRequest, setTermRequest] = useState<TermRequest | null>(null)
   const [needsAcademicYear, setNeedsAcademicYear] = useState(false)
   const [gradeId, setGradeId] = useState('')
   const [termId, setTermId] = useState('')
@@ -60,8 +67,38 @@ export function ImportsScreen() {
   const queryClient = useQueryClient()
   const history = useImportHistory()
   const upload = useUploadResults()
+  const terms = useAllExamPeriods()
+  const schoolTermOptions = useAllExamPeriodOptions()
   const liveReport = useImportReport(reportId ?? '')
   const report = liveReport.data ?? null
+
+  // The server's own list wins once it has spoken (it can name terms the
+  // cached list has not caught up with); otherwise the school's terms.
+  const termOptions = useMemo(
+    () =>
+      termRequest && termRequest.availableTerms.length > 0
+        ? termRequest.availableTerms.map((term) => ({ value: term.id, label: term.name }))
+        : schoolTermOptions,
+    [termRequest, schoolTermOptions],
+  )
+  // The preview needs the picked term's academic year, which only the
+  // school's own exam periods carry (the server's fallback list has no year).
+  const pickedTerm = (terms.data ?? []).find((term) => term.id === termId)
+  const termCheck = useTermCheck(
+    file,
+    pickedTerm ? { id: pickedTerm.id, academicYearId: pickedTerm.academic_year_id } : null,
+  )
+  const check = termCheck.data ?? null
+  // The term the sheet names, as one of the school's own picks.
+  const detectedTerm =
+    check?.status === 'mismatch'
+      ? check.availableTerms.find((term) => term.term !== null && term.term === check.detected?.term)
+      : undefined
+
+  // A term is always sent when there is anything to pick from. While the list
+  // is still loading the button waits; if it failed to load, the upload is
+  // not blocked and the server's 422 becomes the way to pick one.
+  const termRequired = termRequest !== null ? termOptions.length > 0 : terms.isPending || termOptions.length > 0
 
   useEffect(() => {
     // The upload response's grade/subject/classroom auto-creates only
@@ -79,7 +116,7 @@ export function ImportsScreen() {
     setReportId(null)
     setFile(null)
     setNeedsGrade(false)
-    setNeedsTerm(false)
+    setTermRequest(null)
     setNeedsAcademicYear(false)
     setGradeId('')
     setTermId('')
@@ -101,17 +138,28 @@ export function ImportsScreen() {
       })
       setReportId(String(response.id))
       setNeedsGrade(false)
-      setNeedsTerm(false)
+      setTermRequest(null)
       setNeedsAcademicYear(false)
     } catch (error) {
       // A sheet with no detectable grade/term (grades 1-2 never split
       // results by term at all) or no "العام الدراسى ..." metadata line —
       // reveal the matching picker instead of just showing the error, so
       // the operator can retry immediately.
+      const request = readTermRequest(error)
       if (isValidationError(error)) {
         if (error.fieldErrors.grade_id) setNeedsGrade(true)
-        if (error.fieldErrors.term_id) setNeedsTerm(true)
         if (error.fieldErrors.academic_year_id) setNeedsAcademicYear(true)
+      }
+      if (request) {
+        setTermRequest(request)
+        // A pick the server's list does not contain would show as an empty
+        // select while still being held in state and resent.
+        if (request.availableTerms.length > 0 && !request.availableTerms.some((term) => term.id === termId)) {
+          setTermId('')
+        }
+        // The panel carries the server's sentence; a toast saying "The given
+        // data was invalid." on top of it would only repeat noise.
+        if (!(isValidationError(error) && Object.keys(error.fieldErrors).some((key) => key !== 'term_id'))) return
       }
       notifyError(error, shell.error.title)
     }
@@ -141,11 +189,75 @@ export function ImportsScreen() {
         <CardBody className="flex flex-col gap-4">
           <p className="max-w-prose text-small text-muted">{text.uploadHint}</p>
 
-          {needsGrade || needsTerm || needsAcademicYear ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
+            <Field label={shell.pickers.term} hint={text.termHint} required={termRequired}>
+              {(props) => (
+                <Select
+                  {...props}
+                  value={termId}
+                  onChange={(event) => setTermId(event.target.value)}
+                  options={termOptions}
+                  // A real empty slot, so an unpicked term never looks picked.
+                  placeholder={shell.pickers.pickTerm}
+                  disabled={upload.isPending}
+                />
+              )}
+            </Field>
+          </div>
+
+          {file !== null && pickedTerm ? (
+            termCheck.isFetching ? (
+              <p className="text-small text-muted" aria-live="polite">
+                {text.termChecking}
+              </p>
+            ) : check?.status === 'match' ? (
+              <p className="flex items-center gap-2 text-small text-success" aria-live="polite">
+                <Icon name="check" className="size-4 shrink-0" />
+                {text.termMatch}
+              </p>
+            ) : check?.status === 'mismatch' ? (
+              <div
+                role="alert"
+                className="flex flex-col gap-2 rounded-control border border-line border-s-2 border-s-attention bg-sunken px-4 py-3 text-small text-attention"
+              >
+                <p className="flex items-start gap-2">
+                  <Icon name="alert" className="mt-0.5 size-4 shrink-0" />
+                  <span>{check.message ?? text.termMismatch(check.detected?.name ?? '')}</span>
+                </p>
+                <p className="text-muted">{text.termKeep}</p>
+                {detectedTerm && terms.data?.some((term) => term.id === detectedTerm.id) ? (
+                  <div className="flex justify-start">
+                    <Button onClick={() => setTermId(detectedTerm.id)}>{text.termSwitch(detectedTerm.name)}</Button>
+                  </div>
+                ) : null}
+              </div>
+            ) : check?.status === 'unverified' ? (
+              <p className="text-small text-muted">{text.termUnverified}</p>
+            ) : null
+          ) : null}
+
+          {terms.isError && termRequest === null ? (
+            <p className="flex items-center gap-2 text-small text-attention">
+              <Icon name="alert" className="size-4 shrink-0" />
+              {text.termLoadFailed}
+            </p>
+          ) : null}
+
+          {termRequest && termId === '' ? (
+            <p
+              role="alert"
+              className="flex items-start gap-2 rounded-control border border-line border-s-2 border-s-attention bg-sunken px-4 py-3 text-small text-attention"
+            >
+              <Icon name="alert" className="mt-0.5 size-4 shrink-0" />
+              <span>{termOptions.length === 0 ? text.termNoOptions : (termRequest.message ?? text.termUnclear)}</span>
+            </p>
+          ) : null}
+
+          {needsGrade || needsAcademicYear ? (
             <div className="flex flex-col gap-3 rounded-control border border-line border-s-2 border-s-attention bg-sunken px-4 py-3">
               <p className="flex items-center gap-2 text-small text-attention">
                 <Icon name="alert" className="size-4" />
-                {needsAcademicYear && !needsGrade && !needsTerm ? text.yearDetectionFailed : text.detectionFailed}
+                {needsAcademicYear && !needsGrade ? text.yearDetectionFailed : text.detectionFailed}
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
                 {needsAcademicYear ? (
@@ -158,9 +270,6 @@ export function ImportsScreen() {
                 ) : null}
                 {needsGrade ? (
                   <GradeField value={gradeId} onChange={setGradeId} placeholder={shell.pickers.pickGrade} required />
-                ) : null}
-                {needsTerm ? (
-                  <TermField value={termId} onChange={setTermId} placeholder={shell.pickers.pickTerm} required />
                 ) : null}
               </div>
             </div>
@@ -188,7 +297,7 @@ export function ImportsScreen() {
               disabled={
                 file === null ||
                 (needsGrade && gradeId === '') ||
-                (needsTerm && termId === '') ||
+                (termRequired && termId === '') ||
                 (needsAcademicYear && academicYearId === '')
               }
               onClick={submit}
