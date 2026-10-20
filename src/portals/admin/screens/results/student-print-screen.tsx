@@ -364,10 +364,10 @@ function ExtractPage({ data, term, gradeLevel, international, termNumber, academ
               <span className="blank filled b-fit">{fullName}</span>
             </span>{' '}
             منقول من الصف
-            <Blank className="b-md" value={ordinal} />
+            <Blank className="b-md b-ord" value={ordinal} />
             {stageName ? <> {stageName}</> : null}
             {' '}الى الصف
-            <Blank className="b-md" value={nextOrdinal} />
+            <Blank className="b-md b-ord" value={nextOrdinal} />
             {nextStageName ? <> {nextStageName}</> : null}
             <br />
             تحت اشراف المديرية برقم جلوس

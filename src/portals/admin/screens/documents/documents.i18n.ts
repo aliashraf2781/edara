@@ -41,7 +41,7 @@ export const documentsText: Dict<{
       resultExtract: 'مستخرج رسمي بالنتيجة',
       resultExtractHint: 'جدول الدرجات الكامل لصف الطالب وترمه.',
       internationalExtract: 'مستخرج رسمي بنتيجة دولي',
-      internationalExtractHint: 'للصفوف من الأول إلى السادس الابتدائي — العربية والتربية الدينية، ومعهما الدراسات من الصف الثالث.',
+      internationalExtractHint: 'للصفوف من الأول إلى السادس الابتدائي — العربية والتربية الدينية.',
       enrollmentStatement: 'بيان قيد',
       enrollmentStatementHint: 'إفادة قيد الطالب بالمدرسة، جاهزة للطباعة.',
     },

@@ -140,7 +140,12 @@ export const EXTRACT_CSS = `
   min-width:170px;
   border-bottom:1px dotted #000;
 }
-.extract .title-box .blank.filled{ border-bottom:none; }
+.extract .title-box .blank.filled{
+  border-bottom:none;
+  min-width:0;
+  width:auto;
+  padding:0 4px;
+}
 
 /* ---------- info lines ---------- */
 .extract .info-lines p{
@@ -171,6 +176,7 @@ export const EXTRACT_CSS = `
   padding:0;
   text-align:start;
 }
+.extract .blank.filled.b-ord{ min-width:0; padding:0 2px; margin:0 3px; }
 .extract .b-lg{ min-width:140px; }
 .extract .b-to{ min-width:180px; }
 .extract .b-ref{ min-width:220px; }
