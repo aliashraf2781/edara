@@ -7,12 +7,30 @@ export const globalUsersText: Dict<{
   searchLabel: string
   newUser: string
   columns: { name: string; email: string; roles: string; status: string; actions: string }
-  syncRoles: string
-  syncRolesTitle: string
   syncRolesBody: string
-  saveRoles: string
-  rolesSaved: string
-  restricted: string
+  edit: string
+  editTitle: string
+  updated: string
+  passwordOptionalHint: string
+  selfDemoteWarning: string
+  noRolesAvailable: string
+  you: string
+  changeStatus: string
+  statusTitle: string
+  statusBody: string
+  statusLabel: string
+  statusSaved: string
+  saveStatus: string
+  sorts: Record<string, string>
+  filters: {
+    status: string
+    anyStatus: string
+    role: string
+    anyRole: string
+    sort: string
+    remove: string
+    clear: string
+  }
   createTitle: string
   createBody: string
   fields: {
@@ -20,6 +38,7 @@ export const globalUsersText: Dict<{
     email: string
     password: string
     passwordConfirmation: string
+    newPassword: string
     roles: string
   }
   created: string
@@ -46,12 +65,37 @@ export const globalUsersText: Dict<{
       status: 'الحالة',
       actions: 'إجراءات',
     },
-    syncRoles: 'تعديل الأدوار',
-    syncRolesTitle: 'أدوار المستخدم',
     syncRolesBody: 'الحفظ يستبدل مجموعة الأدوار بالكامل بما هو محدّد هنا، ولا يضيف إليها.',
-    saveRoles: 'حفظ الأدوار',
-    rolesSaved: 'تم تحديث الأدوار.',
-    restricted: 'متاح لمدير المنصة العام فقط.',
+    edit: 'تعديل',
+    editTitle: 'تعديل المستخدم',
+    updated: 'تم تحديث المستخدم.',
+    passwordOptionalHint: 'اتركها فارغة إذا لم ترد تغيير كلمة المرور.',
+    selfDemoteWarning: 'أنت تزيل صلاحية الإدارة عن حسابك. قد تفقد القدرة على إدارة المستخدمين والأدوار بعد الحفظ.',
+    noRolesAvailable: 'لا توجد أدوار متاحة.',
+    you: 'أنت',
+    changeStatus: 'تغيير الحالة',
+    statusTitle: 'تغيير حالة المستخدم',
+    statusBody: 'الإيقاف أو الحظر يمنع المستخدم من الدخول دون حذف حسابه، ويمكن التراجع عنه بإعادة التفعيل.',
+    statusLabel: 'الحالة',
+    statusSaved: 'تم تغيير الحالة.',
+    saveStatus: 'حفظ الحالة',
+    sorts: {
+      '-created_at': 'الأحدث أولًا',
+      created_at: 'الأقدم أولًا',
+      name: 'الاسم (أ → ي)',
+      '-name': 'الاسم (ي → أ)',
+      id: 'الرقم التعريفي ↑',
+      '-id': 'الرقم التعريفي ↓',
+    },
+    filters: {
+      status: 'الحالة',
+      anyStatus: 'كل الحالات',
+      role: 'الدور',
+      anyRole: 'كل الأدوار',
+      sort: 'الترتيب',
+      remove: 'إزالة الفلتر',
+      clear: 'مسح الفلاتر',
+    },
     createTitle: 'مستخدم جديد على المنصة',
     createBody: 'ينشئ حسابًا لفريق المنصة، وليس لطاقم مدرسة.',
     fields: {
@@ -59,10 +103,11 @@ export const globalUsersText: Dict<{
       email: 'البريد الإلكتروني',
       password: 'كلمة المرور',
       passwordConfirmation: 'تأكيد كلمة المرور',
+      newPassword: 'كلمة مرور جديدة',
       roles: 'الأدوار',
     },
     created: 'تم إنشاء المستخدم.',
-    emptyTitle: 'لا يوجد مستخدمينن',
+    emptyTitle: 'لا يوجد مستخدمين',
     emptyBody: 'أنشئ أول حساب لفريق المنصة.',
     noResultsTitle: 'لا نتائج مطابقة',
     noResultsBody: 'جرّب كلمة بحث أخرى.',
@@ -90,13 +135,40 @@ export const globalUsersText: Dict<{
     searchLabel: 'Search by name or email',
     newUser: 'New user',
     columns: { name: 'Name', email: 'Email', roles: 'Roles', status: 'Status', actions: 'Actions' },
-    syncRoles: 'Edit roles',
-    syncRolesTitle: 'Roles for this user',
     syncRolesBody:
       'Saving replaces the whole role set with what is ticked here. It does not add to it.',
-    saveRoles: 'Save roles',
-    rolesSaved: 'Roles updated.',
-    restricted: 'Available to global admins only.',
+    edit: 'Edit',
+    editTitle: 'Edit user',
+    updated: 'User updated.',
+    passwordOptionalHint: 'Leave blank to keep the current password.',
+    selfDemoteWarning:
+      'You are removing admin access from your own account. You may lose the ability to manage users and roles after saving.',
+    noRolesAvailable: 'No roles are available.',
+    you: 'You',
+    changeStatus: 'Change status',
+    statusTitle: 'Change user status',
+    statusBody:
+      'Suspending or banning blocks sign-in without deleting the account. Set it back to Active to undo.',
+    statusLabel: 'Status',
+    statusSaved: 'Status changed.',
+    saveStatus: 'Save status',
+    sorts: {
+      '-created_at': 'Newest first',
+      created_at: 'Oldest first',
+      name: 'Name (A → Z)',
+      '-name': 'Name (Z → A)',
+      id: 'ID ascending',
+      '-id': 'ID descending',
+    },
+    filters: {
+      status: 'Status',
+      anyStatus: 'Any status',
+      role: 'Role',
+      anyRole: 'Any role',
+      sort: 'Sort',
+      remove: 'Remove filter',
+      clear: 'Clear filters',
+    },
     createTitle: 'New platform user',
     createBody: 'Creates an account for platform staff, not for a school.',
     fields: {
@@ -104,6 +176,7 @@ export const globalUsersText: Dict<{
       email: 'Email',
       password: 'Password',
       passwordConfirmation: 'Confirm password',
+      newPassword: 'New password',
       roles: 'Roles',
     },
     created: 'User created.',

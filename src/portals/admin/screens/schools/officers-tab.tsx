@@ -20,6 +20,7 @@ import { useToast } from '~/ui/toast'
 import { adminText } from '../../admin.i18n'
 import { PERMISSION } from '../../api/permissions'
 import { useAttachTenantAdmin, useDetachTenantAdmin } from '../../api/tenant-admins'
+import { useGlobalUserList } from '../../api/users'
 import type { AdminRelationship, Tenant, TenantAdmin } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
 import { schoolFormText } from './school-detail.i18n'
@@ -27,9 +28,10 @@ import { schoolFormText } from './school-detail.i18n'
 const RELATIONSHIPS: readonly AdminRelationship[] = ['owner', 'officer', 'reviewer']
 const FIELDS = ['user_id', 'relationship', 'is_primary'] as const
 
-const makeSchema = (required: string) =>
+const makeSchema = (required: string, invalidId: string) =>
   z.object({
-    user_id: z.string().trim().min(1, required),
+    // The API wants the integer id of an existing user.
+    user_id: z.string().trim().min(1, required).regex(/^\d+$/, invalidId),
     relationship: z.enum(RELATIONSHIPS),
     is_primary: z.boolean(),
   })
@@ -41,7 +43,7 @@ export function OfficersTab({ tenant }: { tenant: Tenant }) {
   const shell = useDict(adminText)
   const v = useDict(validationText)
   const { can } = useAdminSession()
-  const { notify } = useToast()
+  const { notify, notifyError } = useToast()
 
   const attach = useAttachTenantAdmin(tenant.code)
   const detach = useDetachTenantAdmin(tenant.code)
@@ -49,7 +51,17 @@ export function OfficersTab({ tenant }: { tenant: Tenant }) {
   const [formMessage, setFormMessage] = useState<string | null>(null)
 
   const editable = can(PERMISSION.assignTenantAdmin)
-  const schema = useMemo(() => makeSchema(v.required), [v.required])
+  // A picker needs the user list; without that permission fall back to a raw id.
+  const canPick = editable && can(PERMISSION.viewGlobalUsers)
+  const candidates = useGlobalUserList(
+    { page: 1, perPage: 100, search: '', status: 'active', role: '', email: '', sort: 'name' },
+    canPick,
+  )
+  const attached = new Set(tenant.admins.map((admin) => admin.id))
+  const userOptions = (candidates.data?.data ?? [])
+    .filter((user) => !attached.has(user.id))
+    .map((user) => ({ value: user.id, label: `${user.name} — ${user.email}` }))
+  const schema = useMemo(() => makeSchema(v.required, text.officers.invalidUserId), [v.required, text.officers.invalidUserId])
   const form = useForm<OfficerForm>({
     resolver: zodResolver(schema),
     defaultValues: { user_id: '', relationship: 'officer', is_primary: false },
@@ -73,8 +85,9 @@ export function OfficersTab({ tenant }: { tenant: Tenant }) {
       await detach.mutateAsync(removing.id)
       notify('success', text.officers.removed)
       setRemoving(null)
-    } catch {
-      notify('danger', shell.error.title)
+    } catch (error) {
+      notifyError(error, shell.error.title)
+      setRemoving(null)
     }
   }
 
@@ -139,9 +152,24 @@ export function OfficersTab({ tenant }: { tenant: Tenant }) {
                   error={form.formState.errors.user_id?.message}
                   required
                 >
-                  {(props) => (
-                    <TextInput {...props} {...form.register('user_id')} dir="ltr" className="font-mono" />
-                  )}
+                  {(props) =>
+                    canPick && !candidates.isError ? (
+                      <Select
+                        {...props}
+                        {...form.register('user_id')}
+                        placeholder={candidates.isPending ? shell.guard.loading : text.officers.pickUser}
+                        options={userOptions}
+                      />
+                    ) : (
+                      <TextInput
+                        {...props}
+                        {...form.register('user_id')}
+                        inputMode="numeric"
+                        dir="ltr"
+                        className="font-mono"
+                      />
+                    )
+                  }
                 </Field>
 
                 <Field

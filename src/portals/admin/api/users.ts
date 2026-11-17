@@ -5,17 +5,48 @@ import { adminApi } from './client'
 import { adminKeys } from './keys'
 import type { GlobalUser, Role, UserStatus } from './types'
 
-export type UserListParams = { page: number; perPage: number; search: string }
+export const USER_STATUSES: readonly UserStatus[] = [
+  'pending',
+  'active',
+  'suspended',
+  'rejected',
+  'banned',
+]
+
+export const USER_SORTS = ['-created_at', 'created_at', 'name', '-name', 'id', '-id'] as const
+export type UserSort = (typeof USER_SORTS)[number]
+export const isUserSort = (value: string): value is UserSort =>
+  (USER_SORTS as readonly string[]).includes(value)
+
+export type UserListParams = {
+  page: number
+  perPage: number
+  search: string
+  status: string
+  role: string
+  email: string
+  sort: string
+}
 
 const toQuery = (params: UserListParams): QueryParams => ({
   page: params.page,
   per_page: params.perPage,
-  search: params.search,
+  search: params.search.trim(),
+  // Only sorts the guide lists are sent; anything else (a hand-edited URL)
+  // falls back to the server default instead of causing a 422.
+  sort: isUserSort(params.sort) ? params.sort : undefined,
+  filter: { status: params.status, email: params.email.trim(), 'roles.name': params.role },
 })
 
 const normalizeUser = (user: GlobalUser): GlobalUser => ({
   ...user,
   roles: roleNames(user.roles),
+})
+
+/** Spatie may serialise permissions as models too; the UI wants names. */
+const normalizeRole = (role: Role): Role => ({
+  ...role,
+  permissions: roleNames(role.permissions),
 })
 
 /**
@@ -38,7 +69,10 @@ export function useGlobalUserList(params: UserListParams, enabled: boolean) {
 export function useGlobalRoles(enabled: boolean) {
   return useQuery({
     queryKey: adminKeys.roles(),
-    queryFn: ({ signal }) => adminApi.get<Role[]>('/roles', undefined, { signal }),
+    queryFn: async ({ signal }) => {
+      const roles = await adminApi.get<Role[] | null>('/roles', undefined, { signal })
+      return (roles ?? []).map(normalizeRole)
+    },
     enabled,
     // Roles and their permissions change rarely; refetching per screen is waste.
     staleTime: 10 * 60 * 1000,
@@ -62,14 +96,26 @@ export function useCreateGlobalUser() {
   })
 }
 
-export type UpdateUserInput = { id: string; name?: string; roles?: string[] }
+/** Send only what changed. `roles`, when present, REPLACES the whole set. */
+export type UpdateUserInput = {
+  id: string
+  name?: string
+  email?: string
+  password?: string
+  password_confirmation?: string
+  roles?: string[]
+}
 
 export function useUpdateGlobalUser() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...body }: UpdateUserInput) =>
       normalizeUser(await adminApi.post<GlobalUser>(`/users/${id}`, body)),
-    onSuccess: () => client.invalidateQueries({ queryKey: adminKeys.users() }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: adminKeys.users() })
+      // Editing yourself can change your own permissions or name.
+      void client.invalidateQueries({ queryKey: adminKeys.identity() })
+    },
   })
 }
 
@@ -87,5 +133,42 @@ export function useDeleteGlobalUser() {
   return useMutation({
     mutationFn: (id: string) => adminApi.del<null>(`/users/${id}`),
     onSuccess: () => client.invalidateQueries({ queryKey: adminKeys.users() }),
+  })
+}
+
+/* ----------------------------------------------------------------- roles */
+
+export type RoleInput = { name: string; permissions: string[] }
+
+/** A role change alters user chips and possibly the caller's own permissions. */
+const refreshAfterRoleChange = (client: ReturnType<typeof useQueryClient>) => {
+  void client.invalidateQueries({ queryKey: adminKeys.roles() })
+  void client.invalidateQueries({ queryKey: adminKeys.users() })
+  void client.invalidateQueries({ queryKey: adminKeys.identity() })
+}
+
+export function useCreateRole() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: RoleInput) => normalizeRole(await adminApi.post<Role>('/roles', input)),
+    onSuccess: () => refreshAfterRoleChange(client),
+  })
+}
+
+/** `permissions` replaces the role's permission set (sync). */
+export function useUpdateRole() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...body }: RoleInput & { id: number }) =>
+      normalizeRole(await adminApi.post<Role>(`/roles/${id}`, body)),
+    onSuccess: () => refreshAfterRoleChange(client),
+  })
+}
+
+export function useDeleteRole() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => adminApi.del<null>(`/roles/${id}`),
+    onSuccess: () => refreshAfterRoleChange(client),
   })
 }

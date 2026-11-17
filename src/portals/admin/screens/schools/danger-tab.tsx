@@ -21,7 +21,7 @@ export function DangerTab({ tenant }: { tenant: Tenant }) {
   const labels = useDict(schoolsText)
   const shell = useDict(adminText)
   const navigate = useNavigate()
-  const { can, isGlobalAdmin } = useAdminSession()
+  const { can } = useAdminSession()
   const { notify, notifyError } = useToast()
 
   const statusChange = useTenantStatusChange(tenant.code)
@@ -29,8 +29,7 @@ export function DangerTab({ tenant }: { tenant: Tenant }) {
   const [pending, setPending] = useState<PendingAction | null>(null)
 
   const canChangeStatus = can(PERMISSION.changeTenantStatus)
-  // Deleting is gated on the role itself, not on a permission.
-  const canDelete = isGlobalAdmin
+  const canDelete = can(PERMISSION.deleteTenant)
 
   if (!canChangeStatus && !canDelete) {
     return <NoAccess title={text.danger.title} description={shell.guard.noAccess} />

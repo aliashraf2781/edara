@@ -83,6 +83,8 @@ export const schoolFormText: Dict<{
     description: string
     add: string
     userId: string
+    pickUser: string
+    invalidUserId: string
     relationship: string
     isPrimary: string
     columnName: string
@@ -193,7 +195,9 @@ export const schoolFormText: Dict<{
       title: 'المسؤولون',
       description: 'مستخدمين المنصة المسؤولون عن متابعة هذه المدرسة.',
       add: 'إضافة مسؤول',
-      userId: 'معرّف المستخدم',
+      userId: 'المستخدم',
+      pickUser: 'اختر مستخدمًا',
+      invalidUserId: 'أدخل رقم المستخدم (أرقام فقط)',
       relationship: 'الصفة',
       isPrimary: 'جهة الاتصال الأساسية',
       columnName: 'الاسم',
@@ -307,7 +311,9 @@ export const schoolFormText: Dict<{
       title: 'Responsible officers',
       description: 'Platform users accountable for this school.',
       add: 'Add officer',
-      userId: 'User ID',
+      userId: 'User',
+      pickUser: 'Select a user',
+      invalidUserId: 'Enter the numeric user ID',
       relationship: 'Relationship',
       isPrimary: 'Primary contact',
       columnName: 'Name',
