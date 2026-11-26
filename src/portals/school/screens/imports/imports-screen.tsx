@@ -86,6 +86,8 @@ export function ImportsScreen() {
   const [gradeId, setGradeId] = useState('')
   const [termId, setTermId] = useState('')
   const [academicYearId, setAcademicYearId] = useState('')
+  // Year-end file with both terms side by side: no single term to pick.
+  const [allTerms, setAllTerms] = useState(false)
 
   const queryClient = useQueryClient()
   const history = useImportHistory()
@@ -123,7 +125,7 @@ export function ImportsScreen() {
   )
   // The preview needs the picked term's academic year, which only the
   // school's own exam periods carry (the server's fallback list has no year).
-  const pickedTerm = (terms.data ?? []).find((term) => term.id === termId)
+  const pickedTerm = allTerms ? undefined : (terms.data ?? []).find((term) => term.id === termId)
   const termCheck = useTermCheck(
     file,
     pickedTerm ? { id: pickedTerm.id, academicYearId: pickedTerm.academic_year_id } : null,
@@ -138,7 +140,8 @@ export function ImportsScreen() {
   // A term is always sent when there is anything to pick from. While the list
   // is still loading the button waits; if it failed to load, the upload is
   // not blocked and the server's 422 becomes the way to pick one.
-  const termRequired = termRequest !== null ? termOptions.length > 0 : terms.isPending || termOptions.length > 0
+  const termRequired =
+    !allTerms && (termRequest !== null ? termOptions.length > 0 : terms.isPending || termOptions.length > 0)
 
   useEffect(() => {
     // The upload response's grade/subject/classroom auto-creates only
@@ -168,6 +171,7 @@ export function ImportsScreen() {
     setGradeId('')
     setTermId('')
     setAcademicYearId('')
+    setAllTerms(false)
     if (fileInput.current) fileInput.current.value = ''
     upload.reset()
   }
@@ -183,8 +187,10 @@ export function ImportsScreen() {
         gradeId: gradeId || undefined,
         termId: termId || undefined,
         academicYearId: effectiveYearId || undefined,
+        allTerms,
       })
       setReportId(String(response.id))
+      setAllTerms(false)
       // Every file is its own upload: nothing picked for this one (grade,
       // term, year, file) may leak into the next.
       setFile(null)
@@ -273,11 +279,28 @@ export function ImportsScreen() {
                   options={termOptions}
                   // A real empty slot, so an unpicked term never looks picked.
                   placeholder={shell.pickers.pickTerm}
-                  disabled={upload.isPending}
+                  disabled={upload.isPending || allTerms}
                 />
               )}
             </Field>
           </div>
+
+          <label className="flex max-w-prose items-start gap-3 text-small text-ink">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 shrink-0"
+              checked={allTerms}
+              disabled={upload.isPending}
+              onChange={(event) => {
+                setAllTerms(event.target.checked)
+                if (event.target.checked) setTermId('')
+              }}
+            />
+            <span className="flex flex-col gap-1">
+              <span className="font-medium">{text.allTermsLabel}</span>
+              <span className="text-muted">{text.allTermsHint}</span>
+            </span>
+          </label>
 
           {file !== null && pickedTerm ? (
             termCheck.isFetching ? (
@@ -375,7 +398,7 @@ export function ImportsScreen() {
             </p>
           ) : null}
 
-          {file !== null && termId !== '' ? (
+          {file !== null && termId !== '' && !allTerms ? (
             <p className="rounded-control border border-line bg-sunken px-4 py-3 text-small text-ink" aria-live="polite">
               {text.uploadSummary(
                 file.name,

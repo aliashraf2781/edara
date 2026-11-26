@@ -8,6 +8,8 @@ export const importsText: Dict<{
   uploadHint: string
   detectionFailed: string
   termHint: string
+  allTermsLabel: string
+  allTermsHint: string
   uploadSummary: (file: string, term: string, year: string | null) => string
   currentYear: (year: string) => string
   termChecking: string
@@ -75,6 +77,8 @@ export const importsText: Dict<{
     termSwitch: (name) => `التبديل إلى ${name}`,
     termKeep: 'سيُستخدم الترم المختار إن تابعت الرفع.',
     termHint: 'يُستخدم الترم الذي تختاره دائمًا، حتى لو بدا أن الملف يخص ترمًا آخر.',
+    allTermsLabel: 'الفصلان الأول والثاني معًا (نتيجة آخر العام)',
+    allTermsHint: 'لملفات الصف الأول والثاني التي تضم الفصلين جنبًا إلى جنب. يُسجَّل الفصلان في رفعة واحدة ولا حاجة لاختيار الترم.',
     uploadSummary: (file, term, year) =>
       year ? `سيتم رفع «${file}» إلى ${term}، العام الدراسي ${year}.` : `سيتم رفع «${file}» إلى ${term}.`,
     currentYear: (year) => `العام الدراسي الحالي: ${year}`,
@@ -158,6 +162,8 @@ export const importsText: Dict<{
     termSwitch: (name) => `Switch to ${name}`,
     termKeep: 'The term you picked will be used if you upload anyway.',
     termHint: "The term you choose is always used, even if the file looks like it belongs to another term.",
+    allTermsLabel: 'Both terms together (year-end result)',
+    allTermsHint: 'For grade 1-2 files that carry both terms side by side. Both terms are recorded in one upload, so no term needs picking.',
     uploadSummary: (file, term, year) =>
       year ? `"${file}" will be uploaded to ${term}, academic year ${year}.` : `"${file}" will be uploaded to ${term}.`,
     currentYear: (year) => `Current academic year: ${year}`,

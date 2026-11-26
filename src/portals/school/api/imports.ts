@@ -25,6 +25,11 @@ export type UploadResultsInput = {
   termId?: string
   gradeId?: string
   academicYearId?: string
+  /**
+   * Year-end files of grades 1-2 carry both terms side by side; this writes
+   * term 1 and term 2 in one upload. `termId` is not needed (and not sent).
+   */
+  allTerms?: boolean
 }
 
 /** A term the school can import into, as the term-unclear 422 lists them. */
@@ -143,11 +148,12 @@ export function useTermCheck(file: File | null, term: { id: string; academicYear
 export function useUploadResults() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ file, gradeId, termId, academicYearId }: UploadResultsInput) => {
+    mutationFn: ({ file, gradeId, termId, academicYearId, allTerms }: UploadResultsInput) => {
       const form = new FormData()
       form.append('file', file)
       if (gradeId) form.append('grade_id', gradeId)
-      if (termId) form.append('term_id', termId)
+      if (allTerms) form.append('all_terms', '1')
+      else if (termId) form.append('term_id', termId)
       if (academicYearId) form.append('academic_year_id', academicYearId)
       return schoolApi.upload<ImportReport>('/school/result-imports', form)
     },
