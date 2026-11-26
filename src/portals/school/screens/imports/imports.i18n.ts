@@ -8,6 +8,8 @@ export const importsText: Dict<{
   uploadHint: string
   detectionFailed: string
   termHint: string
+  uploadSummary: (file: string, term: string, year: string | null) => string
+  currentYear: (year: string) => string
   termChecking: string
   termMatch: string
   termUnverified: string
@@ -73,6 +75,9 @@ export const importsText: Dict<{
     termSwitch: (name) => `التبديل إلى ${name}`,
     termKeep: 'سيُستخدم الترم المختار إن تابعت الرفع.',
     termHint: 'يُستخدم الترم الذي تختاره دائمًا، حتى لو بدا أن الملف يخص ترمًا آخر.',
+    uploadSummary: (file, term, year) =>
+      year ? `سيتم رفع «${file}» إلى ${term}، العام الدراسي ${year}.` : `سيتم رفع «${file}» إلى ${term}.`,
+    currentYear: (year) => `العام الدراسي الحالي: ${year}`,
     termUnclear: 'الملف لا يوضح الترم. اختر الترم ثم أعد الرفع.',
     termNoOptions: 'لا توجد أي ترمات في المدرسة بعد. أضف الترم من شاشة الفترات الامتحانية ثم أعد الرفع.',
     termLoadFailed: 'تعذر تحميل الترمات. يمكنك الرفع، وسنطلب منك اختيار الترم إن لم يتضح من الملف.',
@@ -153,6 +158,9 @@ export const importsText: Dict<{
     termSwitch: (name) => `Switch to ${name}`,
     termKeep: 'The term you picked will be used if you upload anyway.',
     termHint: "The term you choose is always used, even if the file looks like it belongs to another term.",
+    uploadSummary: (file, term, year) =>
+      year ? `"${file}" will be uploaded to ${term}, academic year ${year}.` : `"${file}" will be uploaded to ${term}.`,
+    currentYear: (year) => `Current academic year: ${year}`,
     termUnclear: "The file doesn't say which term it is for. Pick the term, then upload again.",
     termNoOptions: 'This school has no terms yet. Add one on the exam periods screen, then upload again.',
     termLoadFailed: "Couldn't load the terms. You can still upload, and you'll be asked for the term if the file doesn't make it clear.",

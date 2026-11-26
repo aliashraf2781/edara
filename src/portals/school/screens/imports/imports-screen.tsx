@@ -33,7 +33,7 @@ import { useAcademicList } from '../../api/academics'
 import { useAllExamPeriods } from '../../api/exam-periods'
 import { schoolKeys } from '../../api/keys'
 import type { AcademicYear, ImportReport } from '../../api/types'
-import { useAllExamPeriodOptions, useCurriculumNames } from '../../api/use-options'
+import { useCurrentYearTerms, useCurriculumNames, yearLabel } from '../../api/use-options'
 import { AcademicYearField, GradeField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
 import { ImportReportPanel } from './import-report-panel'
@@ -92,9 +92,7 @@ export function ImportsScreen() {
   const upload = useUploadResults()
   const terms = useAllExamPeriods()
   const years = useAcademicList<AcademicYear>('academic-years', {})
-  // Lets the operator clear the year again without it snapping straight back.
-  const yearAutoPicked = useRef(false)
-  const schoolTermOptions = useAllExamPeriodOptions()
+  const { year: currentYear, options: schoolTermOptions } = useCurrentYearTerms()
   const liveReport = useImportReport(reportId ?? '')
   const report = liveReport.data ?? null
 
@@ -112,7 +110,14 @@ export function ImportsScreen() {
   const termOptions = useMemo(
     () =>
       termRequest && termRequest.availableTerms.length > 0
-        ? termRequest.availableTerms.map((term) => ({ value: term.id, label: term.name }))
+        ? (() => {
+            const fromServer = termRequest.availableTerms.map((term) => ({ value: term.id, label: term.name }))
+            // Prefer the current year's terms among the ones the server offers.
+            const inCurrentYear = fromServer.filter((option) =>
+              schoolTermOptions.some((mine) => mine.value === option.value),
+            )
+            return inCurrentYear.length > 0 ? inCurrentYear : fromServer
+          })()
         : schoolTermOptions,
     [termRequest, schoolTermOptions],
   )
@@ -147,23 +152,12 @@ export function ImportsScreen() {
     }
   }, [report?.status, queryClient])
 
-  useEffect(() => {
-    // The sheet named no year and the school has none marked current, so the
-    // server asked for one. Pre-select the school's current year, or its only
-    // year, so the operator can just press upload again instead of hunting
-    // through the list; they can still change it.
-    if (!needsAcademicYear) {
-      yearAutoPicked.current = false
-      return
-    }
-    if (yearAutoPicked.current || academicYearId !== '') return
-    const list = years.data ?? []
-    const pick = list.find((year) => year.is_current) ?? (list.length === 1 ? list[0] : undefined)
-    if (pick) {
-      yearAutoPicked.current = true
-      setAcademicYearId(pick.id)
-    }
-  }, [needsAcademicYear, years.data, academicYearId])
+  // The sheet named no year and the school has none marked current, so the
+  // server asked for one. Until the operator picks, the school's current year
+  // (or its only year) is the selection, so they can just press upload again.
+  const yearList = years.data ?? []
+  const defaultYearId = (yearList.find((year) => year.is_current) ?? (yearList.length === 1 ? yearList[0] : undefined))?.id ?? ''
+  const effectiveYearId = academicYearId !== '' ? academicYearId : needsAcademicYear ? defaultYearId : ''
 
   const resetUpload = () => {
     setReportId(null)
@@ -188,7 +182,7 @@ export function ImportsScreen() {
         file,
         gradeId: gradeId || undefined,
         termId: termId || undefined,
-        academicYearId: academicYearId || undefined,
+        academicYearId: effectiveYearId || undefined,
       })
       setReportId(String(response.id))
       // Every file is its own upload: nothing picked for this one (grade,
@@ -266,7 +260,11 @@ export function ImportsScreen() {
           <p className="max-w-prose text-small text-muted">{text.uploadHint}</p>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
-            <Field label={shell.pickers.term} hint={text.termHint} required={termRequired}>
+            <Field
+              label={shell.pickers.term}
+              hint={currentYear ? text.currentYear(yearLabel(currentYear)) : text.termHint}
+              required={termRequired}
+            >
               {(props) => (
                 <Select
                   {...props}
@@ -338,7 +336,7 @@ export function ImportsScreen() {
               <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
                 {needsAcademicYear ? (
                   <AcademicYearField
-                    value={academicYearId}
+                    value={effectiveYearId}
                     onChange={setAcademicYearId}
                     placeholder={shell.pickers.pickYear}
                     required
@@ -377,6 +375,18 @@ export function ImportsScreen() {
             </p>
           ) : null}
 
+          {file !== null && termId !== '' ? (
+            <p className="rounded-control border border-line bg-sunken px-4 py-3 text-small text-ink" aria-live="polite">
+              {text.uploadSummary(
+                file.name,
+                termOptions.find((option) => option.value === termId)?.label ?? '',
+                pickedTerm && currentYear && pickedTerm.academic_year_id === currentYear.id
+                  ? yearLabel(currentYear)
+                  : null,
+              )}
+            </p>
+          ) : null}
+
           {upload.isPending ? <ProgressBar label={text.uploading} /> : null}
 
           <div className="flex justify-end">
@@ -389,7 +399,7 @@ export function ImportsScreen() {
                 earlier !== undefined ||
                 (needsGrade && gradeId === '') ||
                 (termRequired && termId === '') ||
-                (needsAcademicYear && academicYearId === '')
+                (needsAcademicYear && effectiveYearId === '')
               }
               onClick={submit}
             >

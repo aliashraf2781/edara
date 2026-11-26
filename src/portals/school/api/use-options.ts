@@ -98,6 +98,34 @@ export function useAllExamPeriodOptions(): SelectOption[] {
   }, [list.data, years.data])
 }
 
+/**
+ * The terms of the school's current academic year, for the upload screen: the
+ * year is implied (it is the school's "current" one, set in its academic-year
+ * settings), so only the two terms are offered. Falls back to every term when
+ * no year is marked current, so the picker is never empty for that reason.
+ */
+export function useCurrentYearTerms(): {
+  year: AcademicYear | undefined
+  options: SelectOption[]
+  allOptions: SelectOption[]
+} {
+  const list = useAllExamPeriods()
+  const years = useAcademicList<AcademicYear>('academic-years', {})
+  const allOptions = useAllExamPeriodOptions()
+  return useMemo(() => {
+    const year = (years.data ?? []).find((candidate) => candidate.is_current)
+    if (!year) return { year, options: allOptions, allOptions }
+    const ids = new Set(
+      (list.data ?? []).filter((term) => term.academic_year_id === year.id).map((term) => term.id),
+    )
+    const mine = (list.data ?? [])
+      .filter((term) => ids.has(term.id))
+      .sort((a, b) => (a.term ?? 0) - (b.term ?? 0))
+      .map((term) => ({ value: term.id, label: term.name }))
+    return { year, options: mine.length > 0 ? mine : allOptions, allOptions }
+  }, [list.data, years.data, allOptions])
+}
+
 /** Live id -> name lookups for table cells, replacing the old fixed mock curriculum. */
 export function useCurriculumNames() {
   const grades = useAcademicList<Grade>('grades', {})
