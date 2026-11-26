@@ -21,6 +21,7 @@ import { useTenantList, useTenantStatusChange } from '../../api/tenants'
 import type { TenantSummary } from '../../api/types'
 import { useAdminSession } from '../../auth/session-context'
 import { schoolsText } from './schools.i18n'
+import { CurrentYearCard } from './current-year-card'
 import { SchoolsToolbar } from './schools-toolbar'
 import { ProvisioningStamp, TenantStatusStamp } from './tenant-stamps'
 
@@ -159,6 +160,8 @@ export function SchoolsListScreen() {
           ) : null
         }
       />
+
+      <CurrentYearCard />
 
       <SchoolsToolbar
         search={values.search}

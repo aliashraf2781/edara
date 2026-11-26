@@ -5,6 +5,7 @@ export const adminKeys = {
   all: ['admin'] as const,
   identity: () => [...adminKeys.all, 'identity'] as const,
   profile: () => [...adminKeys.all, 'profile'] as const,
+  currentYear: () => [...adminKeys.all, 'current-year'] as const,
   tenants: () => [...adminKeys.all, 'tenants'] as const,
   tenantList: (params: QueryParams) => [...adminKeys.tenants(), 'list', params] as const,
   tenant: (code: string) => [...adminKeys.tenants(), 'detail', code] as const,

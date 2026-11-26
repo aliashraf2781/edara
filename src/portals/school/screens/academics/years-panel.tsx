@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { validationText } from '~/lib/forms/validation.i18n'
 import { useDict } from '~/lib/i18n/use-dict'
-import { Checkbox } from '~/ui/checkbox'
 import { Field } from '~/ui/field'
 import { Stamp } from '~/ui/stamp'
 import { TextInput } from '~/ui/text-input'
@@ -9,7 +8,7 @@ import type { AcademicYear } from '../../api/types'
 import { academicsText } from './academics.i18n'
 import { ResourcePanel } from './resource-panel'
 
-const FIELDS = ['code', 'name', 'starts_on', 'ends_on', 'is_current'] as const
+const FIELDS = ['code', 'name', 'starts_on', 'ends_on'] as const
 
 export function YearsPanel({ editable }: { editable: boolean }) {
   const text = useDict(academicsText)
@@ -20,7 +19,6 @@ export function YearsPanel({ editable }: { editable: boolean }) {
     name: z.string().trim().min(1, v.required),
     starts_on: z.string().min(1, v.required),
     ends_on: z.string().min(1, v.required),
-    is_current: z.boolean(),
   })
 
   return (
@@ -31,7 +29,7 @@ export function YearsPanel({ editable }: { editable: boolean }) {
       empty={text.empty.years}
       schema={schema}
       fields={FIELDS}
-      defaults={{ code: '', name: '', starts_on: '', ends_on: '', is_current: false }}
+      defaults={{ code: '', name: '', starts_on: '', ends_on: '' }}
       rowKey={(row) => row.id}
       rowLabel={(row) => row.name}
       toForm={(row) => ({
@@ -39,7 +37,6 @@ export function YearsPanel({ editable }: { editable: boolean }) {
         name: row.name,
         starts_on: row.starts_on,
         ends_on: row.ends_on,
-        is_current: row.is_current,
       })}
       columns={[
         { key: 'code', header: text.fields.code, cell: (row) => <span className="font-mono">{row.code}</span> },
@@ -70,7 +67,6 @@ export function YearsPanel({ editable }: { editable: boolean }) {
           <Field label={text.fields.endsOn} error={form.formState.errors.ends_on?.message} required>
             {(props) => <TextInput {...props} {...form.register('ends_on')} type="date" dir="ltr" />}
           </Field>
-          <Checkbox label={text.fields.isCurrent} {...form.register('is_current')} />
         </>
       )}
     />
