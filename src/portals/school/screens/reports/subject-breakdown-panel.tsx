@@ -85,7 +85,7 @@ export function SubjectBreakdownPanel({ termId, gradeId }: { termId: string; gra
           columns={columns}
           rows={rows}
           rowKey={(row) => row.subject_id}
-          isLoading={results.isPending}
+          isLoading={results.isLoading}
         />
       </CardBody>
     </Card>

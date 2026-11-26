@@ -24,6 +24,15 @@ export const importsText: Dict<{
   uploading: string
   noFile: string
   processingBanner: string
+  stalledBanner: string
+  failedBanner: string
+  rolledBackBanner: string
+  alreadyUploaded: string
+  view: string
+  gradeLine: (grade: string, detected: boolean) => string
+  statusProcessing: string
+  statusStalled: string
+  statusLabels: Record<string, string>
   successBanner: (students: number, marks: number) => string
   partialBanner: (valid: number, total: number, invalid: number) => string
   summaryTitle: string
@@ -47,6 +56,8 @@ export const importsText: Dict<{
     imported: string
     errors: string
     date: string
+    status: string
+    details: string
   }
 }> = {
   ar: {
@@ -71,6 +82,15 @@ export const importsText: Dict<{
     upload: 'رفع النتائج',
     uploading: 'جارٍ رفع النتائج',
     noFile: 'اختر ملفًا أولًا.',
+    stalledBanner: 'المعالجة تأخرت، تحقق لاحقاً أو أعد المحاولة.',
+    failedBanner: 'فشلت معالجة الملف. راجع الأخطاء أدناه ثم أعد المحاولة.',
+    rolledBackBanner: 'تم التراجع عن هذه العملية — لم تعد نتائجها مسجلة.',
+    alreadyUploaded: 'هذا الملف تم رفعه من قبل.',
+    view: 'عرض',
+    gradeLine: (grade, detected) => `الصف: ${grade} (${detected ? 'تم اكتشافه من الملف' : 'تم اختياره يدوياً'})`,
+    statusProcessing: 'قيد المعالجة',
+    statusStalled: 'تأخرت المعالجة',
+    statusLabels: { completed: 'مكتملة', failed: 'فشلت', rolled_back: 'تم التراجع', previewing: 'معاينة' },
     processingBanner: 'جارٍ معالجة الملف في الخلفية — قد يستغرق ذلك بضع لحظات لملفات النتائج الكبيرة.',
     successBanner: (students, marks) =>
       `تم رفع نتائج ${students} طالبًا، وتسجيل ${marks} درجة. لا توجد أخطاء.`,
@@ -116,6 +136,8 @@ export const importsText: Dict<{
       imported: 'درجات مسجَّلة',
       errors: 'أخطاء',
       date: 'التاريخ',
+      status: 'الحالة',
+      details: 'التفاصيل',
     },
   },
   en: {
@@ -140,6 +162,15 @@ export const importsText: Dict<{
     upload: 'Upload results',
     uploading: 'Uploading results',
     noFile: 'Choose a file first.',
+    stalledBanner: 'Processing is taking longer than expected — check back later or try again.',
+    failedBanner: 'Processing this file failed. Review the errors below and try again.',
+    rolledBackBanner: 'This import was rolled back — its results are no longer recorded.',
+    alreadyUploaded: 'This file has already been uploaded.',
+    view: 'View',
+    gradeLine: (grade, detected) => `Grade: ${grade} (${detected ? 'detected from the file' : 'chosen manually'})`,
+    statusProcessing: 'Processing',
+    statusStalled: 'Delayed',
+    statusLabels: { completed: 'Completed', failed: 'Failed', rolled_back: 'Rolled back', previewing: 'Previewing' },
     processingBanner: 'Processing the file in the background — this can take a few moments for larger result sheets.',
     successBanner: (students, marks) =>
       `${students} students uploaded and ${marks} marks recorded, with no errors.`,
@@ -185,6 +216,8 @@ export const importsText: Dict<{
       imported: 'Marks recorded',
       errors: 'Errors',
       date: 'Date',
+      status: 'Status',
+      details: 'Details',
     },
   },
 }

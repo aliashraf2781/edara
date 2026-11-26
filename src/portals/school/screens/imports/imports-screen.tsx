@@ -13,8 +13,9 @@ import { ErrorState } from '~/ui/error-state'
 import { Field } from '~/ui/field'
 import { Select } from '~/ui/select'
 import { Icon } from '~/ui/icon'
+import { Stamp } from '~/ui/stamp'
 import { PageHeader } from '~/ui/page-header'
-import { ProgressBar } from '~/ui/spinner'
+import { ProgressBar, Spinner } from '~/ui/spinner'
 import { useToast } from '~/ui/toast'
 import {
   IMPORT_EXTENSIONS,
@@ -23,6 +24,8 @@ import {
   type TermRequest,
   useImportHistory,
   useImportReport,
+  isImportPending,
+  isImportStalled,
   useTermCheck,
   useUploadResults,
 } from '../../api/imports'
@@ -36,6 +39,25 @@ import { ImportReportPanel } from './import-report-panel'
 import { importsText } from './imports.i18n'
 
 const MAX_MB = IMPORT_MAX_BYTES / 1024 / 1024
+
+const count = (row: ImportReport, value: number) =>
+  row.status === 'completed' || row.status === 'failed' ? value : '—'
+
+function StatusBadge({ row }: { row: ImportReport }) {
+  const text = useDict(importsText)
+  if (isImportPending(row.status)) {
+    return isImportStalled(row) ? (
+      <Stamp tone="attention">{text.statusStalled}</Stamp>
+    ) : (
+      <span className="inline-flex items-center gap-2 text-small text-accent">
+        <Spinner className="size-4" />
+        {text.statusProcessing}
+      </span>
+    )
+  }
+  const tone = row.status === 'completed' ? 'success' : row.status === 'failed' ? 'danger' : 'attention'
+  return <Stamp tone={tone}>{text.statusLabels[row.status] ?? row.status}</Stamp>
+}
 
 export function ImportsScreen() {
   const text = useDict(importsText)
@@ -71,6 +93,15 @@ export function ImportsScreen() {
   const schoolTermOptions = useAllExamPeriodOptions()
   const liveReport = useImportReport(reportId ?? '')
   const report = liveReport.data ?? null
+
+  // The same file (by name) already uploaded: point at that import instead of
+  // queuing another batch. A failed or rolled-back import may be retried.
+  const earlier =
+    file === null
+      ? undefined
+      : (history.data?.data ?? []).find(
+          (row) => row.file_name === file.name && row.status !== 'failed' && row.status !== 'rolled_back',
+        )
 
   // The server's own list wins once it has spoken (it can name terms the
   // cached list has not caught up with); otherwise the school's terms.
@@ -127,6 +158,7 @@ export function ImportsScreen() {
 
   const submit = async () => {
     if (!file) return notify('danger', text.noFile)
+    if (earlier) return notify('danger', text.alreadyUploaded)
     if (file.size > IMPORT_MAX_BYTES) return notify('danger', v.fileTooLarge(MAX_MB))
 
     try {
@@ -137,6 +169,13 @@ export function ImportsScreen() {
         academicYearId: academicYearId || undefined,
       })
       setReportId(String(response.id))
+      // Every file is its own upload: nothing picked for this one (grade,
+      // term, year, file) may leak into the next.
+      setFile(null)
+      setGradeId('')
+      setTermId('')
+      setAcademicYearId('')
+      if (fileInput.current) fileInput.current.value = ''
       setNeedsGrade(false)
       setTermRequest(null)
       setNeedsAcademicYear(false)
@@ -165,18 +204,33 @@ export function ImportsScreen() {
     }
   }
 
+  const named = (name: string, id: string) => (
+    <span title={`#${id}`} className={name === id ? 'text-muted' : undefined}>
+      {name === id ? '—' : name}
+    </span>
+  )
   const historyColumns: readonly Column<ImportReport>[] = [
     { key: 'file', header: text.historyColumns.file, cell: (row) => row.file_name },
-    { key: 'grade', header: text.historyColumns.grade, cell: (row) => gradeName(row.grade_id) },
-    { key: 'term', header: text.historyColumns.term, cell: (row) => termName(row.term_id) },
-    { key: 'students', header: text.historyColumns.students, numeric: true, cell: (row) => row.total_rows },
-    { key: 'imported', header: text.historyColumns.imported, numeric: true, cell: (row) => row.imported_rows },
-    { key: 'errors', header: text.historyColumns.errors, numeric: true, cell: (row) => row.invalid_rows },
+    { key: 'grade', header: text.historyColumns.grade, cell: (row) => named(gradeName(row.grade_id), row.grade_id) },
+    { key: 'term', header: text.historyColumns.term, cell: (row) => named(termName(row.term_id), row.term_id) },
+    { key: 'status', header: text.historyColumns.status, cell: (row) => <StatusBadge row={row} /> },
+    // Zeros only mean something once the import has finished.
+    { key: 'students', header: text.historyColumns.students, numeric: true, cell: (row) => count(row, row.total_rows) },
+    { key: 'imported', header: text.historyColumns.imported, numeric: true, cell: (row) => count(row, row.imported_rows) },
+    { key: 'errors', header: text.historyColumns.errors, numeric: true, cell: (row) => count(row, row.invalid_rows) },
     {
       key: 'date',
       header: text.historyColumns.date,
-      numeric: true,
-      cell: (row) => formatDateTime(row.created_at, locale),
+      cell: (row) => <span dir="auto">{formatDateTime(row.created_at, locale)}</span>,
+    },
+    {
+      key: 'open',
+      header: text.historyColumns.details,
+      cell: (row) => (
+        <Button variant="ghost" onClick={() => setReportId(String(row.id))}>
+          {text.view} #{row.id}
+        </Button>
+      ),
     },
   ]
 
@@ -288,6 +342,19 @@ export function ImportsScreen() {
             )}
           </Field>
 
+          {earlier ? (
+            <p
+              role="alert"
+              className="flex flex-wrap items-center gap-2 rounded-control border border-line border-s-2 border-s-attention bg-sunken px-4 py-3 text-small text-attention"
+            >
+              <Icon name="alert" className="size-4 shrink-0" />
+              <span>{text.alreadyUploaded}</span>
+              <Button variant="ghost" onClick={() => setReportId(String(earlier.id))}>
+                {text.view} #{earlier.id}
+              </Button>
+            </p>
+          ) : null}
+
           {upload.isPending ? <ProgressBar label={text.uploading} /> : null}
 
           <div className="flex justify-end">
@@ -296,6 +363,8 @@ export function ImportsScreen() {
               loading={upload.isPending}
               disabled={
                 file === null ||
+                upload.isPending ||
+                earlier !== undefined ||
                 (needsGrade && gradeId === '') ||
                 (termRequired && termId === '') ||
                 (needsAcademicYear && academicYearId === '')
@@ -313,8 +382,9 @@ export function ImportsScreen() {
         <ImportReportPanel
           report={report}
           onStartOver={resetUpload}
-          detectedGradeName={report.gradeDetectedFromSheet ? gradeName(report.grade_id) : null}
+          gradeName={gradeName(report.grade_id)}
           detectedTermName={report.termDetectedFromSheet ? termName(report.term_id) : null}
+          timedOut={liveReport.timedOut}
         />
       ) : null}
 

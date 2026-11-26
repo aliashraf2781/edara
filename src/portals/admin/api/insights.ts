@@ -70,6 +70,9 @@ export function useSchoolInsights(termId: string) {
     },
     enabled: termId !== '',
     placeholderData: (previous) => previous,
+    // Live counts: an import finishing elsewhere must show up on the next visit.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -82,6 +85,8 @@ export function useSchoolStats(code: string, termId: string, enabled = true) {
       ),
     enabled: enabled && code !== '' && termId !== '',
     placeholderData: (previous) => previous,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   })
 }
 

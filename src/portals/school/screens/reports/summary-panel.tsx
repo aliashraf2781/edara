@@ -31,6 +31,12 @@ export function SummaryPanel({ termId, showByGrade }: { termId: string; showByGr
   const summary = useReportSummary(termId)
   const { gradeName } = useCurriculumNames()
 
+  // No term picked yet: the query is disabled, so it would stay "pending"
+  // forever. Ask for a term instead of spinning.
+  if (termId === '') {
+    return <EmptyState title={shell.pickers.pickTerm} description={text.pickTermBody} />
+  }
+
   if (summary.isPending) {
     return (
       <div className="flex items-center gap-3 text-muted">

@@ -24,6 +24,7 @@ export const reportsText: Dict<{
   emptyTitle: string
   emptyBody: string
   noData: string
+  pickTermBody: string
   openReports: string
 }> = {
   ar: {
@@ -61,6 +62,7 @@ export const reportsText: Dict<{
     emptyTitle: 'لا بيانات لعرضها',
     emptyBody: 'لا توجد نتائج منشورة لهذا الترم بعد. ارفع كشف النتائج من شاشة رفع النتائج.',
     noData: 'لا نتائج منشورة',
+    pickTermBody: 'اختر الترم من القائمة أعلاه لعرض الملخص.',
     openReports: 'فتح التقارير',
   },
   en: {
@@ -87,6 +89,7 @@ export const reportsText: Dict<{
     emptyTitle: 'Nothing to show',
     emptyBody: 'No results have been published for this term yet. Upload a results sheet first.',
     noData: 'No published results',
+    pickTermBody: 'Pick a term from the list above to see the summary.',
     openReports: 'Open reports',
   },
 }

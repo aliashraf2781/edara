@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isValidationError } from '~/lib/api/error'
 import { schoolApi } from './client'
@@ -165,30 +166,56 @@ export function useUploadResults() {
   })
 }
 
+/** Poll every 4s while an import is queued/processing, give up after 3 minutes. */
+export const IMPORT_POLL_MS = 4000
+export const IMPORT_POLL_LIMIT_MS = 3 * 60 * 1000
+
+/** "processing" means queued or being processed — its counts are not final. */
+export const isImportPending = (status: string | undefined) => status === 'processing' || status === 'previewing'
+
+/** True when a still-pending import has been waiting longer than the polling limit. */
+export const isImportStalled = (report: Pick<ImportReport, 'status' | 'created_at'>, now = Date.now()) => {
+  if (!isImportPending(report.status)) return false
+  const created = Date.parse(report.created_at)
+  return Number.isFinite(created) && now - created > IMPORT_POLL_LIMIT_MS
+}
+
 export function useImportHistory(perPage = 5) {
   const query = { page: 1, per_page: perPage }
   return useQuery({
     queryKey: schoolKeys.importList(query),
     queryFn: async ({ signal }) =>
       schoolApi.getPage<ImportReport>('/school/result-imports', query, { signal }, perPage),
+    // Keeps the table honest while uploads are still being processed.
+    refetchInterval: (q) =>
+      q.state.data?.data.some((row) => isImportPending(row.status) && !isImportStalled(row)) ? IMPORT_POLL_MS : false,
+    refetchOnWindowFocus: true,
   })
 }
 
 /**
- * The backend now processes an import's rows on a queue worker instead of
- * inline in the upload request (see ResultImportController::store()) — the
- * upload response comes back with status "processing" and zeroed counts,
- * not the final report. Polling here is what turns that into a report that
- * actually updates once the worker finishes: every 1.5s while status is
- * still "processing", stopping the moment it flips to "completed"/"failed"
- * (refetchInterval returning false cancels further polling).
+ * The backend processes an import's rows on a queue worker, so the upload
+ * response is "processing" with zeroed counts. Polls GET /result-imports/{id}
+ * every few seconds until it is completed/failed, and stops after
+ * IMPORT_POLL_LIMIT_MS — `timedOut` then lets the UI say so instead of
+ * leaving zeros on screen.
  */
 export function useImportReport(id: string) {
-  return useQuery({
+  const [timedOut, setTimedOut] = useState(false)
+
+  useEffect(() => {
+    setTimedOut(false)
+    if (id === '') return
+    const timer = window.setTimeout(() => setTimedOut(true), IMPORT_POLL_LIMIT_MS)
+    return () => window.clearTimeout(timer)
+  }, [id])
+
+  const query = useQuery({
     queryKey: schoolKeys.import(id),
     queryFn: ({ signal }) =>
       schoolApi.get<ImportReport>(`/school/result-imports/${id}`, undefined, { signal }),
     enabled: id !== '',
-    refetchInterval: (query) => (query.state.data?.status === 'processing' ? 1500 : false),
+    refetchInterval: (q) => (isImportPending(q.state.data?.status) && !timedOut ? IMPORT_POLL_MS : false),
   })
+  return { ...query, timedOut: timedOut && isImportPending(query.data?.status) }
 }
