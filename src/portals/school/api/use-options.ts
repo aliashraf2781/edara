@@ -18,7 +18,20 @@ const toOptions = (rows: readonly Named[] | undefined): SelectOption[] =>
  */
 export function useYearOptions(): SelectOption[] {
   const list = useAcademicList<AcademicYear>('academic-years', {})
-  return useMemo(() => toOptions(list.data), [list.data])
+  return useMemo(
+    () => (list.data ?? []).map((year) => ({ value: year.id, label: yearLabel(year) })),
+    [list.data],
+  )
+}
+
+/**
+ * An academic year always reads "2025/2026" — shown once (its code and name are
+ * the same text), left-to-right even inside Arabic text, so the slash never
+ * flips it into "2026/2025".
+ */
+export const yearLabel = (year: Pick<AcademicYear, 'code' | 'name'>): string => {
+  const text = year.name && year.name !== year.code ? `${year.code} — ${year.name}` : year.code
+  return `\u200E${text}\u200E`
 }
 
 export function useStageOptions(): SelectOption[] {

@@ -29,9 +29,10 @@ import {
   useTermCheck,
   useUploadResults,
 } from '../../api/imports'
+import { useAcademicList } from '../../api/academics'
 import { useAllExamPeriods } from '../../api/exam-periods'
 import { schoolKeys } from '../../api/keys'
-import type { ImportReport } from '../../api/types'
+import type { AcademicYear, ImportReport } from '../../api/types'
 import { useAllExamPeriodOptions, useCurriculumNames } from '../../api/use-options'
 import { AcademicYearField, GradeField } from '../../components/term-grade-fields'
 import { schoolText } from '../../school.i18n'
@@ -90,6 +91,9 @@ export function ImportsScreen() {
   const history = useImportHistory()
   const upload = useUploadResults()
   const terms = useAllExamPeriods()
+  const years = useAcademicList<AcademicYear>('academic-years', {})
+  // Lets the operator clear the year again without it snapping straight back.
+  const yearAutoPicked = useRef(false)
   const schoolTermOptions = useAllExamPeriodOptions()
   const liveReport = useImportReport(reportId ?? '')
   const report = liveReport.data ?? null
@@ -142,6 +146,24 @@ export function ImportsScreen() {
       void queryClient.invalidateQueries({ queryKey: schoolKeys.all })
     }
   }, [report?.status, queryClient])
+
+  useEffect(() => {
+    // The sheet named no year and the school has none marked current, so the
+    // server asked for one. Pre-select the school's current year, or its only
+    // year, so the operator can just press upload again instead of hunting
+    // through the list; they can still change it.
+    if (!needsAcademicYear) {
+      yearAutoPicked.current = false
+      return
+    }
+    if (yearAutoPicked.current || academicYearId !== '') return
+    const list = years.data ?? []
+    const pick = list.find((year) => year.is_current) ?? (list.length === 1 ? list[0] : undefined)
+    if (pick) {
+      yearAutoPicked.current = true
+      setAcademicYearId(pick.id)
+    }
+  }, [needsAcademicYear, years.data, academicYearId])
 
   const resetUpload = () => {
     setReportId(null)
