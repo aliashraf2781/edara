@@ -73,19 +73,42 @@ export function useExamPeriodOptions(academicYearId: string): SelectOption[] {
   return useMemo(() => toOptions(list.data as ExamPeriod[] | undefined), [list.data])
 }
 
+/**
+ * Every school has the same two terms in each of its academic years, so a bare
+ * term name is ambiguous ("الترم الأول" once per year): a term always reads
+ * "2025/2026 — الترم الأول".
+ */
+const termLabel = (name: string, year: Pick<AcademicYear, 'code' | 'name'> | undefined): string =>
+  year ? `${yearLabel(year)} — ${name}` : name
+
 /** Not scoped to one academic year — backs pickers that filter by term alone. */
 export function useAllExamPeriodOptions(): SelectOption[] {
   const list = useAllExamPeriods()
-  return useMemo(() => toOptions(list.data), [list.data])
+  const years = useAcademicList<AcademicYear>('academic-years', {})
+  return useMemo(() => {
+    const yearById = new Map((years.data ?? []).map((year) => [year.id, year]))
+    return (list.data ?? [])
+      .map((term) => ({ term, year: yearById.get(term.academic_year_id) }))
+      .sort(
+        (a, b) =>
+          (a.year?.code ?? '').localeCompare(b.year?.code ?? '') ||
+          (a.term.term ?? 0) - (b.term.term ?? 0),
+      )
+      .map(({ term, year }) => ({ value: term.id, label: termLabel(term.name, year) }))
+  }, [list.data, years.data])
 }
 
 /** Live id -> name lookups for table cells, replacing the old fixed mock curriculum. */
 export function useCurriculumNames() {
   const grades = useAcademicList<Grade>('grades', {})
   const terms = useAllExamPeriods()
+  const years = useAcademicList<AcademicYear>('academic-years', {})
 
   const gradeById = new Map((grades.data ?? []).map((grade) => [grade.id, grade.name]))
-  const termById = new Map((terms.data ?? []).map((term) => [term.id, term.name]))
+  const yearById = new Map((years.data ?? []).map((year) => [year.id, year]))
+  const termById = new Map(
+    (terms.data ?? []).map((term) => [term.id, termLabel(term.name, yearById.get(term.academic_year_id))]),
+  )
 
   return {
     gradeName: (id: string) => gradeById.get(id) ?? id,
