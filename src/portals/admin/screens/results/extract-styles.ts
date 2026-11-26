@@ -207,9 +207,14 @@ export const EXTRACT_CSS = `
   white-space:normal;
 }
 .extract table.grades th{
-  font-weight:700;
+  font-weight:800;
   height:56px;
   font-size:13.5px;
+}
+/* Subject names only. A stroke, because font weights above bold may not exist
+   in whichever face the browser ends up using. */
+.extract table.grades th:not(.label-col){
+  -webkit-text-stroke:0.4px currentColor;
 }
 .extract table.grades td.label-col, .extract table.grades th.label-col{
   font-weight:700;
